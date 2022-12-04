@@ -1,10 +1,12 @@
 package meal;
 
+import database.DatabaseManager;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -41,7 +43,9 @@ public class Test {
         Element first = meals.get(0);
         System.out.println("Erstes Gericht: " + Meal.parseMeal(first));
 
-
+        DatabaseManager.connect();
+        DatabaseManager.setupTables();
+        DatabaseManager.disconnect();
 
     }
 
