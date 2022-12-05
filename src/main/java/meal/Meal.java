@@ -79,4 +79,8 @@ public class Meal {
                 ", vegan=" + vegan +
                 '}';
     }
+
+    public String text() {
+        return displayName;
+    }
 }

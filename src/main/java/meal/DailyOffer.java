@@ -9,7 +9,7 @@ import java.util.*;
 
 public class DailyOffer {
 
-    private Set<Meal> meals = new HashSet<>();
+    private final Set<Meal> meals = new HashSet<>();
     private final LocalDate date;
 
 
@@ -45,7 +45,9 @@ public class DailyOffer {
         return res;
     }
 
-
+    public Set<Meal> getMeals() {
+        return meals;
+    }
 
     public LocalDate getDate() {
         return date;
