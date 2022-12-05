@@ -22,10 +22,15 @@ public class DailyOffer {
     }
 
     public static DailyOffer parseOffer(Element element){
-
         Locale locale = Locale.GERMANY;
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", locale);
-        String fullDate = element.getElementsByClass("default-headline").get(0).text();
+
+        Elements headLineElements = element.getElementsByClass("active-headline");
+        if (headLineElements.isEmpty()) {
+            headLineElements = element.getElementsByClass("default-headline");
+        }
+        String fullDate = headLineElements.get(0).text();
+
         LocalDate date = LocalDate.parse(fullDate, formatter);
 
         DailyOffer res = new DailyOffer(date);
@@ -33,8 +38,8 @@ public class DailyOffer {
         Elements htmlMeals = element.getElementsByClass("menues").get(0)
                 .getElementsByClass("menue-wrapper");
 
-        for(Element hmtlMeal : htmlMeals){
-            Meal meal = Meal.parseMeal(hmtlMeal);
+        for(Element htmlMeal : htmlMeals){
+            Meal meal = Meal.parseMeal(htmlMeal);
             res.addMeal(meal);
         }
         return res;
