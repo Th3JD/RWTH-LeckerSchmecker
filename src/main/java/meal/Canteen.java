@@ -1,5 +1,6 @@
 package meal;
 
+import com.sun.tools.javac.Main;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -7,7 +8,6 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +15,8 @@ import java.util.Map;
 public class Canteen {
 
     public static final Canteen ACADEMICA = new Canteen("Mensa Academica", "academica");
+
+    public static final List<Canteen> TYPES = List.of(ACADEMICA);
 
     private final String displayName;
     private final String urlName;
@@ -43,12 +45,11 @@ public class Canteen {
             throw new RuntimeException(e);
         }
         Elements elements = doc.getElementsByClass("preventBreak");
-        for(Element e : elements){
+        for(Element e : elements) {
             DailyOffer offer = DailyOffer.parseOffer(e);
             dailyOffers.put(offer.getDate(), offer);
         }
-
-
+        LeckerSchmecker.getLogger().info("Fetched meals for canteen '" + this.getDisplayName() + "'");
     }
 
 
