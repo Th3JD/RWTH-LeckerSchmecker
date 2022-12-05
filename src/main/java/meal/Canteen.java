@@ -15,8 +15,10 @@ import java.util.Optional;
 public class Canteen {
 
     public static final Canteen ACADEMICA = new Canteen("Mensa Academica", "academica");
+    public static final Canteen AHORNSTRASSE = new Canteen("Mensa Ahornstraße", "ahornstrasse");
+    public static final Canteen VITA = new Canteen("Mensa Vita", "vita");
 
-    public static final List<Canteen> TYPES = List.of(ACADEMICA);
+    public static final List<Canteen> TYPES = List.of(ACADEMICA, AHORNSTRASSE, VITA);
 
     public static Optional<Canteen> getByDisplayName(String displayName) {
         return TYPES.stream().filter(c -> c.getDisplayName().equalsIgnoreCase(displayName)).findFirst();

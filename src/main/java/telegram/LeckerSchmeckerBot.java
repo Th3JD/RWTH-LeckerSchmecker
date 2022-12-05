@@ -10,12 +10,11 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.*;
 
 public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
-	private BotAction botAction;
+	private Map<Long, BotAction> botActionByChatId = new HashMap<>();
 
 	/**
 	 * Return username of this bot
@@ -42,44 +41,50 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 	 */
 	@Override
 	public void onUpdateReceived(Update update) {
-		if (update.hasMessage() && update.getMessage().getText().startsWith("exit")) {
-			this.botAction = null;
+		Long chatId = update.getMessage().getChatId();
+
+		if (update.hasMessage() && BotAction.START.getCmds().contains(update.getMessage().getText().split(" ")[0].toLowerCase())) {
+			this.botActionByChatId.remove(chatId);
 		}
 
-		if (this.botAction != null) {
-			boolean finishAction = this.botAction.onUpdate(this, update);
-			if (finishAction) {
-				if (this.botAction != BotAction.START) BotAction.START.init(this, update);
-				this.botAction = null;
-			}
+		// an action is running
+		if (this.botActionByChatId.get(chatId) != null) {
+			this.botActionByChatId.get(chatId).onUpdate(this, update);
+		// start new action
 		} else if (update.hasMessage()) {
 			Message msg = update.getMessage();
-			this.botAction = Arrays.stream(BotAction.values())
-					.filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].trim().toLowerCase()))
+
+			// find action
+			BotAction action = Arrays.stream(BotAction.values())
+					.filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].toLowerCase()))
 					.findFirst().orElse(null);
-			if (this.botAction != null) {
-				boolean finishAction = this.botAction.init(this, update);
-				if (finishAction) {
-					if (this.botAction != BotAction.START) BotAction.START.init(this, update);
-					this.botAction = null;
-				}
+
+			if (action != null) {
+				action.init(this, update.getMessage().getChatId(), null);
+			} else {
+				BotAction.START.init(this, update.getMessage().getChatId(), null);
 			}
+		} else {
+			BotAction.START.init(this, update.getMessage().getChatId(), null);
 		}
 	}
 
 	public void sendTextMessage(Long chatId, String message) {
+		if (message == null) return;
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setText(message);
 		this.sendMessage(chatId, sendMessage);
 	}
 
 	public void sendTextMessage(Update update, String message) {
+		if (message == null) return;
 		SendMessage sendMessage = new SendMessage();
 		sendMessage.setText(message);
 		this.sendMessage(update, sendMessage);
 	}
 
 	public void sendMessage(Long chatId, SendMessage message) {
+		if (message == null) return;
 		message.setChatId(chatId);
 		message.enableMarkdown(true);
 		try {
@@ -107,5 +112,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 		}
 
 		return sb.toString();
+	}
+
+	public void setState(Long chatId, BotAction botAction) {
+		this.botActionByChatId.put(chatId, botAction);
 	}
 }
