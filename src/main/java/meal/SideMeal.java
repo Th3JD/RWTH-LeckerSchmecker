@@ -6,24 +6,13 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SideMeal {
+public class SideMeal extends Meal {
 
-    private final String name;
-    private final String displayName;
     private final Type type;
 
     public SideMeal(String name, String displayName, Type type) {
-        this.name = name;
-        this.displayName = displayName;
+        super(name, displayName);
         this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     public Type getType() {

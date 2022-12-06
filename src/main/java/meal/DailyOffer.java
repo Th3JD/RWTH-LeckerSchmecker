@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class DailyOffer {
 
-    private final Set<Meal> meals = new HashSet<>();
+    private final Set<MainMeal> meals = new HashSet<>();
     private final Set<SideMeal> sideMeals = new HashSet<>();
     private final LocalDate date;
 
@@ -19,7 +19,7 @@ public class DailyOffer {
         this.date = date;
     }
 
-    public void addMeal(Meal meal){
+    public void addMeal(MainMeal meal){
         this.meals.add(meal);
     }
 
@@ -44,7 +44,7 @@ public class DailyOffer {
                 .getElementsByClass("menue-wrapper");
 
         for(Element htmlMeal : htmlMeals){
-            Meal meal = Meal.parseMeal(htmlMeal);
+            MainMeal meal = MainMeal.parseMeal(htmlMeal);
             res.addMeal(meal);
         }
 
@@ -56,7 +56,7 @@ public class DailyOffer {
         return res;
     }
 
-    public Set<Meal> getMeals() {
+    public Set<MainMeal> getMainMeals() {
         return meals;
     }
 
