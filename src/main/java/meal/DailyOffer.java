@@ -22,8 +22,7 @@ public class DailyOffer {
     }
 
     public static DailyOffer parseOffer(Element element){
-        Locale locale = Locale.GERMANY;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", locale);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
 
         Elements headLineElements = element.getElementsByClass("active-headline");
         if (headLineElements.isEmpty()) {
