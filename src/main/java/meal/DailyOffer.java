@@ -6,10 +6,12 @@ import org.jsoup.select.Elements;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DailyOffer {
 
     private final Set<Meal> meals = new HashSet<>();
+    private final Set<SideMeal> sideMeals = new HashSet<>();
     private final LocalDate date;
 
 
@@ -19,6 +21,10 @@ public class DailyOffer {
 
     public void addMeal(Meal meal){
         this.meals.add(meal);
+    }
+
+    public void addSideMeal(SideMeal meal) {
+        this.sideMeals.add(meal);
     }
 
     public static DailyOffer parseOffer(Element element){
@@ -41,11 +47,25 @@ public class DailyOffer {
             Meal meal = Meal.parseMeal(htmlMeal);
             res.addMeal(meal);
         }
+
+        Elements htmlExtras = element.getElementsByClass("extras").get(0).getElementsByClass("menue-wrapper");
+        for (Element htmlExtra : htmlExtras) {
+            SideMeal.parseSideMeals(htmlExtra).forEach(res::addSideMeal);
+        }
+
         return res;
     }
 
     public Set<Meal> getMeals() {
         return meals;
+    }
+
+    public Set<SideMeal> getSideMeals() {
+        return sideMeals;
+    }
+
+    public Set<SideMeal> getSideMeals(SideMeal.Type type) {
+        return sideMeals.stream().filter(m -> m.getType().equals(type)).collect(Collectors.toSet());
     }
 
     public LocalDate getDate() {
