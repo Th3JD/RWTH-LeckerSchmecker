@@ -1,5 +1,6 @@
 package telegram;
 
+import config.Config;
 import meal.Canteen;
 import meal.DailyOffer;
 import meal.Meal;
@@ -21,7 +22,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 	 */
 	@Override
 	public String getBotUsername() {
-		return "rwth_leckerschmecker_bot";
+		return Config.getString("telegram.name");
 	}
 
 	/**
@@ -31,7 +32,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 	 */
 	@Override
 	public String getBotToken() {
-		return "";
+		return Config.getString("telegram.token");
 	}
 
 	/**
