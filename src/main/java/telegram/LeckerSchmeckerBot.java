@@ -115,7 +115,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 		DailyOffer offer = offerOpt.get();
 
 		StringBuilder sb = new StringBuilder();
-		for (Meal meal : offer.getMeals()) {
+		for (MainMeal meal : offer.getMainMeals()) {
 			sb.append("*").append(meal.getType().getDisplayName()).append("*").append("\n")
 					.append(meal.text()).append("\n\n");
 		}
