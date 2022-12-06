@@ -3,6 +3,7 @@ package telegram;
 import config.Config;
 import meal.Canteen;
 import meal.DailyOffer;
+import meal.LeckerSchmecker;
 import meal.Meal;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -43,6 +44,14 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 	@Override
 	public void onUpdateReceived(Update update) {
 		Long chatId = update.getMessage().getChatId();
+
+		// Check if user is allowed to take part in the closed beta
+		if(!Config.isAllowedUser(chatId)){
+			sendTextMessage(chatId, "Dieser Bot steht momentan noch nicht zur Verfügung!");
+			LeckerSchmecker.getLogger().info("Unerlaubter Nutzer mit chatID " + chatId + " hat ein Update ausgelöst.");
+			return;
+		}
+
 
 		if (update.hasMessage() && BotAction.START.getCmds().contains(update.getMessage().getText().split(" ")[0].toLowerCase())) {
 			this.botActionByChatId.remove(chatId);
