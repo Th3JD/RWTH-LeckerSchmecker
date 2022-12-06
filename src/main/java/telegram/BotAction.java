@@ -9,10 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public enum BotAction {
 
@@ -22,33 +19,13 @@ public enum BotAction {
 			bot.setState(chatId, this);
 			bot.sendMessage(chatId, passthroughMessage);
 
-			SendMessage sendMessage = new SendMessage();
-			sendMessage.setText("Wähle eine Mensa!");
+			SendMessage message = new SendMessage();
+			message.setText("Wähle eine Mensa!");
 
-			ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-			sendMessage.setReplyMarkup(replyKeyboardMarkup);
-			replyKeyboardMarkup.setSelective(true);
-			replyKeyboardMarkup.setResizeKeyboard(true);
-			replyKeyboardMarkup.setOneTimeKeyboard(false);
+			message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
+					Canteen.TYPES.stream().map(Canteen::getDisplayName).toList()));
 
-			List<KeyboardRow> keyboard = new ArrayList<>();
-			KeyboardRow keyboardRow = new KeyboardRow();
-
-			int elementsInRow = 0;
-			for (Canteen canteen : Canteen.TYPES) {
-				if (elementsInRow == 2) {
-					keyboard.add(keyboardRow);
-					keyboardRow = new KeyboardRow();
-					elementsInRow = 0;
-				}
-				keyboardRow.add(new KeyboardButton(canteen.getDisplayName()));
-				elementsInRow++;
-			}
-			keyboard.add(keyboardRow);
-
-			replyKeyboardMarkup.setKeyboard(keyboard);
-
-			bot.sendMessage(chatId, sendMessage);
+			bot.sendMessage(chatId, message);
 		}
 
 		@Override
@@ -104,28 +81,8 @@ public enum BotAction {
 				message.setText("Wähle eine Aktion!");
 			}
 
-			ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-			message.setReplyMarkup(replyKeyboardMarkup);
-			replyKeyboardMarkup.setSelective(true);
-			replyKeyboardMarkup.setResizeKeyboard(true);
-			replyKeyboardMarkup.setOneTimeKeyboard(false);
-
-			List<KeyboardRow> keyboard = new ArrayList<>();
-			KeyboardRow keyboardRow = new KeyboardRow();
-
-			int elementsInRow = 0;
-			for (BotAction action : BotAction.values()) {
-				if (elementsInRow == 2) {
-					keyboard.add(keyboardRow);
-					keyboardRow = new KeyboardRow();
-					elementsInRow = 0;
-				}
-				keyboardRow.add(new KeyboardButton(action.getDisplayName()));
-				elementsInRow++;
-			}
-			keyboard.add(keyboardRow);
-
-			replyKeyboardMarkup.setKeyboard(keyboard);
+			message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
+					Arrays.stream(BotAction.values()).map(BotAction::getDisplayName).toList()));
 
 			bot.sendMessage(chatId, message);
 		}
@@ -154,6 +111,36 @@ public enum BotAction {
 
 	public List<String> getCmds() {
 		return cmds;
+	}
+
+	private static ReplyKeyboardMarkup createKeyboardMarkup(int elementsInRow, String... elements){
+		return createKeyboardMarkup(elementsInRow, List.of(elements));
+	}
+
+	private static ReplyKeyboardMarkup createKeyboardMarkup(int elementsInRow, List<String> elements){
+		ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+		replyKeyboardMarkup.setSelective(true);
+		replyKeyboardMarkup.setResizeKeyboard(true);
+		replyKeyboardMarkup.setOneTimeKeyboard(false);
+
+
+		List<KeyboardRow> keyboardRows = new ArrayList<>();
+		KeyboardRow keyboardRow = new KeyboardRow();
+
+		int currentElementsInRow = 0;
+		for (String s : elements) {
+			if (currentElementsInRow == elementsInRow) {
+				keyboardRows.add(keyboardRow);
+				keyboardRow = new KeyboardRow();
+				currentElementsInRow = 0;
+			}
+			keyboardRow.add(new KeyboardButton(s));
+			currentElementsInRow++;
+		}
+		keyboardRows.add(keyboardRow);
+
+		replyKeyboardMarkup.setKeyboard(keyboardRows);
+		return replyKeyboardMarkup;
 	}
 
 	public abstract void init(LeckerSchmeckerBot bot, Long chatId, SendMessage passthroughMessage);
