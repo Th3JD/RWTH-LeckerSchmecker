@@ -11,7 +11,7 @@ import java.util.logging.*;
 
 public class LeckerSchmecker {
 
-	private static Logger logger;
+	private static final Logger logger;
 
 	static {
 		logger = Logger.getLogger("RWTH-LS");

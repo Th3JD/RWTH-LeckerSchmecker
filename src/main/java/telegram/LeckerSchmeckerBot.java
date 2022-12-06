@@ -1,10 +1,7 @@
 package telegram;
 
 import config.Config;
-import meal.Canteen;
-import meal.DailyOffer;
-import meal.LeckerSchmecker;
-import meal.Meal;
+import meal.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -115,11 +112,22 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 			return "";
 		}
 
+		DailyOffer offer = offerOpt.get();
+
 		StringBuilder sb = new StringBuilder();
-		for (Meal meal : offerOpt.get().getMeals()) {
+		for (Meal meal : offer.getMeals()) {
 			sb.append("*").append(meal.getType().getDisplayName()).append("*").append("\n")
 					.append(meal.text()).append("\n\n");
 		}
+
+		sb.append("*Hauptbeilagen*").append("\n");
+		sb.append(String.join(" oder ",
+				offer.getSideMeals(SideMeal.Type.MAIN).stream().map(SideMeal::getDisplayName).toList()));
+		sb.append("\n\n");
+
+		sb.append("*Nebenbeilagen*").append("\n");
+		sb.append(String.join(" oder ",
+				offer.getSideMeals(SideMeal.Type.SIDE).stream().map(SideMeal::getDisplayName).toList()));
 
 		return sb.toString();
 	}
