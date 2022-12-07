@@ -17,8 +17,16 @@ public class Canteen {
     public static final Canteen ACADEMICA = new Canteen("Mensa Academica", "academica");
     public static final Canteen AHORNSTRASSE = new Canteen("Mensa Ahornstraße", "ahornstrasse");
     public static final Canteen VITA = new Canteen("Mensa Vita", "vita");
+    public static final Canteen TEMPLERGRABEN = new Canteen("Bistro Templergraben", "templergraben");
+    public static final Canteen BAYERNALLEE = new Canteen("Mensa Bayernallee", "bayernallee");
+    public static final Canteen EUPENERSTRASSE = new Canteen("Mensa Eupener Straße", "eupenerstrasse");
+    public static final Canteen KMAC = new Canteen("Mensa KMAC", "kmac");
+    public static final Canteen JUELICH = new Canteen("Mensa Jülich", "juelich");
 
-    public static final List<Canteen> TYPES = List.of(ACADEMICA, AHORNSTRASSE, VITA);
+    //public static final Canteen SUEDPARK = new Canteen("Mensa Südpark", "suedpark");
+
+    public static final List<Canteen> TYPES = List.of(ACADEMICA, AHORNSTRASSE, VITA, TEMPLERGRABEN, BAYERNALLEE,
+            EUPENERSTRASSE, KMAC, JUELICH);
 
     public static Optional<Canteen> getByDisplayName(String displayName) {
         return TYPES.stream().filter(c -> c.getDisplayName().equalsIgnoreCase(displayName)).findFirst();
