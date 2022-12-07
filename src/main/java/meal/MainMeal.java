@@ -27,6 +27,12 @@ public class MainMeal extends Meal {
         String displayName = element.getElementsByClass("expand-nutr").get(0).ownText();
         String category = element.getElementsByClass("menue-category").get(0).ownText();
         Type type = Type.getMealTypeFromCategory(category, element);
+
+        if (type == null) {
+            LeckerSchmecker.getLogger().warning("Could not parse type of meal '" + displayName + "'");
+            return null;
+        }
+
         boolean vegetarian = searchNutrientFor(element, NUTR_VEGETARIAN);
         boolean vegan = searchNutrientFor(element, NUTR_VEGAN);
 
@@ -69,10 +75,10 @@ public class MainMeal extends Meal {
 
     public enum Type {
 
-        TELLERGERICHT_VEGETARISCH("Tellergericht Vegetarisch", 2.0f),
-        TELLERGERICHT("Tellergericht", 2.0f),
         VEGETARISCH("Vegetarisch", 2.2f),
         KLASSIKER("Klassiker", 2.8f),
+        TELLERGERICHT_VEGETARISCH("Tellergericht Vegetarisch", 2.0f),
+        TELLERGERICHT("Tellergericht", 2.0f),
         WOK_VEGETARISCH("Wok Vegetarisch", 3.8f),
         WOK("Wok", 3.8f);
 
