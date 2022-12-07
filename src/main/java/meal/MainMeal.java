@@ -67,10 +67,6 @@ public class MainMeal extends Meal {
                 '}';
     }
 
-    public String text() {
-        return displayName;
-    }
-
     public enum Type {
 
         TELLERGERICHT_VEGETARISCH("Tellergericht Vegetarisch", 2.0f),
@@ -103,8 +99,7 @@ public class MainMeal extends Meal {
                     return KLASSIKER;
                 }
                 case "Wok" -> {
-                    if(e.getElementsByClass("content-image").get(0).attr("src").contains("vegan") ||
-                    e.getElementsByClass("content-image").get(0).attr("src").contains("OLV")){
+                    if(searchNutrientFor(e, NUTR_VEGAN) || searchNutrientFor(e, NUTR_VEGETARIAN)){
                         return WOK_VEGETARISCH;
                     }
                     return WOK;
