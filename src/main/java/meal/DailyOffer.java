@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class DailyOffer {
 
-    private final Set<MainMeal> meals = new HashSet<>();
+    private final SortedSet<MainMeal> meals = new TreeSet<>(Comparator.comparing(MainMeal::getType));
     private final Set<SideMeal> sideMeals = new HashSet<>();
     private final LocalDate date;
 
@@ -20,10 +20,12 @@ public class DailyOffer {
     }
 
     public void addMeal(MainMeal meal){
+        if (meal == null) return;
         this.meals.add(meal);
     }
 
     public void addSideMeal(SideMeal meal) {
+        if (meal == null) return;
         this.sideMeals.add(meal);
     }
 
