@@ -1,10 +1,13 @@
 .gradle
+gradlew
+gradlew.bat
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 leckerschmecker.cfg
 users.txt
+src/main/java/meal/Test.java
 
 ### IntelliJ IDEA ###
 .idea/

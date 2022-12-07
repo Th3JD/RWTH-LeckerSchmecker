@@ -19,10 +19,6 @@ public class SideMeal extends Meal {
         return type;
     }
 
-    public String text() {
-        return this.displayName;
-    }
-
     public static List<SideMeal> parseSideMeals(Element element) {
 
         Type type = null;
@@ -40,10 +36,19 @@ public class SideMeal extends Meal {
         String html = element.getElementsByClass("menue-item extra menue-desc").get(0).html();
         return Arrays.stream(html.replace("<span class=\"menue-nutr\">+</span>", "")
                 .replace("<br>", "")
-                .replaceAll("<sup>.*</sup>", "")
+                .replaceAll("<sup>.*?</sup>", "")
                 .split("<span class=\"seperator\">oder</span>")).map(String::trim)
                 .map(name -> new SideMeal(name.toLowerCase().replace(' ', '_'), name, finalType))
                 .toList();
+    }
+
+    @Override
+    public String toString() {
+        return "SideMeal{" +
+                "type=" + type +
+                ", name='" + name + '\'' +
+                ", displayName='" + displayName + '\'' +
+                '}';
     }
 
     public enum Type {
