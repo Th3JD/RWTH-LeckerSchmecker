@@ -80,7 +80,12 @@ public class MainMeal extends Meal {
         TELLERGERICHT_VEGETARISCH("Tellergericht Vegetarisch", 2.0f),
         TELLERGERICHT("Tellergericht", 2.0f),
         WOK_VEGETARISCH("Wok Vegetarisch", 3.8f),
-        WOK("Wok", 3.8f);
+        WOK("Wok", 3.8f),
+        EMPFEHLUNG_DES_TAGES("Gericht des Tages", 4.1f),
+        PASTA("Pasta", 3.7f),
+        PIZZA_CLASSICS("Pizza Classics", 3.7f),
+        PIZZA_DES_TAGES("Pizza des Tages", 3.7f),
+        ;
 
         private final String displayName;
         private final float price;
@@ -109,6 +114,18 @@ public class MainMeal extends Meal {
                         return WOK_VEGETARISCH;
                     }
                     return WOK;
+                }
+                case "Empfehlung des Tages" -> {
+                    return EMPFEHLUNG_DES_TAGES;
+                }
+                case "Pasta" -> {
+                    return PASTA;
+                }
+                case "Pizza Classics" -> {
+                    return PIZZA_CLASSICS;
+                }
+                case "Pizza des Tages" -> {
+                    return PIZZA_DES_TAGES;
                 }
             }
             return null;
