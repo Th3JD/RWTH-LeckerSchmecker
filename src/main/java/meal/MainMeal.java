@@ -5,18 +5,9 @@ import org.jsoup.nodes.Element;
 import java.time.DayOfWeek;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MainMeal extends Meal {
-
-	private static final String NUTR_VEGAN = "vegan",
-			NUTR_VEGETARIAN = "OLV",
-			NUTR_PORK = "Schwein",
-			NUTR_POULTRY = "Geflügel",
-			NUTR_BEEF = "Rind",
-			NUTR_FISH = "Fisch";
-
 
 	private final Type type;
 	private final List<Nutrition> nutritions;
@@ -60,6 +51,10 @@ public class MainMeal extends Meal {
 
 	public String getSymbols() {
 		return this.nutritions.stream().map(Nutrition::getSymbol).collect(Collectors.joining());
+	}
+
+	public List<Nutrition> getNutritions() {
+		return nutritions;
 	}
 
 	@Override
