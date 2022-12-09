@@ -2,141 +2,130 @@ package meal;
 
 import org.jsoup.nodes.Element;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class MainMeal extends Meal {
 
-    private static final String NUTR_VEGAN = "vegan",
-                                NUTR_VEGETARIAN = "OLV",
-                                NUTR_PORK = "Schwein",
-                                NUTR_POULTRY = "Geflügel",
-                                NUTR_BEEF = "Rind";
+	private static final String NUTR_VEGAN = "vegan",
+			NUTR_VEGETARIAN = "OLV",
+			NUTR_PORK = "Schwein",
+			NUTR_POULTRY = "Geflügel",
+			NUTR_BEEF = "Rind",
+			NUTR_FISH = "Fisch";
 
 
-    private final Type type;
-    private final boolean vegetarian;
-    private final boolean vegan;
+	private final Type type;
+	private final Set<Nutrition> nutritions;
 
-    public MainMeal(String name, String displayName, Type type, boolean vegetarian, boolean vegan) {
-        super(name, displayName);
-        this.type = type;
-        this.vegetarian = vegetarian;
-        this.vegan = vegan;
-    }
+	public MainMeal(String name, String displayName, Type type, Set<Nutrition> nutritions) {
+		super(name, displayName);
+		this.type = type;
+		this.nutritions = nutritions;
+	}
 
-    public static MainMeal parseMeal(Element element) {
+	public static MainMeal parseMeal(Element element) {
 
-        String displayName = element.getElementsByClass("expand-nutr").get(0).ownText();
-        String category = element.getElementsByClass("menue-category").get(0).ownText();
-        Type type = Type.getMealTypeFromCategory(category, element);
+		String displayName = element.getElementsByClass("expand-nutr").get(0).ownText();
+		String category = element.getElementsByClass("menue-category").get(0).ownText();
+		Type type = Type.getMealTypeFromCategory(category, element);
 
-        if (type == null) {
-            LeckerSchmecker.getLogger().warning("Could not parse type of meal '" + displayName + "'");
-            return null;
-        }
+		if (type == null) {
+			LeckerSchmecker.getLogger().warning("Could not parse type of meal '" + displayName + "'");
+			return null;
+		}
 
-        boolean vegetarian = searchNutrientFor(element, NUTR_VEGETARIAN);
-        boolean vegan = searchNutrientFor(element, NUTR_VEGAN);
+		String name = displayName.toLowerCase().replace(' ', '_');
 
-        String name = displayName.toLowerCase().replace(' ', '_');
+		return new MainMeal(name, displayName, type, Nutrition.searchNutrientsFor(element));
+	}
 
-        return new MainMeal(name, displayName, type, vegetarian, vegan);
-    }
+	public Type getType() {
+		return type;
+	}
 
-    private static boolean searchNutrientFor(Element e, String string){
-        for(Element image : e.getElementsByClass("content-image")){
-            if(image.attr("src").contains(string)){
-                return true;
-            }
-        }
-        return false;
-    }
+	public String text() {
+		return this.getSymbols() + " " + this.getDisplayName();
+	}
 
-    public Type getType() {
-        return type;
-    }
+	public String getSymbols() {
+		return this.nutritions.stream().map(Nutrition::getSymbol).collect(Collectors.joining());
+	}
 
-    public boolean isVegetarian() {
-        return vegetarian;
-    }
+	@Override
+	public String toString() {
+		return "Meal{" +
+				"name='" + name + '\'' +
+				", displayName='" + displayName + '\'' +
+				", type=" + type +
+				'}';
+	}
 
-    public boolean isVegan() {
-        return vegan;
-    }
+	public enum Type {
 
-    @Override
-    public String toString() {
-        return "Meal{" +
-                "name='" + name + '\'' +
-                ", displayName='" + displayName + '\'' +
-                ", type=" + type +
-                ", vegetarian=" + vegetarian +
-                ", vegan=" + vegan +
-                '}';
-    }
+		VEGETARISCH("Vegetarisch", 2.2f),
+		KLASSIKER("Klassiker", 2.8f),
+		TELLERGERICHT_VEGETARISCH("Tellergericht Vegetarisch", 2.0f),
+		TELLERGERICHT("Tellergericht", 2.0f),
+		WOK_VEGETARISCH("Wok Vegetarisch", 3.8f),
+		WOK("Wok", 3.8f),
+		EMPFEHLUNG_DES_TAGES("Gericht des Tages", 4.1f),
+		PASTA("Pasta", 3.7f),
+		PIZZA_CLASSICS("Pizza Classics", 3.7f),
+		PIZZA_DES_TAGES("Pizza des Tages", 3.7f),
+		;
 
-    public enum Type {
+		private final String displayName;
+		private final float price;
 
-        VEGETARISCH("Vegetarisch", 2.2f),
-        KLASSIKER("Klassiker", 2.8f),
-        TELLERGERICHT_VEGETARISCH("Tellergericht Vegetarisch", 2.0f),
-        TELLERGERICHT("Tellergericht", 2.0f),
-        WOK_VEGETARISCH("Wok Vegetarisch", 3.8f),
-        WOK("Wok", 3.8f),
-        EMPFEHLUNG_DES_TAGES("Gericht des Tages", 4.1f),
-        PASTA("Pasta", 3.7f),
-        PIZZA_CLASSICS("Pizza Classics", 3.7f),
-        PIZZA_DES_TAGES("Pizza des Tages", 3.7f),
-        ;
+		Type(String displayName, float price) {
+			this.displayName = displayName;
+			this.price = price;
+		}
 
-        private final String displayName;
-        private final float price;
+		public static Type getMealTypeFromCategory(String category, Element e) {
+			switch (category) {
+				case "Tellergericht vegetarisch" -> {
+					return TELLERGERICHT_VEGETARISCH;
+				}
+				case "Tellergericht" -> {
+					return TELLERGERICHT;
+				}
+				case "Vegetarisch" -> {
+					return VEGETARISCH;
+				}
+				case "Klassiker" -> {
+					return KLASSIKER;
+				}
+				case "Wok" -> {
+					Set<Nutrition> nutritions = Nutrition.searchNutrientsFor(e);
+					if (nutritions.contains(Nutrition.VEGAN) || nutritions.contains(Nutrition.VEGETARIAN)) {
+						return WOK_VEGETARISCH;
+					}
+					return WOK;
+				}
+				case "Empfehlung des Tages" -> {
+					return EMPFEHLUNG_DES_TAGES;
+				}
+				case "Pasta" -> {
+					return PASTA;
+				}
+				case "Pizza Classics" -> {
+					return PIZZA_CLASSICS;
+				}
+				case "Pizza des Tages" -> {
+					return PIZZA_DES_TAGES;
+				}
+			}
+			return null;
+		}
 
-        Type(String displayName, float price) {
-            this.displayName = displayName;
-            this.price = price;
-        }
+		public String getDisplayName() {
+			return displayName;
+		}
 
-        public static Type getMealTypeFromCategory(String category, Element e){
-            switch (category){
-                case "Tellergericht vegetarisch" -> {
-                    return TELLERGERICHT_VEGETARISCH;
-                }
-                case "Tellergericht" -> {
-                    return TELLERGERICHT;
-                }
-                case "Vegetarisch" -> {
-                    return VEGETARISCH;
-                }
-                case "Klassiker" -> {
-                    return KLASSIKER;
-                }
-                case "Wok" -> {
-                    if(searchNutrientFor(e, NUTR_VEGAN) || searchNutrientFor(e, NUTR_VEGETARIAN)){
-                        return WOK_VEGETARISCH;
-                    }
-                    return WOK;
-                }
-                case "Empfehlung des Tages" -> {
-                    return EMPFEHLUNG_DES_TAGES;
-                }
-                case "Pasta" -> {
-                    return PASTA;
-                }
-                case "Pizza Classics" -> {
-                    return PIZZA_CLASSICS;
-                }
-                case "Pizza des Tages" -> {
-                    return PIZZA_DES_TAGES;
-                }
-            }
-            return null;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public float getPrice() {
-            return price;
-        }
-    }
+		public float getPrice() {
+			return price;
+		}
+	}
 }

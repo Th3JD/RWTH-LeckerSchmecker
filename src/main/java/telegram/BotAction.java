@@ -70,7 +70,7 @@ public enum BotAction {
 		}
 	},
 
-	START("Menü", List.of("/start", "start", "exit", "menu", "menü")) {
+	START("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü")) {
 		@Override
 		public void init(LeckerSchmeckerBot bot, Long chatId, SendMessage passthroughMessage) {
 			bot.setState(chatId, this);
