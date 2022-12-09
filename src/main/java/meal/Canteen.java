@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 public class Canteen {
 
@@ -63,7 +64,8 @@ public class Canteen {
             DailyOffer offer = DailyOffer.parseOffer(e);
             dailyOffers.put(offer.getDate(), offer);
         }
-        LeckerSchmecker.getLogger().info("Fetched meals for canteen '" + this.getDisplayName() + "'");
+        LeckerSchmecker.getLogger().info("Fetched " + this.dailyOffers.values().stream()
+                .mapToInt(d -> d.getMainMeals().size()).sum() + " meals for canteen '" + this.getDisplayName() + "'");
     }
 
     public Map<LocalDate, DailyOffer> getDailyOffers() {
