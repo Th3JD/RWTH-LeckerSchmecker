@@ -3,6 +3,8 @@ package meal;
 import org.jsoup.nodes.Element;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 public enum Nutrition {
@@ -12,7 +14,8 @@ public enum Nutrition {
 	PORK("Schwein", "\uD83D\uDC37"),
 	POULTRY("Geflügel", "\uD83D\uDC14"),
 	BEEF("Rind", "\uD83D\uDC2E"),
-	FISH("Fisch", "\uD83D\uDC1F");
+	FISH("Fisch", "\uD83D\uDC1F"),
+	SWEET(null, "\uD83C\uDF6E");
 
 	private final String htmlKey;
 	private final String symbol;
@@ -30,13 +33,13 @@ public enum Nutrition {
 		return symbol;
 	}
 
-	public static Set<Nutrition> searchNutrientsFor(Element e) {
-		Set<Nutrition> nutritions = new HashSet<>();
+	public static LinkedList<Nutrition> searchNutrientsFor(Element e) {
+		LinkedList<Nutrition> nutritions = new LinkedList<>();
 
 		for (Element image : e.getElementsByClass("content-image")) {
 			String html = image.attr("src");
 			for (Nutrition nutrition : Nutrition.values()) {
-				if (html.contains(nutrition.getHtmlKey())) {
+				if (nutrition.getHtmlKey() != null && html.contains(nutrition.getHtmlKey())) {
 					nutritions.add(nutrition);
 				}
 			}
