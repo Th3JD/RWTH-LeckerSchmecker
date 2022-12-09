@@ -46,7 +46,7 @@ public class DailyOffer {
                 .getElementsByClass("menue-wrapper");
 
         for(Element htmlMeal : htmlMeals){
-            MainMeal meal = MainMeal.parseMeal(htmlMeal);
+            MainMeal meal = MainMeal.parseMeal(res, htmlMeal);
             res.addMeal(meal);
         }
 

@@ -2,6 +2,9 @@ package meal;
 
 import org.jsoup.nodes.Element;
 
+import java.time.DayOfWeek;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,15 +19,15 @@ public class MainMeal extends Meal {
 
 
 	private final Type type;
-	private final Set<Nutrition> nutritions;
+	private final List<Nutrition> nutritions;
 
-	public MainMeal(String name, String displayName, Type type, Set<Nutrition> nutritions) {
+	public MainMeal(String name, String displayName, Type type, List<Nutrition> nutritions) {
 		super(name, displayName);
 		this.type = type;
 		this.nutritions = nutritions;
 	}
 
-	public static MainMeal parseMeal(Element element) {
+	public static MainMeal parseMeal(DailyOffer offer, Element element) {
 
 		String displayName = element.getElementsByClass("expand-nutr").get(0).ownText();
 		String category = element.getElementsByClass("menue-category").get(0).ownText();
@@ -37,7 +40,14 @@ public class MainMeal extends Meal {
 
 		String name = displayName.toLowerCase().replace(' ', '_');
 
-		return new MainMeal(name, displayName, type, Nutrition.searchNutrientsFor(element));
+		LinkedList<Nutrition> nutritions = Nutrition.searchNutrientsFor(element);
+
+		if ((type.equals(Type.TELLERGERICHT) || type.equals(Type.TELLERGERICHT_VEGETARISCH))
+				&& offer.getDate().getDayOfWeek().equals(DayOfWeek.FRIDAY)) {
+			nutritions.addFirst(Nutrition.SWEET);
+		}
+
+		return new MainMeal(name, displayName, type, nutritions);
 	}
 
 	public Type getType() {
@@ -98,7 +108,7 @@ public class MainMeal extends Meal {
 					return KLASSIKER;
 				}
 				case "Wok" -> {
-					Set<Nutrition> nutritions = Nutrition.searchNutrientsFor(e);
+					List<Nutrition> nutritions = Nutrition.searchNutrientsFor(e);
 					if (nutritions.contains(Nutrition.VEGAN) || nutritions.contains(Nutrition.VEGETARIAN)) {
 						return WOK_VEGETARISCH;
 					}
