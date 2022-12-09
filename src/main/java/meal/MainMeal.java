@@ -46,7 +46,8 @@ public class MainMeal extends Meal {
 	}
 
 	public String text() {
-		return this.getSymbols() + " " + this.getDisplayName();
+		String symbols = this.getSymbols();
+		return symbols + (!symbols.isEmpty() ? " " : "") + this.getDisplayName();
 	}
 
 	public String getSymbols() {
