@@ -81,8 +81,8 @@ public class MainMeal extends Meal {
 		WOK("Wok", 3.8f),
 		EMPFEHLUNG_DES_TAGES("Gericht des Tages", 4.1f),
 		PASTA("Pasta", 3.7f),
-		PIZZA_CLASSICS("Pizza Classics", 3.7f),
 		PIZZA_DES_TAGES("Pizza des Tages", 3.7f),
+		PIZZA_CLASSICS("Pizza Classics", 3.7f),
 		;
 
 		private final String displayName;
