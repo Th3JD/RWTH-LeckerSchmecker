@@ -3,24 +3,41 @@ package telegram;
 import meal.Canteen;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
+import java.time.LocalDate;
+
 public class ChatContext {
 
     private final LeckerSchmeckerBot bot;
     private final long chatID;
     private BotAction returnToAction; // Action to return to, once the internal actions are done
     private BotAction currentAction;
-    private Canteen currentCanteen;
+    private Canteen selectedCanteen;
     private Canteen defaultCanteen;
+    private LocalDate selectedDate;
 
     public ChatContext(LeckerSchmeckerBot bot, long chatID){
         this.bot = bot;
         this.chatID = chatID;
-        returnToAction = null;
-        currentAction = null;
-        currentCanteen = null;
-        defaultCanteen = null;
+        this.returnToAction = null;
+        this.currentAction = null;
+        this.selectedCanteen = null;
+        this.defaultCanteen = null;
 
         //TODO: Load default values like language and defaultCanteen from database
+    }
+
+    public void resetTemporaryInformation(){
+        this.returnToAction = null;
+        this.selectedCanteen = null;
+        this.selectedDate = null;
+    }
+
+    public LocalDate getSelectedDate() {
+        return selectedDate;
+    }
+
+    public void setSelectedDate(LocalDate selectedDate) {
+        this.selectedDate = selectedDate;
     }
 
     public LeckerSchmeckerBot getBot(){
@@ -47,12 +64,12 @@ public class ChatContext {
         this.returnToAction = returnToAction;
     }
 
-    public Canteen getCurrentCanteen() {
-        return currentCanteen;
+    public Canteen getSelectedCanteen() {
+        return selectedCanteen;
     }
 
-    public void setCurrentCanteen(Canteen currentCanteen) {
-        this.currentCanteen = currentCanteen;
+    public void setSelectedCanteen(Canteen selectedCanteen) {
+        this.selectedCanteen = selectedCanteen;
     }
 
     public Canteen getDefaultCanteen() {

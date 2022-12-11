@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class LeckerSchmeckerBot extends TelegramLongPollingBot {
@@ -72,6 +73,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
 			// Find action requested by the user
 			BotAction action = Arrays.stream(BotAction.values())
+					.filter(a -> !a.isInternal())
 					.filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].toLowerCase()))
 					.findFirst().orElse(null);
 
@@ -118,7 +120,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 		Optional<DailyOffer> offerOpt = canteen.getDailyOffer(date);
 
 		if (offerOpt.isEmpty()) {
-			return "";
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMANY);
+			return canteen.getDisplayName() + " bietet am " + date.format(formatter) + " keine Gerichte an!";
 		}
 
 		DailyOffer offer = offerOpt.get();
