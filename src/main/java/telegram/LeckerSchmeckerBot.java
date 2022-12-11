@@ -13,7 +13,7 @@ import java.util.*;
 
 public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
-	private Map<Long, BotAction> botActionByChatId = new HashMap<>();
+	private Map<Long, ChatContext> chatContextById = new HashMap<>();
 
 	/**
 	 * Return username of this bot
@@ -49,30 +49,39 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 			return;
 		}
 
-
-		if (update.hasMessage() && BotAction.START.getCmds().contains(update.getMessage().getText().split(" ")[0].toLowerCase())) {
-			this.botActionByChatId.remove(chatId);
+		// Create ChatContext if it does not exist
+		ChatContext context;
+		if(!chatContextById.containsKey(chatId)){
+			context = new ChatContext(this, chatId);
+			chatContextById.put(chatId, context);
+		} else {
+			context = chatContextById.get(chatId);
 		}
 
-		// an action is running
-		if (this.botActionByChatId.get(chatId) != null) {
-			this.botActionByChatId.get(chatId).onUpdate(this, update);
-		// start new action
+		// Reset the current action if the user wants to access the main menu
+		if (update.hasMessage() && BotAction.MAIN_MENU.getCmds().contains(update.getMessage().getText().split(" ")[0].toLowerCase())) {
+			context.setCurrentAction(null);
+		}
+
+		// An action is currently running -> update
+		if (context.hasCurrentAction()){
+			context.getCurrentAction().onUpdate(context, update);
+		// No action is currently running -> start new action
 		} else if (update.hasMessage()) {
 			Message msg = update.getMessage();
 
-			// find action
+			// Find action requested by the user
 			BotAction action = Arrays.stream(BotAction.values())
 					.filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].toLowerCase()))
 					.findFirst().orElse(null);
 
 			if (action != null) {
-				action.init(this, update.getMessage().getChatId(), null);
+				action.init(context, null);
 			} else {
-				BotAction.START.init(this, update.getMessage().getChatId(), null);
+				BotAction.MAIN_MENU.init(context, null);
 			}
 		} else {
-			BotAction.START.init(this, update.getMessage().getChatId(), null);
+			BotAction.MAIN_MENU.init(context, null);
 		}
 	}
 
@@ -132,7 +141,4 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 		return sb.toString();
 	}
 
-	public void setState(Long chatId, BotAction botAction) {
-		this.botActionByChatId.put(chatId, botAction);
-	}
 }
