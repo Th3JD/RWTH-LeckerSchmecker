@@ -15,9 +15,9 @@ public enum BotAction {
 
 	LIST_MEALS("Gerichte", List.of("gerichte", "essen")) {
 		@Override
-		public void init(LeckerSchmeckerBot bot, Long chatId, SendMessage passthroughMessage) {
-			bot.setState(chatId, this);
-			bot.sendMessage(chatId, passthroughMessage);
+		public void init(ChatContext context, SendMessage passthroughMessage) {
+			context.setCurrentAction(this);
+			context.sendMessage(passthroughMessage);
 
 			SendMessage message = new SendMessage();
 			message.setText("Wähle eine Mensa!");
@@ -25,11 +25,11 @@ public enum BotAction {
 			message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
 					Canteen.TYPES.stream().map(Canteen::getDisplayName).toList()));
 
-			bot.sendMessage(chatId, message);
+			context.sendMessage(message);
 		}
 
 		@Override
-		public void onUpdate(LeckerSchmeckerBot bot, Update update) {
+		public void onUpdate(ChatContext context, Update update) {
 			if (!update.hasMessage()) {
 				return;
 			}
@@ -38,42 +38,42 @@ public enum BotAction {
 
 			Optional<Canteen> canteenOpt = Canteen.getByDisplayName(msg.getText());
 			if (canteenOpt.isEmpty()) {
-				bot.sendTextMessage(update, "Unbekannte Mensa!");
-				this.init(bot, msg.getChatId(), null);
+				context.sendMessage("Unbekannte Mensa!");
+				this.init(context, null);
 				return;
 			}
 
 			SendMessage sendMessage = new SendMessage();
 			sendMessage.enableMarkdownV2(true);
 
-			sendMessage.setText("--------    *Gerichte*    --------\n\n" + bot.getMealsText(canteenOpt.get(), LocalDate.now()));
+			sendMessage.setText("--------    *Gerichte*    --------\n\n" + context.getBot().getMealsText(canteenOpt.get(), LocalDate.now()));
 
-			BotAction.START.init(bot, msg.getChatId(), sendMessage);
+			BotAction.MAIN_MENU.init(context, sendMessage);
 		}
 	},
 
 	RATING("Kritik", List.of("bewertung", "kritik", "rating")) {
 		@Override
-		public void init(LeckerSchmeckerBot bot, Long chatId, SendMessage passthroughMessage) {
-			bot.setState(chatId, this);
-			bot.sendMessage(chatId, passthroughMessage);
+		public void init(ChatContext context, SendMessage passthroughMessage) {
+			context.setCurrentAction(this);
+			context.sendMessage(passthroughMessage);
 
 			SendMessage sendMessage = new SendMessage();
 			sendMessage.setText("Bald verfügbar!");
 
-			BotAction.START.init(bot, chatId, sendMessage);
+			BotAction.MAIN_MENU.init(context, sendMessage);
 		}
 
 		@Override
-		public void onUpdate(LeckerSchmeckerBot bot, Update update) {
+		public void onUpdate(ChatContext context, Update update) {
 
 		}
 	},
 
-	START("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü")) {
+	MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü")) {
 		@Override
-		public void init(LeckerSchmeckerBot bot, Long chatId, SendMessage passthroughMessage) {
-			bot.setState(chatId, this);
+		public void init(ChatContext context, SendMessage passthroughMessage) {
+			context.setCurrentAction(this);
 
 			SendMessage message = passthroughMessage;
 			if (message == null) {
@@ -84,16 +84,16 @@ public enum BotAction {
 			message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
 					Arrays.stream(BotAction.values()).map(BotAction::getDisplayName).toList()));
 
-			bot.sendMessage(chatId, message);
+			context.sendMessage(message);
 		}
 
 		@Override
-		public void onUpdate(LeckerSchmeckerBot bot, Update update) {
+		public void onUpdate(ChatContext context, Update update) {
 			Message msg = update.getMessage();
 			Arrays.stream(BotAction.values())
 					.filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].toLowerCase()))
 					.findFirst()
-					.ifPresent(action -> action.init(bot, update.getMessage().getChatId(), null));
+					.ifPresent(action -> action.init(context, null));
 		}
 	};
 
@@ -143,7 +143,7 @@ public enum BotAction {
 		return replyKeyboardMarkup;
 	}
 
-	public abstract void init(LeckerSchmeckerBot bot, Long chatId, SendMessage passthroughMessage);
+	public abstract void init(ChatContext context, SendMessage passthroughMessage);
 
-	public abstract void onUpdate(LeckerSchmeckerBot bot, Update update);
+	public abstract void onUpdate(ChatContext context, Update update);
 }
