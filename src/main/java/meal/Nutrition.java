@@ -6,8 +6,8 @@ import java.util.LinkedList;
 
 public enum Nutrition {
 
-	VEGAN("vegan", "\uD83E\uDDC0"),
-	VEGETARIAN("OLV", "\uD83C\uDF31"),
+	VEGAN("vegan", "\uD83C\uDF31"),
+	VEGETARIAN("olv", "\uD83E\uDDC0"),
 	PORK("schwein", "\uD83D\uDC37"),
 	POULTRY("geflügel", "\uD83D\uDC14"),
 	BEEF("rind", "\uD83D\uDC2E"),
