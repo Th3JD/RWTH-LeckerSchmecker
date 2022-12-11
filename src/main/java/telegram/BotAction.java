@@ -9,15 +9,64 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 public enum BotAction {
 
-	LIST_MEALS("Gerichte", List.of("gerichte", "essen")) {
+	SELECT_DATE("Datum", List.of(), true){
+
+		private final int LOOKAHEAD_DAYS = 3;
+		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
 		@Override
 		public void init(ChatContext context, SendMessage passthroughMessage) {
 			context.setCurrentAction(this);
-			context.sendMessage(passthroughMessage);
+
+			SendMessage message = new SendMessage();
+			message.setText("Wähle ein Datum!");
+
+			List<String> queryDates = new LinkedList<>();
+			LocalDate today = LocalDate.now();
+			for(int i = 0; i < LOOKAHEAD_DAYS; i++) {
+				queryDates.add(today.plusDays(i).format(formatter));
+			}
+
+			message.setReplyMarkup(BotAction.createKeyboardMarkup(1, queryDates));
+
+			context.sendMessage(message);
+		}
+
+		@Override
+		public void onUpdate(ChatContext context, Update update) {
+			if(!update.hasMessage()){ // User did not answer with a text message
+				this.init(context, null);
+			}
+
+			String text = update.getMessage().getText();
+			try {
+				LocalDate selectedDate = LocalDate.parse(text, formatter);
+				if(!selectedDate.isBefore(LocalDate.now().plusDays(LOOKAHEAD_DAYS))){
+					context.sendMessage("Ungültiges Datum!");
+					this.init(context, null);
+					return;
+				}
+
+				context.setSelectedDate(selectedDate);
+				context.getReturnToAction().onUpdate(context, update);
+
+			} catch (DateTimeParseException e){
+				context.sendMessage("Ungültiges Datum!");
+				this.init(context, null);
+			}
+
+
+		}
+	},
+	SELECT_CANTEEN("Kantinen", List.of(), true){
+		@Override
+		public void init(ChatContext context, SendMessage passthroughMessage) {
+			context.setCurrentAction(this);
 
 			SendMessage message = new SendMessage();
 			message.setText("Wähle eine Mensa!");
@@ -35,7 +84,6 @@ public enum BotAction {
 			}
 
 			Message msg = update.getMessage();
-
 			Optional<Canteen> canteenOpt = Canteen.getByDisplayName(msg.getText());
 			if (canteenOpt.isEmpty()) {
 				context.sendMessage("Unbekannte Mensa!");
@@ -43,16 +91,53 @@ public enum BotAction {
 				return;
 			}
 
-			SendMessage sendMessage = new SendMessage();
-			sendMessage.enableMarkdownV2(true);
-
-			sendMessage.setText("--------    *Gerichte*    --------\n\n" + context.getBot().getMealsText(canteenOpt.get(), LocalDate.now()));
-
-			BotAction.MAIN_MENU.init(context, sendMessage);
+			context.setSelectedCanteen(canteenOpt.get());
+			context.getReturnToAction().onUpdate(context, update);
 		}
 	},
 
-	RATING("Kritik", List.of("bewertung", "kritik", "rating")) {
+	LIST_MEALS("Gerichte", List.of("gerichte", "essen"), false) {
+		@Override
+		public void init(ChatContext context, SendMessage passthroughMessage) {
+			context.setCurrentAction(this);
+			context.setReturnToAction(this); // Needed to make the internal action return to this action
+
+			// Select date, selecting the canteen is done in onUpdate
+			SELECT_DATE.init(context, null);
+		}
+
+		@Override
+		public void onUpdate(ChatContext context, Update update) {
+			if(!update.hasMessage()){
+				return;
+			}
+
+			// Check if we returned from an internal state (should always be true)
+			if(context.getReturnToAction() == this){
+
+				// Check if we already know about the canteen (the date should always be set at this point)
+				if(context.getDefaultCanteen() != null || context.getSelectedCanteen() != null){
+					Canteen selectedCanteen = context.getDefaultCanteen() != null ? context.getDefaultCanteen() : context.getSelectedCanteen();
+
+					SendMessage message = new SendMessage();
+					message.enableMarkdownV2(true);
+					message.setText("--------    *Gerichte*    --------\n\n" + context.getBot().getMealsText(selectedCanteen, context.getSelectedDate()));
+
+					// Reset everything prior to exiting the state
+					context.resetTemporaryInformation();
+
+					MAIN_MENU.init(context, message);
+				} else {
+
+					// No canteen chosen so far
+					SELECT_CANTEEN.init(context, null);
+				}
+
+			}
+		}
+	},
+
+	RATING("Kritik", List.of("bewertung", "kritik", "rating"), false) {
 		@Override
 		public void init(ChatContext context, SendMessage passthroughMessage) {
 			context.setCurrentAction(this);
@@ -70,10 +155,13 @@ public enum BotAction {
 		}
 	},
 
-	MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü")) {
+	MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü"), false) {
 		@Override
 		public void init(ChatContext context, SendMessage passthroughMessage) {
 			context.setCurrentAction(this);
+
+			// Reset context in case the user quit while in an internal state
+			context.resetTemporaryInformation();
 
 			SendMessage message = passthroughMessage;
 			if (message == null) {
@@ -82,7 +170,9 @@ public enum BotAction {
 			}
 
 			message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
-					Arrays.stream(BotAction.values()).map(BotAction::getDisplayName).toList()));
+					Arrays.stream(BotAction.values())
+							.filter(a -> !a.isInternal())
+							.map(BotAction::getDisplayName).toList()));
 
 			context.sendMessage(message);
 		}
@@ -99,10 +189,12 @@ public enum BotAction {
 
 	private final String displayName;
 	private final List<String> cmds;
+	private final boolean isInternal;
 
-	BotAction(String displayName, List<String> cmds) {
+	BotAction(String displayName, List<String> cmds, boolean isInternal) {
 		this.displayName = displayName;
 		this.cmds = cmds;
+		this.isInternal = isInternal;
 	}
 
 	public String getDisplayName() {
@@ -111,6 +203,10 @@ public enum BotAction {
 
 	public List<String> getCmds() {
 		return cmds;
+	}
+
+	public boolean isInternal() {
+		return isInternal;
 	}
 
 	private static ReplyKeyboardMarkup createKeyboardMarkup(int elementsInRow, String... elements){
