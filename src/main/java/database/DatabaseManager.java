@@ -74,8 +74,9 @@ public class DatabaseManager {
     }
 
     protected void _setupTables(){
+        Statement stmt = null;
         try {
-            Statement stmt = connection.createStatement();
+            stmt = connection.createStatement();
             stmt.addBatch("create table if not exists meals2 (" +
                     "meal_id   int auto_increment primary key, " +
                     "meal_name varchar(100) not null" +
@@ -97,9 +98,16 @@ public class DatabaseManager {
 
             stmt.executeBatch();
             connection.commit();
-            stmt.close();
         } catch (SQLException e){
             e.printStackTrace();
+        } finally {
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
     }
