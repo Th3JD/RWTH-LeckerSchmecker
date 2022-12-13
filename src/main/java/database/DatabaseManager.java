@@ -105,7 +105,7 @@ public class DatabaseManager {
                 try {
                     stmt.close();
                 } catch (SQLException e) {
-                    throw new RuntimeException(e);
+                    e.printStackTrace();
                 }
             }
         }

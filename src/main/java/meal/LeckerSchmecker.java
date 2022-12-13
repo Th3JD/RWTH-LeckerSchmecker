@@ -2,6 +2,10 @@ package meal;
 
 import config.Config;
 import database.DatabaseManager;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.checkerframework.common.returnsreceiver.qual.This;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -33,6 +37,8 @@ public class LeckerSchmecker {
 		logger.addHandler(handler);
 	}
 
+	private static final Object mon = Void.TYPE;
+
 	public static void main(String[] args) {
 		Config.readAllowedUsers();
 		logger.setLevel(Level.INFO);
@@ -49,14 +55,26 @@ public class LeckerSchmecker {
 
 		updateOffers();
 
-		/* This is supposed to be executed before the program terminates. However, the program now doesn't terminate at all.
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			LeckerSchmecker.getLogger().info("LeckersSchmecker is shutting down. Cleaning up...");
-			DatabaseManager.disconnect();
-			LeckerSchmecker.getLogger().info("Bye.");
-			System.exit(0);
-		}));
-		 */
+		Runtime.getRuntime().addShutdownHook(new Thread(LeckerSchmecker::exit));
+
+		// wait for notify on "mon"
+		synchronized (mon) {
+			try {
+				mon.wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} finally {
+				exit();
+			}
+		}
+
+		// only reachable by notify on "mon" (currently not used)
+		exit();
+	}
+
+	public static void exit() {
+		System.out.println("LeckersSchmecker is shutting down. Cleaning up...");
+		DatabaseManager.disconnect();
 	}
 
 	public static void updateOffers() {
