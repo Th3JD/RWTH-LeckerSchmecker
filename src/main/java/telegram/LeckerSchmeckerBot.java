@@ -1,6 +1,7 @@
 package telegram;
 
 import config.Config;
+import database.DatabaseManager;
 import meal.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -53,7 +54,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 		// Create ChatContext if it does not exist
 		ChatContext context;
 		if(!chatContextById.containsKey(chatId)){
-			context = new ChatContext(this, chatId);
+			context = DatabaseManager.loadUser(this, chatId);
 			chatContextById.put(chatId, context);
 		} else {
 			context = chatContextById.get(chatId);

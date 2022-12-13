@@ -5,14 +5,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 public class Canteen {
 
@@ -32,6 +30,10 @@ public class Canteen {
 
     public static Optional<Canteen> getByDisplayName(String displayName) {
         return TYPES.stream().filter(c -> c.getDisplayName().equalsIgnoreCase(displayName)).findFirst();
+    }
+
+    public static Optional<Canteen> getByURLName(String urlName){
+        return TYPES.stream().filter(c -> c.getUrlName().equalsIgnoreCase(urlName)).findFirst();
     }
 
     private final String displayName;

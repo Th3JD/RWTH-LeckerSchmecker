@@ -1,6 +1,7 @@
 package meal;
 
 import config.Config;
+import database.DatabaseManager;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -36,6 +37,9 @@ public class LeckerSchmecker {
 		Config.readAllowedUsers();
 		logger.setLevel(Level.INFO);
 
+		DatabaseManager.connect();
+		DatabaseManager.setupTables();
+
 		try {
 			TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
 			botsApi.registerBot(new LeckerSchmeckerBot());
@@ -44,6 +48,15 @@ public class LeckerSchmecker {
 		}
 
 		updateOffers();
+
+		/* This is supposed to be executed before the program terminates. However, the program now doesn't terminate at all.
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			LeckerSchmecker.getLogger().info("LeckersSchmecker is shutting down. Cleaning up...");
+			DatabaseManager.disconnect();
+			LeckerSchmecker.getLogger().info("Bye.");
+			System.exit(0);
+		}));
+		 */
 	}
 
 	public static void updateOffers() {
