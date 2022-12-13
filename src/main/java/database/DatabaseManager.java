@@ -97,7 +97,6 @@ public class DatabaseManager {
             //TODO: Add table containing information about the user, date, meal and rating
 
             stmt.executeBatch();
-            connection.commit();
         } catch (SQLException e){
             e.printStackTrace();
         } finally {
