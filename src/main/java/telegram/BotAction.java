@@ -153,7 +153,8 @@ public enum BotAction {
 
 					SendMessage message = new SendMessage();
 					message.enableMarkdownV2(true);
-					message.setText("--------    *Gerichte*    --------\n\n" + context.getBot().getMealsText(selectedCanteen, context.getSelectedDate()));
+					message.setText("--------    *Gerichte (" + selectedCanteen.getDisplayName() + ")*    --------\n\n"
+							+ context.getBot().getMealsText(selectedCanteen, context.getSelectedDate()));
 
 					// Reset everything prior to exiting the state
 					context.resetTemporaryInformation();
