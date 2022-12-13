@@ -20,7 +20,7 @@ public class DatabaseManager {
     private final TimeBasedGenerator generator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
 
     // STATEMENTS
-    private PreparedStatement LOAD_USER, ADD_USER;
+    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN;
     /////////////
 
 
@@ -49,6 +49,10 @@ public class DatabaseManager {
     public static ChatContext loadUser(LeckerSchmeckerBot bot, long chatID){
         return getInstance()._loadUser(bot, chatID);
     }
+
+    public static void setDefaultCanteen(UUID userID, Canteen canteen){
+        getInstance()._setDefaultCanteen(userID, canteen);
+    }
     // ///////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -67,6 +71,7 @@ public class DatabaseManager {
         try {
             LOAD_USER.close();
             ADD_USER.close();
+            SET_CANTEEN.close();
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -115,6 +120,7 @@ public class DatabaseManager {
         try {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
             ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?)");
+            SET_CANTEEN = connection.prepareStatement("UPDATE users SET default_canteen=? WHERE userID like ?");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -156,6 +162,20 @@ public class DatabaseManager {
         }
         return null;
     }
+
+    protected void _setDefaultCanteen(UUID userID, Canteen canteen){
+        try {
+            SET_CANTEEN.clearParameters();
+            SET_CANTEEN.setString(1, canteen != null ? canteen.getUrlName() : null);
+            SET_CANTEEN.setString(2, userID.toString());
+            SET_CANTEEN.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
 
     // ///////////////////////////////////////////////////////////////////////////////////////
 

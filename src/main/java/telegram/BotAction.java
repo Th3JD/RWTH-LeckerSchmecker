@@ -18,7 +18,7 @@ public enum BotAction {
 	SELECT_DATE("Datum", List.of(), true){
 
 		private final int LOOKAHEAD_DAYS = 3;
-		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
+		private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
 		@Override
 		public void init(ChatContext context, SendMessage passthroughMessage) {
 			context.setCurrentAction(this);
@@ -96,6 +96,38 @@ public enum BotAction {
 		}
 	},
 
+	MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü"), false) {
+		@Override
+		public void init(ChatContext context, SendMessage passthroughMessage) {
+			context.setCurrentAction(this);
+
+			// Reset context in case the user quit while in an internal state
+			context.resetTemporaryInformation();
+
+			SendMessage message = passthroughMessage;
+			if (message == null) {
+				message = new SendMessage();
+				message.setText("Wähle eine Aktion!");
+			}
+
+			message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
+					Arrays.stream(BotAction.values())
+							.filter(a -> !a.isInternal())
+							.map(BotAction::getDisplayName).toList()));
+
+			context.sendMessage(message);
+		}
+
+		@Override
+		public void onUpdate(ChatContext context, Update update) {
+			Message msg = update.getMessage();
+			Arrays.stream(BotAction.values())
+					.filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].toLowerCase()))
+					.findFirst()
+					.ifPresent(action -> action.init(context, null));
+		}
+	},
+
 	LIST_MEALS("Gerichte", List.of("gerichte", "essen"), false) {
 		@Override
 		public void init(ChatContext context, SendMessage passthroughMessage) {
@@ -155,37 +187,80 @@ public enum BotAction {
 		}
 	},
 
-	MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü"), false) {
+	SELECT_DEFAULTS("Standardwerte", List.of("standardwerte", "defaults"), false){
 		@Override
 		public void init(ChatContext context, SendMessage passthroughMessage) {
 			context.setCurrentAction(this);
 
-			// Reset context in case the user quit while in an internal state
-			context.resetTemporaryInformation();
+			SendMessage message = new SendMessage();
+			message.setText("Soll ein Standardwert gesetzt oder gelöscht werden?");
 
-			SendMessage message = passthroughMessage;
-			if (message == null) {
-				message = new SendMessage();
-				message.setText("Wähle eine Aktion!");
-			}
-
-			message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
-					Arrays.stream(BotAction.values())
-							.filter(a -> !a.isInternal())
-							.map(BotAction::getDisplayName).toList()));
+			message.setReplyMarkup(BotAction.createKeyboardMarkup(1, "Setzen", "Löschen"));
 
 			context.sendMessage(message);
 		}
 
 		@Override
 		public void onUpdate(ChatContext context, Update update) {
-			Message msg = update.getMessage();
-			Arrays.stream(BotAction.values())
-					.filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].toLowerCase()))
-					.findFirst()
-					.ifPresent(action -> action.init(context, null));
+			if(!update.hasMessage()){
+				return;
+			}
+
+			// Check if we returned from an internal state
+			if(context.getReturnToAction() == this){
+
+				SendMessage message = new SendMessage();
+
+				// Check if the user selected a canteen
+				if(context.getSelectedCanteen() != null){
+					context.setDefaultCanteen(context.getSelectedCanteen());
+					message.setText(context.getSelectedCanteen().getDisplayName() + " \u2705");
+				}
+
+				// Reset everything prior to exiting the state
+				context.resetTemporaryInformation();
+				MAIN_MENU.init(context, message);
+				return;
+			}
+
+			String text = update.getMessage().getText();
+			switch (text){
+				case "Setzen", "Löschen" -> {
+					boolean shouldBeSet = text.equals("Setzen");
+					context.setDefaultValueSet(shouldBeSet);
+
+					SendMessage message = new SendMessage();
+					message.setText("Welcher Standardwert soll " + (shouldBeSet ? "gesetzt" : "gelöscht") + " werden?");
+					message.setReplyMarkup(BotAction.createKeyboardMarkup(1, "Mensa"));
+					context.sendMessage(message);
+				}
+				case "Mensa" -> {
+
+					// Check if the default canteen needs to be set or unset
+					if(context.getDefaultValueSet()){
+						// Canteen should be set
+						context.setReturnToAction(this); // Needed to make the internal action return to this action
+
+						SELECT_CANTEEN.init(context, null);
+					} else {
+						// Canteen should be unset
+						context.setDefaultCanteen(null);
+
+						SendMessage message = new SendMessage();
+						message.setText("Deine Standardmensa wurde zurückgesetzt!");
+						MAIN_MENU.init(context, message);
+					}
+					return;
+				}
+				default -> {
+					context.sendMessage("Ungültige Option. Wähle eine Option oder kehre mit /start zum Hauptmenü zurück.");
+					this.init(context, null);
+				}
+			}
+
 		}
 	};
+
 
 	private final String displayName;
 	private final List<String> cmds;
