@@ -4,10 +4,12 @@ import meal.Canteen;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public class ChatContext {
 
     private final LeckerSchmeckerBot bot;
+    private final UUID userID;
     private final long chatID;
     private BotAction returnToAction; // Action to return to, once the internal actions are done
     private BotAction currentAction;
@@ -15,21 +17,31 @@ public class ChatContext {
     private Canteen defaultCanteen;
     private LocalDate selectedDate;
 
-    public ChatContext(LeckerSchmeckerBot bot, long chatID){
+    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen){
         this.bot = bot;
+        this.userID = userID;
         this.chatID = chatID;
+        this.defaultCanteen = defaultCanteen;
+
         this.returnToAction = null;
         this.currentAction = null;
+        this.selectedDate = null;
         this.selectedCanteen = null;
-        this.defaultCanteen = null;
-
-        //TODO: Load default values like language and defaultCanteen from database
     }
+
 
     public void resetTemporaryInformation(){
         this.returnToAction = null;
         this.selectedCanteen = null;
         this.selectedDate = null;
+    }
+
+    public UUID getUserID() {
+        return userID;
+    }
+
+    public long getChatID() {
+        return chatID;
     }
 
     public LocalDate getSelectedDate() {
