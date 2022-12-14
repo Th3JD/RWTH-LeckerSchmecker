@@ -11,11 +11,13 @@ public class MainMeal extends Meal {
 
 	private final Type type;
 	private final List<Nutrition> nutritions;
+	private Integer id;
 
-	public MainMeal(String name, String displayName, Type type, List<Nutrition> nutritions) {
+	public MainMeal(String name, String displayName, Type type, List<Nutrition> nutritions, Integer id) {
 		super(name, displayName);
 		this.type = type;
 		this.nutritions = nutritions;
+		this.id = id;
 	}
 
 	public static MainMeal parseMeal(DailyOffer offer, Element element) {
@@ -29,7 +31,9 @@ public class MainMeal extends Meal {
 			return null;
 		}
 
-		String name = displayName.toLowerCase().replace(' ', '_');
+		String name = compress(displayName);
+
+		// TODO: Read mealID from database
 
 		LinkedList<Nutrition> nutritions = Nutrition.searchNutrientsFor(element);
 
@@ -38,7 +42,7 @@ public class MainMeal extends Meal {
 			nutritions.addFirst(Nutrition.SWEET);
 		}
 
-		return new MainMeal(name, displayName, type, nutritions);
+		return new MainMeal(name, displayName, type, nutritions, null);
 	}
 
 	public Type getType() {
@@ -57,6 +61,28 @@ public class MainMeal extends Meal {
 	public List<Nutrition> getNutritions() {
 		return nutritions;
 	}
+
+	public Integer getId() {
+		return id;
+	}
+
+	private static String compress(String displayName){
+		String res = displayName;
+		res = res.replace("|", " ")
+				.replace("-", " ")
+				.replace(",", " ")
+				.replace(".", " ")
+				.replace("ß", "ss")
+				.replace(" mit ", " ")
+				.replace(" und ", " ")
+				.replace(" oder ", " ")
+				.toLowerCase()
+				.replace("   ", " ")
+				.replace("  ", " ")
+				.replace(" ", "_");
+		return res;
+	}
+
 
 	@Override
 	public String toString() {

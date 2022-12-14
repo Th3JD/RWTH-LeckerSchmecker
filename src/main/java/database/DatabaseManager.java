@@ -87,6 +87,7 @@ public class DatabaseManager {
                     "meal_name varchar(100) not null" +
                     ");");
 
+            // Users
             stmt.addBatch("create table if not exists users\n" +
                     "(\n" +
                     "    userID          UUID                                                                                                                        not null,\n" +
@@ -99,7 +100,48 @@ public class DatabaseManager {
             stmt.addBatch("create unique index if not exists users_chatID_index\n" +
                     "    on users (chatID desc);");
 
-            //TODO: Add table containing information about the user, date, meal and rating
+            // Meals
+            stmt.addBatch("create table if not exists meal_name_alias\n" +
+                    "(\n" +
+                    "    mealID int auto_increment,\n" +
+                    "    alias  VARCHAR(100) not null,\n" +
+                    "    constraint meal_name_alias_pk\n" +
+                    "        primary key (mealID, alias)\n" +
+                    ");");
+
+            stmt.addBatch("create unique index if not exists meal_name_alias_alias_uindex\n" +
+                    "    on meal_name_alias (alias);");
+
+            stmt.addBatch("create table if not exists meal_shortname_alias\n" +
+                    "(\n" +
+                    "    mealID     int          null,\n" +
+                    "    shortAlias VARCHAR(100) not null,\n" +
+                    "    constraint meal_shortname_alias_pk\n" +
+                    "        primary key (mealID, shortAlias),\n" +
+                    "    constraint meal_shortname_alias_meal_name_alias_mealID_fk\n" +
+                    "        foreign key (mealID) references meal_name_alias (mealID)\n" +
+                    ");");
+
+            stmt.addBatch("create index if not exists meal_shortname_alias_shortAlias_index\n" +
+                    "    on meal_shortname_alias (shortAlias);");
+
+            // Rating
+            stmt.addBatch("create table if not exists ratings\n" +
+                    "(\n" +
+                    "    userID UUID    not null,\n" +
+                    "    mealID int     not null,\n" +
+                    "    date   DATE    not null,\n" +
+                    "    rating TINYINT not null,\n" +
+                    "    constraint ratings_pk\n" +
+                    "        primary key (userID, mealID, date),\n" +
+                    "    constraint ratings_meal_name_alias_mealID_fk\n" +
+                    "        foreign key (mealID) references meal_name_alias (mealID),\n" +
+                    "    constraint ratings_users_userID_fk\n" +
+                    "        foreign key (userID) references users (userID)\n" +
+                    ");\n");
+
+            stmt.addBatch("create index if not exists ratings_mealID_index\n" +
+                    "    on leckerschmecker.ratings (mealID desc);");
 
             stmt.executeBatch();
         } catch (SQLException e){
