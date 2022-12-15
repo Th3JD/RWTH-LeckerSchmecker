@@ -17,7 +17,7 @@ public class DatabaseManager {
     protected static DatabaseManager instance;
 
     private Connection connection;
-    private final TimeBasedGenerator generator = Generators.timeBasedGenerator(EthernetAddress.fromInterface());
+    private final TimeBasedGenerator generator = Generators.timeBasedGenerator(new EthernetAddress("00:00:00:00:00:00"));
 
     // STATEMENTS
     private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN;
