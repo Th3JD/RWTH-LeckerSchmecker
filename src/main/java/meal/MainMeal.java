@@ -10,12 +10,14 @@ import java.util.stream.Collectors;
 public class MainMeal extends Meal {
 
 	private final Type type;
+	private final float price;
 	private final List<Nutrition> nutritions;
 	private Integer id;
 
-	public MainMeal(String name, String displayName, Type type, List<Nutrition> nutritions, Integer id) {
+	public MainMeal(String name, String displayName, Type type, float price, List<Nutrition> nutritions, Integer id) {
 		super(name, displayName);
 		this.type = type;
+		this.price = price;
 		this.nutritions = nutritions;
 		this.id = id;
 	}
@@ -31,6 +33,9 @@ public class MainMeal extends Meal {
 			return null;
 		}
 
+		String priceStr = element.getElementsByClass("menue-price").get(0).ownText();
+		float price = Float.parseFloat(priceStr.split(" ")[0].replace(',', '.'));
+
 		String name = compress(displayName);
 
 		// TODO: Read mealID from database
@@ -42,11 +47,15 @@ public class MainMeal extends Meal {
 			nutritions.addFirst(Nutrition.SWEET);
 		}
 
-		return new MainMeal(name, displayName, type, nutritions, null);
+		return new MainMeal(name, displayName, type, price, nutritions, null);
 	}
 
 	public Type getType() {
 		return type;
+	}
+
+	public float getPrice() {
+		return price;
 	}
 
 	public String text() {
@@ -83,13 +92,13 @@ public class MainMeal extends Meal {
 		return res;
 	}
 
-
 	@Override
 	public String toString() {
-		return "Meal{" +
-				"name='" + name + '\'' +
+		return "MainMeal{" +
+				"type=" + type +
+				", price=" + price +
+				", name='" + name + '\'' +
 				", displayName='" + displayName + '\'' +
-				", type=" + type +
 				'}';
 	}
 
