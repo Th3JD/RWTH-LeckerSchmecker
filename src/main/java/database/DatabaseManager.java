@@ -82,10 +82,6 @@ public class DatabaseManager {
         Statement stmt = null;
         try {
             stmt = connection.createStatement();
-            stmt.addBatch("create table if not exists meals2 (" +
-                    "meal_id   int auto_increment primary key, " +
-                    "meal_name varchar(100) not null" +
-                    ");");
 
             // Users
             stmt.addBatch("create table if not exists users\n" +
