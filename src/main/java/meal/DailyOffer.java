@@ -1,5 +1,6 @@
 package meal;
 
+import config.Config;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -37,8 +38,18 @@ public class DailyOffer {
             headLineElements = element.getElementsByClass("default-headline");
         }
         String fullDate = headLineElements.get(0).text();
-
         LocalDate date = LocalDate.parse(fullDate, formatter);
+
+        // Check if the date is already in the past
+        if(date.isBefore(LocalDate.now())){
+            return null;
+        }
+
+        // Check if the date is too far in the future
+        if(!date.isBefore(LocalDate.now().plusDays(Config.getInt("meals.daysToFetch")))){
+            // Meals this far in the future are prone to contain typos and are oftentimes subject to change
+            return null;
+        }
 
         DailyOffer res = new DailyOffer(date);
 

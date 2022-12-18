@@ -18,7 +18,7 @@ public enum InternalAction implements BotAction{
 
     SELECT_DATE{
 
-        private final int LOOKAHEAD_DAYS = Config.getInt("meals.daysToPresent");
+        private final int LOOKAHEAD_DAYS = Config.getInt("botaction.select_date.daysToPresent");
         private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {

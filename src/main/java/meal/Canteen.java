@@ -65,7 +65,8 @@ public class Canteen {
         Elements elements = doc.getElementsByClass("preventBreak");
         for(Element e : elements) {
             DailyOffer offer = DailyOffer.parseOffer(e);
-            dailyOffers.put(offer.getDate(), offer);
+            if(offer != null)
+                dailyOffers.put(offer.getDate(), offer);
         }
         LeckerSchmecker.getLogger().info("Fetched " + this.dailyOffers.values().stream()
                 .mapToInt(d -> d.getMainMeals().size()).sum() + " meals for canteen '" + this.getDisplayName() + "'");
