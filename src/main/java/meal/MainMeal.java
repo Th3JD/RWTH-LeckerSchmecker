@@ -1,11 +1,13 @@
 package meal;
 
-import org.jsoup.nodes.Element;
-
+import database.DatabaseManager;
 import java.time.DayOfWeek;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+import org.jsoup.nodes.Element;
+import telegram.LeckerSchmeckerBot;
 
 public class MainMeal extends Meal {
 
@@ -24,6 +26,7 @@ public class MainMeal extends Meal {
 
 	public static MainMeal parseMeal(DailyOffer offer, Element element) {
 
+		// parse from html
 		String displayName = element.getElementsByClass("expand-nutr").get(0).ownText();
 		String category = element.getElementsByClass("menue-category").get(0).ownText();
 		Type type = Type.getMealTypeFromCategory(category, element);
@@ -38,8 +41,6 @@ public class MainMeal extends Meal {
 
 		String name = compress(displayName);
 
-		// TODO: Read mealID from database
-
 		LinkedList<Nutrition> nutritions = Nutrition.searchNutrientsFor(element);
 
 		if ((type.equals(Type.TELLERGERICHT) || type.equals(Type.TELLERGERICHT_VEGETARISCH))
@@ -47,7 +48,35 @@ public class MainMeal extends Meal {
 			nutritions.addFirst(Nutrition.SWEET);
 		}
 
-		return new MainMeal(name, displayName, type, price, nutritions, null);
+		MainMeal meal = new MainMeal(name, displayName, type, price, nutritions, null);
+
+		// database
+		Integer id = DatabaseManager.loadMealID(meal);
+
+		// meal already exists
+		if (id != null) {
+			meal.id = id;
+			return meal;
+		}
+
+		Set<Integer> similarIDs = DatabaseManager.loadMealIDsByShortAlias(meal);
+
+		// if no short name matches,then insert meal into database, else ask admins
+		if (similarIDs.isEmpty()) {
+			meal.id = DatabaseManager.addMeal(meal);
+		} else {
+			LeckerSchmecker.getLogger()
+					.info("Found similar meal for '" + meal.getName() + "', asking admins");
+			LeckerSchmeckerBot.getInstance().askAdmins(meal, similarIDs);
+		}
+		return meal;
+	}
+
+	public String getShortAlias() {
+		if (displayName.contains("|")) {
+			return compress(displayName.split("\\|")[0]);
+		}
+		return name;
 	}
 
 	public Type getType() {
@@ -75,19 +104,25 @@ public class MainMeal extends Meal {
 		return id;
 	}
 
-	private static String compress(String displayName){
+	public void setId(Integer id) {
+		this.id = id;
+	}
+
+	private static String compress(String displayName) {
 		String res = displayName;
 		res = res.replace("|", " ")
 				.replace("-", " ")
+				.replace(":", " ")
 				.replace(",", " ")
 				.replace(".", " ")
+				.toLowerCase()
 				.replace("ß", "ss")
 				.replace(" mit ", " ")
 				.replace(" und ", " ")
 				.replace(" oder ", " ")
-				.toLowerCase()
 				.replace("   ", " ")
 				.replace("  ", " ")
+				.trim()
 				.replace(" ", "_");
 		return res;
 	}

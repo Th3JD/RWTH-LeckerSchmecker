@@ -1,7 +1,5 @@
 package config;
 
-import meal.LeckerSchmecker;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -17,10 +15,11 @@ public class Config {
 
     private Properties properties;
     private final String fileName = "leckerschmecker.cfg";
-    private Set<Long> allowedUsers = new HashSet<>();
+    private final Set<Long> allowedUsers = new HashSet<>();
+    private final Set<Long> admins = new HashSet<>();
 
-    public static Config getInstance(){
-        if(instance == null){
+    public static Config getInstance() {
+        if (instance == null) {
             instance = new Config();
             instance._init();
         }
@@ -37,21 +36,30 @@ public class Config {
         return getInstance()._getInt(property);
     }
 
-    public static void readAllowedUsers(){
+    public static void readAllowedUsers() {
         getInstance()._readAllowedUsers();
     }
 
-    public static boolean isAllowedUser(long chatID){
+    public static boolean isAllowedUser(long chatID) {
         return getInstance()._isAllowedUser(chatID);
     }
+
+    public static boolean isAdmin(long chatID) {
+        return getInstance()._isAdmin(chatID);
+    }
+
+    public static long getAdminChatID() {
+        return getInstance()._getAdminChatID();
+    }
+
     // ///////////////////////////////////////////////////////////////////////////////////////
 
     // protected implementations /////////////////////////////////////////////////////////////
-    protected String _getString(String property){
+    protected String _getString(String property) {
         return properties.getProperty(property);
     }
 
-    protected int _getInt(String property){
+    protected int _getInt(String property) {
         return Integer.parseInt(properties.getProperty(property));
     }
 
@@ -75,20 +83,26 @@ public class Config {
         try {
             fis = new FileInputStream("users.txt");
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
         Scanner scanner = new Scanner(fis);
 
-        while(scanner.hasNextLine()){
+        while (scanner.hasNextLine()) {
             allowedUsers.add(Long.valueOf(scanner.nextLine()));
         }
-
     }
 
-    protected boolean _isAllowedUser(long chatID){
+    protected boolean _isAllowedUser(long chatID) {
         return allowedUsers.contains(chatID);
     }
 
+    protected boolean _isAdmin(long chatID) {
+        return Long.parseLong(properties.getProperty("telegram.adminChatID")) == chatID;
+    }
+
+    protected long _getAdminChatID() {
+        return Long.parseLong(properties.getProperty("telegram.adminChatID"));
+    }
     // ///////////////////////////////////////////////////////////////////////////////////////
 
 }

@@ -1,12 +1,11 @@
 package telegram;
 
+import java.util.Arrays;
+import java.util.List;
 import meal.Canteen;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-
-import java.util.Arrays;
-import java.util.List;
 
 public enum CallableAction implements BotAction{
 
@@ -16,7 +15,7 @@ public enum CallableAction implements BotAction{
             context.setCurrentAction(this);
 
             // Reset context in case the user quit while in an internal state
-            context.resetTemporaryInformation();
+            context.resetPassthroughInformation();
 
             SendMessage message = passthroughMessage;
             if (message == null) {
@@ -70,7 +69,7 @@ public enum CallableAction implements BotAction{
                             + context.getBot().getMealsText(selectedCanteen, context.getSelectedDate()));
 
                     // Reset everything prior to exiting the state
-                    context.resetTemporaryInformation();
+                    context.resetPassthroughInformation();
 
                     MAIN_MENU.init(context, message);
                 } else {
@@ -132,7 +131,7 @@ public enum CallableAction implements BotAction{
                 }
 
                 // Reset everything prior to exiting the state
-                context.resetTemporaryInformation();
+                context.resetPassthroughInformation();
                 MAIN_MENU.init(context, message);
                 return;
             }

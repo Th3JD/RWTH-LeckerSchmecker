@@ -4,28 +4,39 @@ import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import config.Config;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import meal.Canteen;
 import meal.LeckerSchmecker;
+import meal.MainMeal;
 import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
-
-import java.sql.*;
-import java.util.UUID;
 
 public class DatabaseManager {
 
     protected static DatabaseManager instance;
 
     private Connection connection;
-    private final TimeBasedGenerator generator = Generators.timeBasedGenerator(new EthernetAddress("00:00:00:00:00:00"));
+    private final TimeBasedGenerator generator = Generators.timeBasedGenerator(
+            new EthernetAddress("00:00:00:00:00:00"));
 
     // STATEMENTS
-    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN;
+    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
+            ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS;
     /////////////
 
 
-    private static DatabaseManager getInstance(){
-        if(instance == null){
+    private static DatabaseManager getInstance() {
+        if (instance == null) {
             instance = new DatabaseManager();
         }
         return instance;
@@ -46,18 +57,43 @@ public class DatabaseManager {
         getInstance()._setupTables();
     }
 
-    public static ChatContext loadUser(LeckerSchmeckerBot bot, long chatID){
+    public static ChatContext loadUser(LeckerSchmeckerBot bot, long chatID) {
         return getInstance()._loadUser(bot, chatID);
     }
 
-    public static void setDefaultCanteen(UUID userID, Canteen canteen){
+    public static void setDefaultCanteen(UUID userID, Canteen canteen) {
         getInstance()._setDefaultCanteen(userID, canteen);
     }
+
+    public static Integer loadMealID(MainMeal meal) {
+        return getInstance()._loadMealID(meal);
+    }
+
+    public static Integer loadMealID(String mealName) {
+        return getInstance()._loadMealID(mealName);
+    }
+
+    public static Set<Integer> loadMealIDsByShortAlias(MainMeal meal) {
+        return getInstance()._loadMealIDsByShortAlias(meal);
+    }
+
+    public static int addMeal(MainMeal meal) {
+        return getInstance()._addMeal(meal);
+    }
+
+    public static List<String> getMealAliases(int mealID) {
+        return getInstance()._getMealAliases(mealID);
+    }
+
+    public static void addAliasToMeal(int mealID, String newAlias) {
+        getInstance()._addAliasToMeal(mealID, newAlias);
+    }
+
     // ///////////////////////////////////////////////////////////////////////////////////////
 
 
     // protected implementations /////////////////////////////////////////////////////////////
-    protected void _connect(){
+    protected void _connect() {
         try {
             connection = DriverManager.getConnection(Config.getString("database.url"),
                     Config.getString("database.user"),
@@ -72,6 +108,12 @@ public class DatabaseManager {
             LOAD_USER.close();
             ADD_USER.close();
             SET_CANTEEN.close();
+            LOAD_MEAL_BY_ALIAS.close();
+            LOAD_MEALS_BY_SHORT_ALIAS.close();
+            ADD_NEW_MEAL_ALIAS.close();
+            ADD_NEW_MEAL_SHORT_ALIAS.close();
+            LOAD_MEALNAME_BY_ID.close();
+            ADD_MEAL_ALIAS.close();
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -158,7 +200,21 @@ public class DatabaseManager {
         try {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
             ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?)");
-            SET_CANTEEN = connection.prepareStatement("UPDATE users SET default_canteen=? WHERE userID like ?");
+            SET_CANTEEN = connection.prepareStatement(
+                    "UPDATE users SET default_canteen=? WHERE userID like ?");
+            LOAD_MEAL_BY_ALIAS = connection.prepareStatement(
+                    "SELECT mealID FROM meal_name_alias WHERE alias LIKE ?");
+            LOAD_MEALS_BY_SHORT_ALIAS = connection.prepareStatement(
+                    "SELECT mealID FROM meal_shortname_alias WHERE shortAlias LIKE ?");
+            ADD_NEW_MEAL_ALIAS = connection.prepareStatement(
+                    "INSERT INTO meal_name_alias (alias) VALUES (?)",
+                    Statement.RETURN_GENERATED_KEYS);
+            ADD_NEW_MEAL_SHORT_ALIAS = connection.prepareStatement(
+                    "INSERT INTO meal_shortname_alias VALUES (?,?)");
+            LOAD_MEALNAME_BY_ID = connection.prepareStatement(
+                    "SELECT alias FROM meal_name_alias WHERE mealID=?");
+            ADD_MEAL_ALIAS = connection.prepareStatement(
+                    "INSERT INTO meal_name_alias VALUES (?, ?)");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -213,7 +269,97 @@ public class DatabaseManager {
 
     }
 
+    protected Integer _loadMealID(String mealName) {
+        try {
+            LOAD_MEAL_BY_ALIAS.clearParameters();
+            LOAD_MEAL_BY_ALIAS.setString(1, mealName);
+            ResultSet rs = LOAD_MEAL_BY_ALIAS.executeQuery();
 
+            if (!rs.next()) {
+                return null;
+            } else {
+                return rs.getInt("mealID");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    protected Integer _loadMealID(MainMeal meal) {
+        return this._loadMealID(meal.getName());
+    }
+
+    protected Set<Integer> _loadMealIDsByShortAlias(MainMeal meal) {
+        Set<Integer> ids = new HashSet<>();
+
+        try {
+            LOAD_MEALS_BY_SHORT_ALIAS.clearParameters();
+            LOAD_MEALS_BY_SHORT_ALIAS.setString(1, meal.getShortAlias());
+            ResultSet rs = LOAD_MEALS_BY_SHORT_ALIAS.executeQuery();
+
+            while (rs.next()) {
+                ids.add(rs.getInt("mealID"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return ids;
+    }
+
+    protected int _addMeal(MainMeal meal) {
+        int newID = -1;
+
+        try {
+            ADD_NEW_MEAL_ALIAS.clearParameters();
+            ADD_NEW_MEAL_ALIAS.setString(1, meal.getName());
+            ADD_NEW_MEAL_ALIAS.executeUpdate();
+            ResultSet rs = ADD_NEW_MEAL_ALIAS.getGeneratedKeys();
+
+            rs.next();
+            newID = rs.getInt("insert_id");
+
+            ADD_NEW_MEAL_SHORT_ALIAS.clearParameters();
+            ADD_NEW_MEAL_SHORT_ALIAS.setInt(1, newID);
+            ADD_NEW_MEAL_SHORT_ALIAS.setString(2, meal.getShortAlias());
+            ADD_NEW_MEAL_SHORT_ALIAS.executeUpdate();
+            return newID;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return newID;
+    }
+
+    protected List<String> _getMealAliases(int mealID) {
+        List<String> res = new LinkedList<>();
+        try {
+            LOAD_MEALNAME_BY_ID.clearParameters();
+            LOAD_MEALNAME_BY_ID.setInt(1, mealID);
+            ResultSet rs = LOAD_MEALNAME_BY_ID.executeQuery();
+
+            while (rs.next()) {
+                res.add(rs.getString("alias"));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    protected void _addAliasToMeal(int mealID, String newAlias) {
+        try {
+            ADD_MEAL_ALIAS.clearParameters();
+            ADD_MEAL_ALIAS.setInt(1, mealID);
+            ADD_MEAL_ALIAS.setString(2, newAlias);
+            ADD_MEAL_ALIAS.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
     // ///////////////////////////////////////////////////////////////////////////////////////
 
