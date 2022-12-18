@@ -1,5 +1,7 @@
 package config;
 
+import meal.LeckerSchmecker;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -31,6 +33,10 @@ public class Config {
         return getInstance()._getString(property);
     }
 
+    public static int getInt(String property){
+        return getInstance()._getInt(property);
+    }
+
     public static void readAllowedUsers(){
         getInstance()._readAllowedUsers();
     }
@@ -43,6 +49,10 @@ public class Config {
     // protected implementations /////////////////////////////////////////////////////////////
     protected String _getString(String property){
         return properties.getProperty(property);
+    }
+
+    protected int _getInt(String property){
+        return Integer.parseInt(properties.getProperty(property));
     }
 
     protected void _init(){

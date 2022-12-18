@@ -1,5 +1,6 @@
 package telegram;
 
+import config.Config;
 import meal.Canteen;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -17,7 +18,7 @@ public enum InternalAction implements BotAction{
 
     SELECT_DATE{
 
-        private final int LOOKAHEAD_DAYS = 3;
+        private final int LOOKAHEAD_DAYS = Config.getInt("meals.daysToPresent");
         private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
