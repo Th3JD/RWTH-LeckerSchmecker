@@ -1,11 +1,16 @@
 package telegram;
 
 import database.DatabaseManager;
-import meal.Canteen;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import meal.Canteen;
+import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 
 public class ChatContext {
 
@@ -13,6 +18,7 @@ public class ChatContext {
     private final LeckerSchmeckerBot bot;
     private final UUID userID;
     private final long chatID;
+    private final Map<String, Integer> messageIdByPollId = new HashMap<>();
 
     // State information
     private BotAction returnToAction; // Action to return to, once the internal actions are done
@@ -33,7 +39,7 @@ public class ChatContext {
     }
 
 
-    public void resetTemporaryInformation(){
+    public void resetPassthroughInformation() {
         this.returnToAction = null;
         this.selectedCanteen = null;
         this.selectedDate = null;
@@ -107,16 +113,35 @@ public class ChatContext {
         return defaultCanteen;
     }
 
-    public void sendMessage(String text){
+    public void sendMessage(String text) {
         bot.sendTextMessage(chatID, text);
     }
 
-    public void sendMessage(SendMessage message){
+    public void sendMessage(SendMessage message) {
         bot.sendMessage(chatID, message);
     }
 
+    public String sendPoll(SendPoll poll) {
+        Message msg = bot.sendPoll(chatID, poll);
+        String pollId = msg.getPoll().getId();
+        this.messageIdByPollId.put(pollId, msg.getMessageId());
+        return pollId;
+    }
 
+    public void deleteMessage(Integer msgId) {
+        bot.deleteMessage(chatID, new DeleteMessage(String.valueOf(chatID), msgId));
+    }
 
+    public void deletePoll(Poll poll) {
+        bot.deletePoll(chatID,
+                new DeleteMessage(String.valueOf(chatID), this.messageIdByPollId.get(poll.getId())),
+                poll);
+        this.messageIdByPollId.remove(poll.getId());
+    }
+
+    public Integer getMessageIdByPollId(String pollId) {
+        return this.messageIdByPollId.get(pollId);
+    }
 
 
 }
