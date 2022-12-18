@@ -8,6 +8,7 @@ build/
 leckerschmecker.cfg
 users.txt
 src/main/java/meal/Test.java
+logs/
 
 ### IntelliJ IDEA ###
 .idea/
