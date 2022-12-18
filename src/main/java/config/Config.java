@@ -14,9 +14,7 @@ public class Config {
     protected static Config instance;
 
     private Properties properties;
-    private final String fileName = "leckerschmecker.cfg";
     private final Set<Long> allowedUsers = new HashSet<>();
-    private final Set<Long> admins = new HashSet<>();
 
     public static Config getInstance() {
         if (instance == null) {
@@ -52,6 +50,14 @@ public class Config {
         return getInstance()._getAdminChatID();
     }
 
+    public static int getLogLines() {
+        return getInstance()._getMaxLogLines();
+    }
+
+    public static int getLogFiles() {
+        return getInstance()._getMaxLogFiles();
+    }
+
     // ///////////////////////////////////////////////////////////////////////////////////////
 
     // protected implementations /////////////////////////////////////////////////////////////
@@ -64,6 +70,7 @@ public class Config {
     }
 
     protected void _init(){
+        String fileName = "leckerschmecker.cfg";
         try {
             InputStream is = new FileInputStream(fileName);
             properties = new Properties();
@@ -79,11 +86,12 @@ public class Config {
     }
 
     protected void _readAllowedUsers(){
-        FileInputStream fis = null;
+        FileInputStream fis;
         try {
             fis = new FileInputStream("users.txt");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
+            return;
         }
         Scanner scanner = new Scanner(fis);
 
@@ -102,6 +110,14 @@ public class Config {
 
     protected long _getAdminChatID() {
         return Long.parseLong(properties.getProperty("telegram.adminChatID"));
+    }
+
+    protected int _getMaxLogLines() {
+        return Integer.parseInt(properties.getProperty("log.maxLines"));
+    }
+
+    protected int _getMaxLogFiles() {
+        return Integer.parseInt(properties.getProperty("log.maxFiles"));
     }
     // ///////////////////////////////////////////////////////////////////////////////////////
 
