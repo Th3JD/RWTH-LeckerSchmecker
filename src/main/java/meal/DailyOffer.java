@@ -81,6 +81,20 @@ public class DailyOffer {
         return sideMeals.stream().filter(m -> m.getType().equals(type)).collect(Collectors.toSet());
     }
 
+    public Optional<MainMeal> getMainMealById(Integer id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+        return this.getMainMeals().stream().filter(m -> id.equals(m.getId())).findFirst();
+    }
+
+    public Optional<MainMeal> getMainMealByDisplayName(String displayName) {
+        if (displayName == null) {
+            return Optional.empty();
+        }
+        return this.getMainMeals().stream().filter(m -> displayName.equals(m.getDisplayName())).findFirst();
+    }
+
     public LocalDate getDate() {
         return date;
     }

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import meal.Canteen;
+import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -27,7 +28,13 @@ public class ChatContext {
     // Passthrough information
     private Canteen selectedCanteen;
     private Canteen defaultCanteen;
+
     private LocalDate selectedDate;
+
+    private MainMeal selectedMeal;
+
+    private Integer ratedPoints;
+
     private Boolean defaultValueSet; // Couldn't come up with a better name... Sorry :(
 
 
@@ -43,6 +50,8 @@ public class ChatContext {
         this.returnToAction = null;
         this.selectedCanteen = null;
         this.selectedDate = null;
+        this.selectedMeal = null;
+        this.ratedPoints = null;
         this.defaultValueSet = null;
     }
 
@@ -77,6 +86,10 @@ public class ChatContext {
         this.selectedDate = selectedDate;
     }
 
+    public boolean hasDateSelected() {
+        return this.getSelectedDate() != null;
+    }
+
     public LeckerSchmeckerBot getBot(){
         return bot;
     }
@@ -109,8 +122,40 @@ public class ChatContext {
         this.selectedCanteen = selectedCanteen;
     }
 
+    public boolean hasCanteen() {
+        return this.getDefaultCanteen() != null || this.getSelectedCanteen() != null;
+    }
+
+    public Canteen getCanteen() {
+        return this.getDefaultCanteen() != null ? this.getDefaultCanteen() : this.getSelectedCanteen();
+    }
+
     public Canteen getDefaultCanteen() {
         return defaultCanteen;
+    }
+
+    public MainMeal getSelectedMeal() {
+        return selectedMeal;
+    }
+
+    public void setSelectedMeal(MainMeal selectedMeal) {
+        this.selectedMeal = selectedMeal;
+    }
+
+    public boolean hasMealSelected() {
+        return this.selectedMeal != null;
+    }
+
+    public Integer getRatedPoints() {
+        return ratedPoints;
+    }
+
+    public void setRatedPoints(Integer ratedPoints) {
+        this.ratedPoints = ratedPoints;
+    }
+
+    public boolean hasRated() {
+        return this.ratedPoints != null;
     }
 
     public void sendMessage(String text) {
