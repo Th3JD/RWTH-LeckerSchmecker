@@ -2,17 +2,20 @@ package telegram;
 
 import config.Config;
 import meal.Canteen;
+import meal.MainMeal;
+import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.polls.Poll;
+import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 
 public enum InternalAction implements BotAction{
 
@@ -22,6 +25,7 @@ public enum InternalAction implements BotAction{
         private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
+            context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
@@ -67,6 +71,7 @@ public enum InternalAction implements BotAction{
     SELECT_CANTEEN{
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
+            context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
@@ -95,7 +100,57 @@ public enum InternalAction implements BotAction{
             context.setSelectedCanteen(canteenOpt.get());
             context.getReturnToAction().onUpdate(context, update);
         }
-    };
+    },
+    SELECT_MEAL{
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage) {
+            context.sendMessage(passthroughMessage);
+            context.setCurrentAction(this);
+            SendMessage msg = new SendMessage();
+            msg.setText("Wähle ein Gericht!");
+            msg.setReplyMarkup(BotAction.createKeyboardMarkup(1,
+                    context.getCanteen().getDailyOffer(LocalDate.now()).get()
+                            .getMainMeals().stream().map(MainMeal::getDisplayName).toList()));
+            context.sendMessage(msg);
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+            System.out.println(update.getMessage().getText());
+            context.setSelectedMeal(context.getCanteen()
+                    .getDailyOffer(LocalDate.now()).get().getMainMealByDisplayName(update.getMessage().getText()).get());
+            context.getReturnToAction().onUpdate(context, update);
+        }
+    },
+
+    RATE_MEAL() {
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage) {
+            context.sendMessage(passthroughMessage);
+            context.setCurrentAction(this);
+
+            MainMeal meal = context.getSelectedMeal();
+
+            SendMessage msg = new SendMessage();
+            msg.setText("Gib eine Bewertung für '_" + meal.getDisplayName() + "_' ab!");
+            msg.setReplyMarkup(BotAction.createKeyboardMarkup(5,
+                    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Hauptmenü"));
+
+            context.sendMessage(msg);
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+            String updateMsg = update.getMessage().getText();
+
+            try {
+                context.setRatedPoints(Integer.parseInt(updateMsg));
+            } catch (NumberFormatException ignored) {
+                context.sendMessage("Ungültige Bewertung!");
+            }
+            context.getReturnToAction().onUpdate(context, update);
+        }
+    }
 
 
 

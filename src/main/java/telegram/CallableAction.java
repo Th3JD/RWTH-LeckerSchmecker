@@ -1,13 +1,104 @@
 package telegram;
 
-import java.util.Arrays;
-import java.util.List;
 import meal.Canteen;
+import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-public enum CallableAction implements BotAction{
+import java.util.Arrays;
+import java.util.List;
+
+public enum CallableAction implements BotAction {
+
+    LIST_MEALS("Gerichte", List.of("gerichte", "essen")) {
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage) {
+            context.setCurrentAction(this);
+            context.setReturnToAction(this); // Needed to make the internal action return to this action
+
+            // Select date, selecting the canteen is done in onUpdate
+            InternalAction.SELECT_DATE.init(context, null);
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+            if (!update.hasMessage()) {
+                return;
+            }
+
+            // Check if we returned from an internal state (should always be true)
+            if (context.getReturnToAction() == this) {
+
+                // Check if we already know about the canteen (the date should always be set at this point)
+                if (context.hasCanteen()) {
+                    Canteen selectedCanteen = context.getCanteen();
+
+                    SendMessage message = new SendMessage();
+                    message.enableMarkdownV2(true);
+                    message.setText("--------    *Gerichte (" + selectedCanteen.getDisplayName() + ")*    --------\n\n"
+                            + context.getBot().getMealsText(selectedCanteen, context.getSelectedDate()));
+
+                    // Reset everything prior to exiting the state
+                    context.resetPassthroughInformation();
+
+                    MAIN_MENU.init(context, message);
+                } else {
+
+                    // No canteen chosen so far
+                    InternalAction.SELECT_CANTEEN.init(context, null);
+                }
+
+            }
+        }
+    },
+
+    RATING("Kritik", List.of("bewertung", "kritik", "rating")) {
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage) {
+            context.setCurrentAction(this);
+            context.sendMessage(passthroughMessage);
+            context.setReturnToAction(this);
+
+            if (context.hasCanteen()) {
+                InternalAction.SELECT_MEAL.init(context, null);
+            } else {
+                InternalAction.SELECT_CANTEEN.init(context, null);
+            }
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+            if (!context.hasCanteen()) {
+                context.setReturnToAction(this);
+                InternalAction.SELECT_CANTEEN.init(context, null);
+                return;
+            }
+
+            if (!context.hasMealSelected()) {
+                context.setReturnToAction(this);
+                InternalAction.SELECT_MEAL.init(context, null);
+                return;
+            }
+
+            System.out.println("text");
+
+            MainMeal meal = context.getSelectedMeal();
+
+            if (!context.hasRated()) {
+                context.setReturnToAction(this);
+                InternalAction.RATE_MEAL.init(context, null);
+                return;
+            }
+
+            int ratedPoints = context.getRatedPoints();
+
+            MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
+                    "_" + meal.getDisplayName() + "_: *" + ratedPoints + "*"));
+            context.resetPassthroughInformation();
+            // TODO save rating
+        }
+    },
 
     MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü")) {
         @Override
@@ -40,67 +131,7 @@ public enum CallableAction implements BotAction{
         }
     },
 
-    LIST_MEALS("Gerichte", List.of("gerichte", "essen")) {
-        @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
-            context.setCurrentAction(this);
-            context.setReturnToAction(this); // Needed to make the internal action return to this action
-
-            // Select date, selecting the canteen is done in onUpdate
-            InternalAction.SELECT_DATE.init(context, null);
-        }
-
-        @Override
-        public void onUpdate(ChatContext context, Update update) {
-            if(!update.hasMessage()){
-                return;
-            }
-
-            // Check if we returned from an internal state (should always be true)
-            if(context.getReturnToAction() == this){
-
-                // Check if we already know about the canteen (the date should always be set at this point)
-                if(context.getDefaultCanteen() != null || context.getSelectedCanteen() != null){
-                    Canteen selectedCanteen = context.getDefaultCanteen() != null ? context.getDefaultCanteen() : context.getSelectedCanteen();
-
-                    SendMessage message = new SendMessage();
-                    message.enableMarkdownV2(true);
-                    message.setText("--------    *Gerichte (" + selectedCanteen.getDisplayName() + ")*    --------\n\n"
-                            + context.getBot().getMealsText(selectedCanteen, context.getSelectedDate()));
-
-                    // Reset everything prior to exiting the state
-                    context.resetPassthroughInformation();
-
-                    MAIN_MENU.init(context, message);
-                } else {
-
-                    // No canteen chosen so far
-                    InternalAction.SELECT_CANTEEN.init(context, null);
-                }
-
-            }
-        }
-    },
-
-    RATING("Kritik", List.of("bewertung", "kritik", "rating")) {
-        @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
-            context.setCurrentAction(this);
-            context.sendMessage(passthroughMessage);
-
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setText("Bald verfügbar!");
-
-            MAIN_MENU.init(context, sendMessage);
-        }
-
-        @Override
-        public void onUpdate(ChatContext context, Update update) {
-
-        }
-    },
-
-    SELECT_DEFAULTS("Standardwerte", List.of("standardwerte", "defaults")){
+    SELECT_DEFAULTS("Standardwerte", List.of("standardwerte", "defaults")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -115,19 +146,19 @@ public enum CallableAction implements BotAction{
 
         @Override
         public void onUpdate(ChatContext context, Update update) {
-            if(!update.hasMessage()){
+            if (!update.hasMessage()) {
                 return;
             }
 
             // Check if we returned from an internal state
-            if(context.getReturnToAction() == this){
+            if (context.getReturnToAction() == this) {
 
                 SendMessage message = new SendMessage();
 
                 // Check if the user selected a canteen
-                if(context.getSelectedCanteen() != null){
+                if (context.getSelectedCanteen() != null) {
                     context.setDefaultCanteen(context.getSelectedCanteen());
-                    message.setText(context.getSelectedCanteen().getDisplayName() + " \u2705");
+                    message.setText(context.getSelectedCanteen().getDisplayName() + " ✅");
                 }
 
                 // Reset everything prior to exiting the state
@@ -137,7 +168,7 @@ public enum CallableAction implements BotAction{
             }
 
             String text = update.getMessage().getText();
-            switch (text){
+            switch (text) {
                 case "Setzen", "Löschen" -> {
                     boolean shouldBeSet = text.equals("Setzen");
                     context.setDefaultValueSet(shouldBeSet);
@@ -150,7 +181,7 @@ public enum CallableAction implements BotAction{
                 case "Mensa" -> {
 
                     // Check if the default canteen needs to be set or unset
-                    if(context.getDefaultValueSet()){
+                    if (context.getDefaultValueSet()) {
                         // Canteen should be set
                         context.setReturnToAction(this); // Needed to make the internal action return to this action
 

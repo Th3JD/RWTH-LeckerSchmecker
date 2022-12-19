@@ -7,6 +7,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public interface BotAction {
@@ -26,7 +27,7 @@ public interface BotAction {
         replyKeyboardMarkup.setOneTimeKeyboard(false);
 
 
-        List<KeyboardRow> keyboardRows = new ArrayList<>();
+        List<KeyboardRow> keyboardRows = new LinkedList<>();
         KeyboardRow keyboardRow = new KeyboardRow();
 
         int currentElementsInRow = 0;
