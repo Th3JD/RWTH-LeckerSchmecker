@@ -20,7 +20,7 @@ public class DailyOffer {
         this.date = date;
     }
 
-    public void addMeal(MainMeal meal){
+    public void addMeal(MainMeal meal) {
         if (meal == null) return;
         this.meals.add(meal);
     }
@@ -30,7 +30,7 @@ public class DailyOffer {
         this.sideMeals.add(meal);
     }
 
-    public static DailyOffer parseOffer(Element element){
+    public static DailyOffer parseOffer(Element element) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
 
         Elements headLineElements = element.getElementsByClass("active-headline");
@@ -41,12 +41,12 @@ public class DailyOffer {
         LocalDate date = LocalDate.parse(fullDate, formatter);
 
         // Check if the date is already in the past
-        if(date.isBefore(LocalDate.now())){
+        if (date.isBefore(LocalDate.now())) {
             return null;
         }
 
         // Check if the date is too far in the future
-        if(!date.isBefore(LocalDate.now().plusDays(Config.getInt("meals.daysToFetch")))){
+        if (!date.isBefore(LocalDate.now().plusDays(Config.getInt("meals.daysToFetch")))) {
             // Meals this far in the future are prone to contain typos and are oftentimes subject to change
             return null;
         }
@@ -56,7 +56,7 @@ public class DailyOffer {
         Elements htmlMeals = element.getElementsByClass("menues").get(0)
                 .getElementsByClass("menue-wrapper");
 
-        for(Element htmlMeal : htmlMeals){
+        for (Element htmlMeal : htmlMeals) {
             MainMeal meal = MainMeal.parseMeal(res, htmlMeal);
             res.addMeal(meal);
         }
@@ -79,13 +79,6 @@ public class DailyOffer {
 
     public Set<SideMeal> getSideMeals(SideMeal.Type type) {
         return sideMeals.stream().filter(m -> m.getType().equals(type)).collect(Collectors.toSet());
-    }
-
-    public Optional<MainMeal> getMainMealById(Integer id) {
-        if (id == null) {
-            return Optional.empty();
-        }
-        return this.getMainMeals().stream().filter(m -> id.equals(m.getId())).findFirst();
     }
 
     public Optional<MainMeal> getMainMealByDisplayName(String displayName) {

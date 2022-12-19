@@ -1,10 +1,6 @@
 package telegram;
 
 import database.DatabaseManager;
-import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 import meal.Canteen;
 import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
@@ -12,6 +8,11 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class ChatContext {
 
@@ -38,7 +39,7 @@ public class ChatContext {
     private Boolean defaultValueSet; // Couldn't come up with a better name... Sorry :(
 
 
-    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen){
+    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen) {
         this.bot = bot;
         this.userID = userID;
         this.chatID = chatID;
@@ -90,11 +91,11 @@ public class ChatContext {
         return this.getSelectedDate() != null;
     }
 
-    public LeckerSchmeckerBot getBot(){
+    public LeckerSchmeckerBot getBot() {
         return bot;
     }
 
-    public boolean hasCurrentAction(){
+    public boolean hasCurrentAction() {
         return currentAction != null;
     }
 
@@ -183,10 +184,4 @@ public class ChatContext {
                 poll);
         this.messageIdByPollId.remove(poll.getId());
     }
-
-    public Integer getMessageIdByPollId(String pollId) {
-        return this.messageIdByPollId.get(pollId);
-    }
-
-
 }

@@ -3,26 +3,25 @@ package telegram;
 import config.Config;
 import meal.Canteen;
 import meal.MainMeal;
-import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.polls.Poll;
-import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
-public enum InternalAction implements BotAction{
+public enum InternalAction implements BotAction {
 
-    SELECT_DATE{
+    SELECT_DATE {
 
         private final int LOOKAHEAD_DAYS = Config.getInt("botaction.select_date.daysToPresent");
         private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
+
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -33,7 +32,7 @@ public enum InternalAction implements BotAction{
 
             List<String> queryDates = new LinkedList<>();
             LocalDate today = LocalDate.now();
-            for(int i = 0; i < LOOKAHEAD_DAYS; i++) {
+            for (int i = 0; i < LOOKAHEAD_DAYS; i++) {
                 queryDates.add(today.plusDays(i).format(formatter));
             }
 
@@ -44,14 +43,14 @@ public enum InternalAction implements BotAction{
 
         @Override
         public void onUpdate(ChatContext context, Update update) {
-            if(!update.hasMessage()){ // User did not answer with a text message
+            if (!update.hasMessage()) { // User did not answer with a text message
                 this.init(context, null);
             }
 
             String text = update.getMessage().getText();
             try {
                 LocalDate selectedDate = LocalDate.parse(text, formatter);
-                if(!selectedDate.isBefore(LocalDate.now().plusDays(LOOKAHEAD_DAYS))){
+                if (!selectedDate.isBefore(LocalDate.now().plusDays(LOOKAHEAD_DAYS))) {
                     context.sendMessage("Ungültiges Datum!");
                     this.init(context, null);
                     return;
@@ -60,7 +59,7 @@ public enum InternalAction implements BotAction{
                 context.setSelectedDate(selectedDate);
                 context.getReturnToAction().onUpdate(context, update);
 
-            } catch (DateTimeParseException e){
+            } catch (DateTimeParseException e) {
                 context.sendMessage("Ungültiges Datum!");
                 this.init(context, null);
             }
@@ -68,7 +67,7 @@ public enum InternalAction implements BotAction{
 
         }
     },
-    SELECT_CANTEEN{
+    SELECT_CANTEEN {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -101,7 +100,7 @@ public enum InternalAction implements BotAction{
             context.getReturnToAction().onUpdate(context, update);
         }
     },
-    SELECT_MEAL{
+    SELECT_MEAL {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -116,7 +115,6 @@ public enum InternalAction implements BotAction{
 
         @Override
         public void onUpdate(ChatContext context, Update update) {
-            System.out.println(update.getMessage().getText());
             context.setSelectedMeal(context.getCanteen()
                     .getDailyOffer(LocalDate.now()).get().getMainMealByDisplayName(update.getMessage().getText()).get());
             context.getReturnToAction().onUpdate(context, update);
@@ -151,9 +149,6 @@ public enum InternalAction implements BotAction{
             context.getReturnToAction().onUpdate(context, update);
         }
     }
-
-
-
 
 
 }

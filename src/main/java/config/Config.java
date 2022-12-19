@@ -26,11 +26,11 @@ public class Config {
 
 
     // Static function declarations //////////////////////////////////////////////////////////
-    public static String getString(String property){
+    public static String getString(String property) {
         return getInstance()._getString(property);
     }
 
-    public static int getInt(String property){
+    public static int getInt(String property) {
         return getInstance()._getInt(property);
     }
 
@@ -69,23 +69,23 @@ public class Config {
         return Integer.parseInt(properties.getProperty(property));
     }
 
-    protected void _init(){
+    protected void _init() {
         String fileName = "leckerschmecker.cfg";
         try {
             InputStream is = new FileInputStream(fileName);
             properties = new Properties();
             properties.load(is);
-        } catch (FileNotFoundException e){
+        } catch (FileNotFoundException e) {
             System.err.println("Config file does not exist!\nPath: " + fileName);
             System.exit(-1);
-        } catch (IOException e){
+        } catch (IOException e) {
             System.err.println("Failed to read config file! Error:\n");
             e.printStackTrace();
             System.exit(-1);
         }
     }
 
-    protected void _readAllowedUsers(){
+    protected void _readAllowedUsers() {
         FileInputStream fis;
         try {
             fis = new FileInputStream("users.txt");

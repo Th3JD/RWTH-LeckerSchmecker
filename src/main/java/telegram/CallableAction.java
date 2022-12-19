@@ -81,8 +81,6 @@ public enum CallableAction implements BotAction {
                 return;
             }
 
-            System.out.println("text");
-
             MainMeal meal = context.getSelectedMeal();
 
             if (!context.hasRated()) {
@@ -194,7 +192,6 @@ public enum CallableAction implements BotAction {
                         message.setText("Deine Standardmensa wurde zurückgesetzt!");
                         MAIN_MENU.init(context, message);
                     }
-                    return;
                 }
                 default -> {
                     context.sendMessage("Ungültige Option. Wähle eine Option oder kehre mit /start zum Hauptmenü zurück.");
