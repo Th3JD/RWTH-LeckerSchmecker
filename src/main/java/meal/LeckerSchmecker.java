@@ -12,14 +12,21 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import telegram.LeckerSchmeckerBot;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.*;
 
 public class LeckerSchmecker {
 
 	private static Logger logger;
 
-	private static final Object mon = Void.TYPE;
+	private static final Object exit = Void.TYPE;
+
+	private static final Timer timer = new Timer();
 
 	public static void main(String[] args) {
 		Config.readAllowedUsers();
@@ -36,14 +43,18 @@ public class LeckerSchmecker {
 			e.printStackTrace();
 		}
 
-		updateOffers();
+		// schedule update task without a delay
+		timer.schedule(new UpdateTask(), 0);
 
+
+		// add shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(LeckerSchmecker::exit));
 
-		// wait for notify on "mon"
-		synchronized (mon) {
+
+		// wait for notify on "exit"
+		synchronized (exit) {
 			try {
-				mon.wait();
+				exit.wait();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} finally {
@@ -51,7 +62,7 @@ public class LeckerSchmecker {
 			}
 		}
 
-		// only reachable by notify on "mon" (currently not used)
+		// only reachable by notify on "exit" (currently not used)
 		exit();
 	}
 
@@ -101,5 +112,22 @@ public class LeckerSchmecker {
 
 	public static Logger getLogger() {
 		return logger;
+	}
+
+	public static class UpdateTask extends TimerTask {
+		@Override
+		public void run() {
+			// update offers
+			updateOffers();
+
+			// schedule this task until 10:30 next day
+			LocalDateTime dateTime = LocalDateTime.now()
+					.plusDays(1)
+					.withHour(10)
+					.withMinute(30);
+			timer.schedule(new UpdateTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
+			logger.info("Scheduled update until " +
+					dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+		}
 	}
 }
