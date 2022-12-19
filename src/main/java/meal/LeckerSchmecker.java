@@ -2,16 +2,14 @@ package meal;
 
 import config.Config;
 import database.DatabaseManager;
-
-import java.io.File;
-import java.io.IOException;
-
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import telegram.LeckerSchmeckerBot;
 
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -22,113 +20,113 @@ import java.util.logging.*;
 
 public class LeckerSchmecker {
 
-	private static Logger logger;
+    private static Logger logger;
 
-	private static final Object exit = Void.TYPE;
+    private static final Object exit = Void.TYPE;
 
-	private static final Timer timer = new Timer();
+    private static final Timer timer = new Timer();
 
-	public static void main(String[] args) {
-		Config.readAllowedUsers();
-		initLogger();
-		logger.setLevel(Level.INFO);
+    public static void main(String[] args) {
+        Config.readAllowedUsers();
+        initLogger();
+        logger.setLevel(Level.INFO);
 
-		DatabaseManager.connect();
-		DatabaseManager.setupTables();
+        DatabaseManager.connect();
+        DatabaseManager.setupTables();
 
-		try {
-			TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-			botsApi.registerBot(new LeckerSchmeckerBot());
-		} catch (TelegramApiException e) {
-			e.printStackTrace();
-		}
+        try {
+            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+            botsApi.registerBot(new LeckerSchmeckerBot());
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
 
-		// schedule update task without a delay
-		timer.schedule(new UpdateTask(), 0);
-
-
-		// add shutdown hook
-		Runtime.getRuntime().addShutdownHook(new Thread(LeckerSchmecker::exit));
+        // schedule update task without a delay
+        timer.schedule(new UpdateTask(), 0);
 
 
-		// wait for notify on "exit"
-		synchronized (exit) {
-			try {
-				exit.wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} finally {
-				exit();
-			}
-		}
+        // add shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(LeckerSchmecker::exit));
 
-		// only reachable by notify on "exit" (currently not used)
-		exit();
-	}
 
-	public static void exit() {
-		System.out.println("LeckersSchmecker is shutting down. Cleaning up...");
-		DatabaseManager.disconnect();
-	}
+        // wait for notify on "exit"
+        synchronized (exit) {
+            try {
+                exit.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                exit();
+            }
+        }
 
-	private static void initLogger() {
-		logger = Logger.getLogger("RWTH-LS");
-		logger.setUseParentHandlers(false);
+        // only reachable by notify on "exit" (currently not used)
+        exit();
+    }
 
-		SimpleFormatter formatter = new SimpleFormatter() {
-			private static final String format = "[%1$tF %1$tT] [%2$-7s] %3$s %n";
+    public static void exit() {
+        System.out.println("LeckersSchmecker is shutting down. Cleaning up...");
+        DatabaseManager.disconnect();
+    }
 
-			@Override
-			public synchronized String format(LogRecord lr) {
-				return String.format(format,
-						new Date(lr.getMillis()),
-						lr.getLevel().getLocalizedName(),
-						lr.getMessage()
-				);
-			}
-		};
+    private static void initLogger() {
+        logger = Logger.getLogger("RWTH-LS");
+        logger.setUseParentHandlers(false);
 
-		ConsoleHandler consoleHandler = new ConsoleHandler();
-		consoleHandler.setFormatter(formatter);
-		logger.addHandler(consoleHandler);
+        SimpleFormatter formatter = new SimpleFormatter() {
+            private static final String format = "[%1$tF %1$tT] [%2$-7s] %3$s %n";
 
-		try {
-			File logFile = new File("logs/latest");
-			FileUtils.createParentDirectories(logFile);
-			FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), Config.getLogLines(),
-					Config.getLogFiles(), true);
-			fileHandler.setLevel(Level.INFO);
-			fileHandler.setFormatter(formatter);
-			logger.addHandler(fileHandler);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+            @Override
+            public synchronized String format(LogRecord lr) {
+                return String.format(format,
+                        new Date(lr.getMillis()),
+                        lr.getLevel().getLocalizedName(),
+                        lr.getMessage()
+                );
+            }
+        };
 
-	public static void updateOffers() {
-		Canteen.TYPES.forEach(Canteen::fetchDailyOffers);
-		logger.info("Updated canteen offers");
-	}
+        ConsoleHandler consoleHandler = new ConsoleHandler();
+        consoleHandler.setFormatter(formatter);
+        logger.addHandler(consoleHandler);
 
-	public static Logger getLogger() {
-		return logger;
-	}
+        try {
+            File logFile = new File("logs/latest");
+            FileUtils.createParentDirectories(logFile);
+            FileHandler fileHandler = new FileHandler(logFile.getAbsolutePath(), Config.getLogLines(),
+                    Config.getLogFiles(), true);
+            fileHandler.setLevel(Level.INFO);
+            fileHandler.setFormatter(formatter);
+            logger.addHandler(fileHandler);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	public static class UpdateTask extends TimerTask {
-		@Override
-		public void run() {
-			// update offers
-			updateOffers();
+    public static void updateOffers() {
+        Canteen.TYPES.forEach(Canteen::fetchDailyOffers);
+        logger.info("Updated canteen offers");
+    }
 
-			// schedule this task until 10:30 next day
-			LocalDateTime dateTime = LocalDateTime.now()
-					.plusDays(1)
-					.withHour(10)
-					.withMinute(30)
-					.withSecond(0);
-			timer.schedule(new UpdateTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
-			logger.info("Scheduled update until " +
-					dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
-		}
-	}
+    public static Logger getLogger() {
+        return logger;
+    }
+
+    public static class UpdateTask extends TimerTask {
+        @Override
+        public void run() {
+            // update offers
+            updateOffers();
+
+            // schedule this task until 10:30 next day
+            LocalDateTime dateTime = LocalDateTime.now()
+                    .plusDays(1)
+                    .withHour(10)
+                    .withMinute(30)
+                    .withSecond(0);
+            timer.schedule(new UpdateTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
+            logger.info("Scheduled update until " +
+                    dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+        }
+    }
 }

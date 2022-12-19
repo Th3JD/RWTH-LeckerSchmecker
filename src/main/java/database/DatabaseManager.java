@@ -4,22 +4,14 @@ import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import config.Config;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 import meal.Canteen;
 import meal.LeckerSchmecker;
 import meal.MainMeal;
 import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
+
+import java.sql.*;
+import java.util.*;
 
 public class DatabaseManager {
 
@@ -44,16 +36,16 @@ public class DatabaseManager {
 
 
     // Static function declarations //////////////////////////////////////////////////////////
-    public static void connect(){
+    public static void connect() {
         getInstance()._connect();
         getInstance()._setupStatements();
     }
 
-    public static void disconnect(){
+    public static void disconnect() {
         getInstance()._disconnect();
     }
 
-    public static void setupTables(){
+    public static void setupTables() {
         getInstance()._setupTables();
     }
 
@@ -103,7 +95,7 @@ public class DatabaseManager {
         }
     }
 
-    protected void _disconnect(){
+    protected void _disconnect() {
         try {
             LOAD_USER.close();
             ADD_USER.close();
@@ -120,7 +112,7 @@ public class DatabaseManager {
         }
     }
 
-    protected void _setupTables(){
+    protected void _setupTables() {
         Statement stmt = null;
         try {
             stmt = connection.createStatement();
@@ -182,7 +174,7 @@ public class DatabaseManager {
                     "    on leckerschmecker.ratings (mealID desc);");
 
             stmt.executeBatch();
-        } catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         } finally {
             if (stmt != null) {
@@ -196,7 +188,7 @@ public class DatabaseManager {
 
     }
 
-    protected void _setupStatements(){
+    protected void _setupStatements() {
         try {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
             ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?)");
@@ -220,13 +212,13 @@ public class DatabaseManager {
         }
     }
 
-    protected ChatContext _loadUser(LeckerSchmeckerBot bot, long chatID){
-        try{
+    protected ChatContext _loadUser(LeckerSchmeckerBot bot, long chatID) {
+        try {
             LOAD_USER.clearParameters();
             LOAD_USER.setLong(1, chatID);
             ResultSet rs = LOAD_USER.executeQuery();
 
-            if(!rs.next()){
+            if (!rs.next()) {
                 // User not yet in database
                 LeckerSchmecker.getLogger().info("User with chatID " + chatID + " is not yet registered.");
 
@@ -244,20 +236,20 @@ public class DatabaseManager {
 
                 String defaultCanteenRaw = rs.getString("default_canteen");
                 Canteen defaultCanteen = null;
-                if(defaultCanteenRaw != null){
+                if (defaultCanteenRaw != null) {
                     defaultCanteen = Canteen.getByURLName(rs.getString("default_canteen")).get();
                 }
 
                 return new ChatContext(bot, userID, chatID, defaultCanteen);
             }
 
-        } catch (SQLException e){
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    protected void _setDefaultCanteen(UUID userID, Canteen canteen){
+    protected void _setDefaultCanteen(UUID userID, Canteen canteen) {
         try {
             SET_CANTEEN.clearParameters();
             SET_CANTEEN.setString(1, canteen != null ? canteen.getUrlName() : null);

@@ -3,7 +3,6 @@ package meal;
 import org.jsoup.nodes.Element;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public class SideMeal extends Meal {
@@ -35,9 +34,9 @@ public class SideMeal extends Meal {
 
         String html = element.getElementsByClass("menue-item extra menue-desc").get(0).html();
         return Arrays.stream(html.replace("<span class=\"menue-nutr\">+</span>", "")
-                .replace("<br>", "")
-                .replaceAll("<sup>.*?</sup>", "")
-                .split("<span class=\"seperator\">oder</span>")).map(String::trim)
+                        .replace("<br>", "")
+                        .replaceAll("<sup>.*?</sup>", "")
+                        .split("<span class=\"seperator\">oder</span>")).map(String::trim)
                 .map(name -> new SideMeal(name.toLowerCase().replace(' ', '_'), name, finalType))
                 .toList();
     }

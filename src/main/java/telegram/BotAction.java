@@ -6,7 +6,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,11 +15,11 @@ public interface BotAction {
 
     void onUpdate(ChatContext context, Update update);
 
-    static ReplyKeyboardMarkup createKeyboardMarkup(int elementsInRow, String... elements){
+    static ReplyKeyboardMarkup createKeyboardMarkup(int elementsInRow, String... elements) {
         return createKeyboardMarkup(elementsInRow, List.of(elements));
     }
 
-    static ReplyKeyboardMarkup createKeyboardMarkup(int elementsInRow, List<String> elements){
+    static ReplyKeyboardMarkup createKeyboardMarkup(int elementsInRow, List<String> elements) {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setSelective(true);
         replyKeyboardMarkup.setResizeKeyboard(true);

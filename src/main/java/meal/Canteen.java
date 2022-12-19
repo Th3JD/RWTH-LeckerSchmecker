@@ -32,7 +32,7 @@ public class Canteen {
         return TYPES.stream().filter(c -> c.getDisplayName().equalsIgnoreCase(displayName)).findFirst();
     }
 
-    public static Optional<Canteen> getByURLName(String urlName){
+    public static Optional<Canteen> getByURLName(String urlName) {
         return TYPES.stream().filter(c -> c.getUrlName().equalsIgnoreCase(urlName)).findFirst();
     }
 
@@ -53,7 +53,7 @@ public class Canteen {
         return urlName;
     }
 
-    public void fetchDailyOffers(){
+    public void fetchDailyOffers() {
         dailyOffers.clear();
 
         Document doc;
@@ -63,9 +63,9 @@ public class Canteen {
             throw new RuntimeException(e);
         }
         Elements elements = doc.getElementsByClass("preventBreak");
-        for(Element e : elements) {
+        for (Element e : elements) {
             DailyOffer offer = DailyOffer.parseOffer(e);
-            if(offer != null)
+            if (offer != null)
                 dailyOffers.put(offer.getDate(), offer);
         }
         LeckerSchmecker.getLogger().info("Fetched " + this.dailyOffers.values().stream()

@@ -1,18 +1,14 @@
 package telegram;
 
 import database.DatabaseManager;
+import meal.MainMeal;
+
 import java.util.HashSet;
 import java.util.Set;
-import meal.MainMeal;
 
 public class MealPollInfo {
 
-    private final String pollID;
     private final Set<MainMeal> mealsWaitingForID = new HashSet<>();
-
-    MealPollInfo(String pollID) {
-        this.pollID = pollID;
-    }
 
     public void addMeal(MainMeal meal) {
         mealsWaitingForID.add(meal);
