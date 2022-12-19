@@ -124,7 +124,8 @@ public class LeckerSchmecker {
 			LocalDateTime dateTime = LocalDateTime.now()
 					.plusDays(1)
 					.withHour(10)
-					.withMinute(30);
+					.withMinute(30)
+					.withSecond(0);
 			timer.schedule(new UpdateTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
 			logger.info("Scheduled update until " +
 					dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
