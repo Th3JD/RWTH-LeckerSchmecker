@@ -6,6 +6,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,6 +59,7 @@ public enum CallableAction implements BotAction {
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
             context.sendMessage(passthroughMessage);
+
             context.setReturnToAction(this);
 
             if (context.hasCanteen()) {
@@ -72,6 +74,23 @@ public enum CallableAction implements BotAction {
             if (!context.hasCanteen()) {
                 context.setReturnToAction(this);
                 InternalAction.SELECT_CANTEEN.init(context, null);
+                return;
+            }
+
+            Canteen canteen = context.getCanteen();
+            LocalTime currentTime = LocalTime.now();
+
+            if (currentTime.isBefore(canteen.getOpeningTime())) {
+                MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
+                        canteen.getDisplayName() + " hat noch nicht geöffnet!"));
+                context.resetPassthroughInformation();
+                return;
+            }
+
+            if (currentTime.isAfter(canteen.getClosingTime().plusMinutes(30))) {
+                MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
+                        canteen.getDisplayName() + " hat schon geschlossen!"));
+                context.resetPassthroughInformation();
                 return;
             }
 

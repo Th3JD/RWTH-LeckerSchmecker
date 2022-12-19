@@ -7,6 +7,7 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,14 +15,22 @@ import java.util.Optional;
 
 public class Canteen {
 
-    public static final Canteen ACADEMICA = new Canteen("Mensa Academica", "academica");
-    public static final Canteen AHORNSTRASSE = new Canteen("Mensa Ahornstraße", "ahornstrasse");
-    public static final Canteen VITA = new Canteen("Mensa Vita", "vita");
-    public static final Canteen TEMPLERGRABEN = new Canteen("Bistro Templergraben", "templergraben");
-    public static final Canteen BAYERNALLEE = new Canteen("Mensa Bayernallee", "bayernallee");
-    public static final Canteen EUPENERSTRASSE = new Canteen("Mensa Eupener Straße", "eupenerstrasse");
-    public static final Canteen KMAC = new Canteen("Mensa KMAC", "kmac");
-    public static final Canteen JUELICH = new Canteen("Mensa Jülich", "juelich");
+    public static final Canteen ACADEMICA = new Canteen("Mensa Academica", "academica",
+            LocalTime.of(11, 30), LocalTime.of(14, 30));
+    public static final Canteen AHORNSTRASSE = new Canteen("Mensa Ahornstraße", "ahornstrasse",
+            LocalTime.of(11, 30), LocalTime.of(14, 30));
+    public static final Canteen VITA = new Canteen("Mensa Vita", "vita",
+            LocalTime.of(11, 30), LocalTime.of(14, 30));
+    public static final Canteen TEMPLERGRABEN = new Canteen("Bistro Templergraben", "templergraben",
+            LocalTime.of(11, 30), LocalTime.of(15, 00));
+    public static final Canteen BAYERNALLEE = new Canteen("Mensa Bayernallee", "bayernallee",
+            LocalTime.of(11, 30), LocalTime.of(14, 30));
+    public static final Canteen EUPENERSTRASSE = new Canteen("Mensa Eupener Straße", "eupenerstrasse",
+            LocalTime.of(11, 15), LocalTime.of(14, 15));
+    public static final Canteen KMAC = new Canteen("Mensa KMAC", "kmac",
+            LocalTime.of(11, 30), LocalTime.of(14, 30));
+    public static final Canteen JUELICH = new Canteen("Mensa Jülich", "juelich",
+            LocalTime.of(11, 30), LocalTime.of(14, 30));
 
     //public static final Canteen SUEDPARK = new Canteen("Mensa Südpark", "suedpark");
 
@@ -38,11 +47,15 @@ public class Canteen {
 
     private final String displayName;
     private final String urlName;
+    private final LocalTime openingTime;
+    private final LocalTime closingTime;
     private final Map<LocalDate, DailyOffer> dailyOffers = new HashMap<>();
 
-    private Canteen(String displayName, String urlName) {
+    private Canteen(String displayName, String urlName, LocalTime openingTime, LocalTime closingTime) {
         this.displayName = displayName;
         this.urlName = urlName;
+        this.openingTime = openingTime;
+        this.closingTime = closingTime;
     }
 
     public String getDisplayName() {
@@ -51,6 +64,14 @@ public class Canteen {
 
     public String getUrlName() {
         return urlName;
+    }
+
+    public LocalTime getOpeningTime() {
+        return openingTime;
+    }
+
+    public LocalTime getClosingTime() {
+        return closingTime;
     }
 
     public void fetchDailyOffers() {
