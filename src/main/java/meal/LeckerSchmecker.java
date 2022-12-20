@@ -128,19 +128,7 @@ public class LeckerSchmecker {
 
                  dateTime = now.plusMinutes(15).withSecond(0);
             } else {
-                // fetch in the morning at 8:30 and in the evening at 18:00
-                if (now.getHour() <= 12 || now.getHour() >= 18) {
-                    dateTime = now
-                            .plusDays(1)
-                            .withHour(8)
-                            .withMinute(30)
-                            .withSecond(0);
-                } else {
-                    dateTime = now
-                            .withHour(18)
-                            .withMinute(0)
-                            .withSecond(0);
-                }
+                dateTime = now.plusHours(4).withMinute(0).withSecond(0);
             }
 
             timer.schedule(new UpdateTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
