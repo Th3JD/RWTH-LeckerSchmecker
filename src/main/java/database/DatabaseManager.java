@@ -33,7 +33,8 @@ public class DatabaseManager {
 
     // STATEMENTS
     private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
-            ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS, RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE;
+            ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS,
+            RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING;
     /////////////
 
 
@@ -99,6 +100,14 @@ public class DatabaseManager {
         return getInstance()._hasRatedToday(context);
     }
 
+    public static Float getGlobalRating(MainMeal meal) {
+        return getInstance()._getGlobalRating(meal);
+    }
+
+    public static Float getUserRating(ChatContext context, MainMeal meal) {
+        return getInstance()._getUserRating(context, meal);
+    }
+
     // ///////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -127,6 +136,8 @@ public class DatabaseManager {
             RATE_MEAL.close();
             DELETE_RATING.close();
             LOAD_USER_RATING_BY_DATE.close();
+            LOAD_GLOBAL_RATING.close();
+            LOAD_USER_RATING.close();
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -234,6 +245,20 @@ public class DatabaseManager {
                     "DELETE FROM ratings WHERE userID=? AND date=?");
             LOAD_USER_RATING_BY_DATE = connection.prepareStatement(
                     "SELECT * FROM ratings WHERE userID=? AND date=?");
+            LOAD_GLOBAL_RATING = connection.prepareStatement(
+                    "SELECT AVG(rating) as average from (ratings r inner join (\n"
+                            + "    select userID, mealID, MAX(date) as MaxDate\n"
+                            + "    from ratings\n"
+                            + "    WHERE mealID=?\n"
+                            + "    group by userID, mealID\n"
+                            + ") rmax on r.userID=rmax.userID and r.mealID=rmax.mealID and r.date=MaxDate);");
+            LOAD_USER_RATING = connection.prepareStatement(
+                    "SELECT rating from (ratings r inner join (\n"
+                            + "    select userID, mealID, MAX(date) as MaxDate\n"
+                            + "    from ratings\n"
+                            + "    WHERE mealID=? and userID LIKE ?\n"
+                            + "    group by userID, mealID\n"
+                            + ") rmax on r.userID=rmax.userID and r.mealID=rmax.mealID and r.date=MaxDate);");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -408,6 +433,47 @@ public class DatabaseManager {
             e.printStackTrace();
         }
         return false;
+    }
+
+    protected Float _getGlobalRating(MainMeal meal) {
+        try {
+            LOAD_GLOBAL_RATING.clearParameters();
+            LOAD_GLOBAL_RATING.setInt(1, meal.getId());
+            ResultSet rs = LOAD_GLOBAL_RATING.executeQuery();
+
+            if (!rs.next()) {
+                return null;
+            }
+
+            if (rs.getFloat("average") == 0f) {
+                return null; // rs.getFloat returns 0f if the value is null
+            }
+
+            return rs.getFloat("average");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    protected Float _getUserRating(ChatContext context, MainMeal meal) {
+        try {
+            LOAD_USER_RATING.clearParameters();
+            LOAD_USER_RATING.setInt(1, meal.getId());
+            LOAD_USER_RATING.setString(2, context.getUserID().toString());
+            ResultSet rs = LOAD_USER_RATING.executeQuery();
+
+            if (!rs.next()) {
+                return null;
+            }
+
+            return rs.getFloat("rating");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////
