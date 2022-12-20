@@ -186,23 +186,33 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         }
     }
 
-    public String getMealsText(Canteen canteen, LocalDate date) {
+    public String getMealsText(Canteen canteen, LocalDate date, ChatContext context) {
+
+        DecimalFormat decimalFormat = new DecimalFormat("0.00");
         Optional<DailyOffer> offerOpt = canteen.getDailyOffer(date);
 
         if (offerOpt.isEmpty()) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMANY);
-            return canteen.getDisplayName() + " bietet am " + date.format(formatter) + " keine Gerichte an!";
+            return canteen.getDisplayName() + " bietet am " + date.format(formatter)
+                    + " keine Gerichte an!";
         }
 
         DailyOffer offer = offerOpt.get();
 
         StringBuilder sb = new StringBuilder();
         for (MainMeal meal : offer.getMainMeals()) {
+            Float globalRating = DatabaseManager.getGlobalRating(meal);
+            Float userRating = DatabaseManager.getUserRating(context, meal);
+
             sb.append("*").append(meal.getType().getDisplayName()).append("*")
-                    .append(" _").append(new DecimalFormat("0.00").format(meal.getPrice()))
+                    .append(" _").append(decimalFormat.format(meal.getPrice()))
                     .append("€").append("_")
                     .append("\n")
-                    .append(meal.text()).append("\n\n");
+                    .append(meal.text()).append("\n")
+                    .append("Globales Rating: ").append(globalRating == null ? "_Nicht bewertet_"
+                            : decimalFormat.format(globalRating)).append("\n")
+                    .append("Dein Rating:         ").append(userRating == null ? "_Nicht bewertet_"
+                            : decimalFormat.format(userRating)).append("\n\n");
         }
 
         sb.append("*Hauptbeilagen*").append("\n");
