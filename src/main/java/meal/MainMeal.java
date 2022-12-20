@@ -1,15 +1,13 @@
 package meal;
 
 import database.DatabaseManager;
-import org.jsoup.nodes.Element;
-import telegram.LeckerSchmeckerBot;
-
-import java.text.DecimalFormat;
 import java.time.DayOfWeek;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.jsoup.nodes.Element;
+import telegram.LeckerSchmeckerBot;
 
 public class MainMeal extends Meal {
 
@@ -91,8 +89,7 @@ public class MainMeal extends Meal {
 
     public String text() {
         String symbols = this.getSymbols();
-        return this.getDisplayName() + (symbols.isEmpty() ? "" : " ") + symbols + " " +
-                new DecimalFormat("0.00").format(this.getPrice()) + "€";
+        return this.getDisplayName() + (symbols.isEmpty() ? "" : " ") + symbols;
     }
 
     public String getSymbols() {
