@@ -1,12 +1,6 @@
 package telegram;
 
 import config.Config;
-import meal.Canteen;
-import meal.MainMeal;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -14,6 +8,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import meal.Canteen;
+import meal.MainMeal;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.objects.Update;
 
 public enum InternalAction implements BotAction {
 
@@ -144,6 +143,11 @@ public enum InternalAction implements BotAction {
             try {
                 context.setRatedPoints(Integer.parseInt(updateMsg));
             } catch (NumberFormatException ignored) {
+                if (updateMsg.equals("Hauptmenü")) {
+                    context.resetPassthroughInformation();
+                    CallableAction.MAIN_MENU.init(context, null);
+                    return;
+                }
                 context.sendMessage("Ungültige Bewertung!");
             }
             context.getReturnToAction().onUpdate(context, update);

@@ -1,14 +1,14 @@
 package telegram;
 
+import database.DatabaseManager;
+import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.List;
 import meal.Canteen;
 import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-
-import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.List;
 
 public enum CallableAction implements BotAction {
 
@@ -62,6 +62,12 @@ public enum CallableAction implements BotAction {
 
             context.setReturnToAction(this);
 
+            // Check if user already rated a meal today
+            if (DatabaseManager.hasRatedToday(context)) {
+                context.sendMessage(
+                        "Da du heute bereits ein Gericht bewertet hast, wird deine alte Bewertung bei Erhalt der neuen gelöscht.");
+            }
+
             if (context.hasCanteen()) {
                 InternalAction.SELECT_MEAL.init(context, null);
             } else {
@@ -88,9 +94,9 @@ public enum CallableAction implements BotAction {
             }
 
             if (currentTime.isAfter(canteen.getClosingTime().plusMinutes(30))) {
+                context.resetPassthroughInformation();
                 MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
                         canteen.getDisplayName() + " hat schon geschlossen!"));
-                context.resetPassthroughInformation();
                 return;
             }
 
@@ -102,6 +108,13 @@ public enum CallableAction implements BotAction {
 
             MainMeal meal = context.getSelectedMeal();
 
+            if (meal.getId() == null) {
+                context.resetPassthroughInformation();
+                MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
+                        "'_" + meal.getDisplayName() + "_'" + " kann noch nicht bewertet werden!"));
+                return;
+            }
+
             if (!context.hasRated()) {
                 context.setReturnToAction(this);
                 InternalAction.RATE_MEAL.init(context, null);
@@ -110,14 +123,15 @@ public enum CallableAction implements BotAction {
 
             int ratedPoints = context.getRatedPoints();
 
+            DatabaseManager.rateMeal(context, meal, ratedPoints);
+
+            context.resetPassthroughInformation();
             MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
                     "_" + meal.getDisplayName() + "_: *" + ratedPoints + "*"));
-            context.resetPassthroughInformation();
-            // TODO save rating
         }
     },
 
-    MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü")) {
+    MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü", "hauptmenü")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -211,13 +225,13 @@ public enum CallableAction implements BotAction {
                         message.setText("Deine Standardmensa wurde zurückgesetzt!");
                         MAIN_MENU.init(context, message);
                     }
+                    return;
                 }
                 default -> {
                     context.sendMessage("Ungültige Option. Wähle eine Option oder kehre mit /start zum Hauptmenü zurück.");
                     this.init(context, null);
                 }
             }
-
         }
     };
 
