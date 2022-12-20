@@ -4,14 +4,24 @@ import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
 import config.Config;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import meal.Canteen;
 import meal.LeckerSchmecker;
 import meal.MainMeal;
 import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
-
-import java.sql.*;
-import java.util.*;
 
 public class DatabaseManager {
 
@@ -23,7 +33,7 @@ public class DatabaseManager {
 
     // STATEMENTS
     private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
-            ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS;
+            ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS, RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE;
     /////////////
 
 
@@ -81,6 +91,14 @@ public class DatabaseManager {
         getInstance()._addAliasToMeal(mealID, newAlias);
     }
 
+    public static void rateMeal(ChatContext context, MainMeal meal, int rating) {
+        getInstance()._rateMeal(context, meal, rating);
+    }
+
+    public static boolean hasRatedToday(ChatContext context) {
+        return getInstance()._hasRatedToday(context);
+    }
+
     // ///////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -106,6 +124,9 @@ public class DatabaseManager {
             ADD_NEW_MEAL_SHORT_ALIAS.close();
             LOAD_MEALNAME_BY_ID.close();
             ADD_MEAL_ALIAS.close();
+            RATE_MEAL.close();
+            DELETE_RATING.close();
+            LOAD_USER_RATING_BY_DATE.close();
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -207,6 +228,12 @@ public class DatabaseManager {
                     "SELECT alias FROM meal_name_alias WHERE mealID=?");
             ADD_MEAL_ALIAS = connection.prepareStatement(
                     "INSERT INTO meal_name_alias VALUES (?, ?)");
+            RATE_MEAL = connection.prepareStatement(
+                    "INSERT INTO ratings VALUES (?, ?, ?, ?)");
+            DELETE_RATING = connection.prepareStatement(
+                    "DELETE FROM ratings WHERE userID=? AND date=?");
+            LOAD_USER_RATING_BY_DATE = connection.prepareStatement(
+                    "SELECT * FROM ratings WHERE userID=? AND date=?");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -351,6 +378,36 @@ public class DatabaseManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    protected void _rateMeal(ChatContext context, MainMeal meal, int rating) {
+        try {
+            DELETE_RATING.clearParameters();
+            DELETE_RATING.setString(1, context.getUserID().toString());
+            DELETE_RATING.setDate(2, Date.valueOf(LocalDate.now()));
+            DELETE_RATING.executeUpdate();
+
+            RATE_MEAL.clearParameters();
+            RATE_MEAL.setString(1, context.getUserID().toString());
+            RATE_MEAL.setInt(2, meal.getId());
+            RATE_MEAL.setDate(3, Date.valueOf(LocalDate.now()));
+            RATE_MEAL.setInt(4, rating);
+            RATE_MEAL.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected boolean _hasRatedToday(ChatContext context) {
+        try {
+            LOAD_USER_RATING_BY_DATE.clearParameters();
+            LOAD_USER_RATING_BY_DATE.setString(1, context.getUserID().toString());
+            LOAD_USER_RATING_BY_DATE.setDate(2, Date.valueOf(LocalDate.now()));
+            return LOAD_USER_RATING_BY_DATE.executeQuery().next();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////
