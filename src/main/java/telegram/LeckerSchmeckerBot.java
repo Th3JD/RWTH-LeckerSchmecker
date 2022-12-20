@@ -3,7 +3,22 @@ package telegram;
 
 import config.Config;
 import database.DatabaseManager;
-import meal.*;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import meal.Canteen;
+import meal.DailyOffer;
+import meal.LeckerSchmecker;
+import meal.MainMeal;
+import meal.SideMeal;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -13,10 +28,6 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import util.MultiKeyMap;
-
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
 
 public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
@@ -187,7 +198,10 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
         StringBuilder sb = new StringBuilder();
         for (MainMeal meal : offer.getMainMeals()) {
-            sb.append("*").append(meal.getType().getDisplayName()).append("*").append("\n")
+            sb.append("*").append(meal.getType().getDisplayName()).append("*")
+                    .append(" _").append(new DecimalFormat("0.00").format(meal.getPrice()))
+                    .append("€").append("_")
+                    .append("\n")
                     .append(meal.text()).append("\n\n");
         }
 
