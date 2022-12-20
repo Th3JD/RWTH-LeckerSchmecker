@@ -41,15 +41,18 @@ public enum AdminAction implements BotAction {
 
             Poll poll = update.getPoll();
 
-            String votedMeal = poll.getOptions().stream()
+            String votedMealID = poll.getOptions().stream()
                     .max(Comparator.comparingInt(PollOption::getVoterCount))
-                    .get().getText();
+                    .get().getText().split(":")[0];
             int updatedMeals = LeckerSchmeckerBot.getInstance().getMealPollInfo(poll)
-                    .updateMeals(votedMeal.split(":")[0]);
+                    .updateMeals(votedMealID);
 
             LeckerSchmeckerBot.getInstance().removeMealPollInfo(poll);
 
-            context.sendMessage("*" + votedMeal + ":* " + updatedMeals + " Gerichte aktualisiert");
+            context.sendMessage(
+                    updatedMeals + " Gericht" + (updatedMeals == 1 ? "wurde" : "e wurden") +
+                            " angepasst. " + (updatedMeals == 1 ? "Es gehört " : "Sie gehören ")
+                            + "nun zu: " + votedMealID);
 
             context.deletePoll(poll);
         }
