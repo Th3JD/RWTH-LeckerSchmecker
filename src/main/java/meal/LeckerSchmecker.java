@@ -124,7 +124,8 @@ public class LeckerSchmecker {
             // fetch every 15 min between daily opening hours (excluding saturday and sunday)
             if (!now.getDayOfWeek().equals(DayOfWeek.SATURDAY)
                     && !now.getDayOfWeek().equals(DayOfWeek.SUNDAY)
-                    && now.getHour() >= 10 && now.getHour() <= 14) {
+                    && now.getHour() >= 10
+                    && (now.getHour() < 14) || (now.getHour() == 14 && now.getMinute() <= 30)) {
 
                  dateTime = now.plusMinutes(15).withSecond(0);
             } else {
