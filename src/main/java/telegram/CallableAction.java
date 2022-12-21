@@ -66,7 +66,7 @@ public enum CallableAction implements BotAction {
             // Check if user already rated a meal today
             if (DatabaseManager.hasRatedToday(context)) {
                 context.sendMessage(
-                        "Da du heute bereits ein Gericht bewertet hast, wird deine alte Bewertung bei Erhalt der neuen gelöscht.");
+                        "Da du heute bereits ein Gericht bewertet hast, wird deine alte Bewertung bei Erhalt der Neuen gelöscht.");
             }
 
             if (context.hasCanteen()) {
@@ -171,7 +171,8 @@ public enum CallableAction implements BotAction {
             SendMessage message = new SendMessage();
             message.setText("Soll ein Standardwert gesetzt oder gelöscht werden?");
 
-            message.setReplyMarkup(BotAction.createKeyboardMarkup(1, "Setzen", "Löschen"));
+            message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
+                    "Setzen", "Löschen", "Hauptmenü"));
 
             context.sendMessage(message);
         }
@@ -207,7 +208,7 @@ public enum CallableAction implements BotAction {
 
                     SendMessage message = new SendMessage();
                     message.setText("Welcher Standardwert soll " + (shouldBeSet ? "gesetzt" : "gelöscht") + " werden?");
-                    message.setReplyMarkup(BotAction.createKeyboardMarkup(1, "Mensa"));
+                    message.setReplyMarkup(BotAction.createKeyboardMarkup(1, "Mensa", "Hauptmenü"));
                     context.sendMessage(message);
                 }
                 case "Mensa" -> {
