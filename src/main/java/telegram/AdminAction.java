@@ -50,7 +50,7 @@ public enum AdminAction implements BotAction {
             LeckerSchmeckerBot.getInstance().removeMealPollInfo(poll);
 
             context.sendMessage(
-                    updatedMeals + " Gericht" + (updatedMeals == 1 ? "wurde" : "e wurden") +
+                    updatedMeals + " Gericht" + (updatedMeals == 1 ? " wurde" : "e wurden") +
                             " angepasst. " + (updatedMeals == 1 ? "Es gehört " : "Sie gehören ")
                             + "nun zu: " + votedMealID);
 
