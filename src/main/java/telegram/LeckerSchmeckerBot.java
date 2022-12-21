@@ -188,7 +188,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
     public String getMealsText(Canteen canteen, LocalDate date, ChatContext context) {
 
-        DecimalFormat decimalFormat = new DecimalFormat("0.00");
+        DecimalFormat priceFormat = new DecimalFormat("0.00");
+        DecimalFormat ratingFormat = new DecimalFormat("0.0");
         Optional<DailyOffer> offerOpt = canteen.getDailyOffer(date);
 
         if (offerOpt.isEmpty()) {
@@ -205,14 +206,14 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             Float userRating = DatabaseManager.getUserRating(context, meal);
 
             sb.append("*").append(meal.getType().getDisplayName()).append("*")
-                    .append(" _").append(decimalFormat.format(meal.getPrice()))
+                    .append(" _").append(priceFormat.format(meal.getPrice()))
                     .append("€").append("_")
                     .append("\n")
                     .append(meal.text()).append("\n")
                     .append("Globales Rating: ").append(globalRating == null ? "_Nicht bewertet_"
-                            : decimalFormat.format(globalRating)).append("\n")
+                            : ratingFormat.format(globalRating)).append("\n")
                     .append("Dein Rating:         ").append(userRating == null ? "_Nicht bewertet_"
-                            : decimalFormat.format(userRating)).append("\n\n");
+                            : ratingFormat.format(userRating)).append("\n\n");
         }
 
         sb.append("*Hauptbeilagen*").append("\n");
