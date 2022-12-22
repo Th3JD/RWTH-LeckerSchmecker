@@ -17,10 +17,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import meal.Canteen;
-import meal.LeckerSchmecker;
-import meal.MainMeal;
-import meal.Nutrition;
+
+import meal.*;
 import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
 
@@ -69,8 +67,8 @@ public class DatabaseManager {
         getInstance()._setDefaultCanteen(userID, canteen);
     }
 
-    public static void setDefaultMealType(UUID userID, Nutrition nutrition) {
-        getInstance()._setDefaultMealType(userID, nutrition);
+    public static void setDefaultMealType(UUID userID, MealType mealType) {
+        getInstance()._setDefaultMealType(userID, mealType);
     }
 
     public static Integer loadMealID(MainMeal meal) {
@@ -161,7 +159,7 @@ public class DatabaseManager {
                     "    userID          UUID                                                                                                                        not null,\n" +
                     "    chatID          BIGINT                                                                                                                      not null,\n" +
                     "    default_canteen ENUM ('academica', 'ahornstrasse', 'vita', 'templergraben', 'bayernallee', 'eupenerstrasse', 'kmac', 'juelich', 'suedpark') null,\n" +
-                    "    default_meal_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'nospicy', 'everything') null,\n" +
+                    "    default_meal_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'nomilk', 'all') null,\n" +
                     "    constraint users_pk\n" +
                     "        primary key (userID)\n" +
                     ");\n");
@@ -302,9 +300,9 @@ public class DatabaseManager {
                 }
 
                 String defaultMealTypeRaw = rs.getString("default_meal_type");
-                Nutrition defaultMealType = null;
+                MealType defaultMealType = null;
                 if (defaultMealTypeRaw != null) {
-                    defaultMealType = Nutrition.getByName(rs.getString("default_meal_type")).get();
+                    defaultMealType = MealType.getById(rs.getString("default_meal_type")).get();
                 }
 
                 return new ChatContext(bot, userID, chatID, defaultCanteen, defaultMealType);
@@ -328,10 +326,10 @@ public class DatabaseManager {
 
     }
 
-    protected void _setDefaultMealType(UUID userID, Nutrition nutrition) {
+    protected void _setDefaultMealType(UUID userID, MealType mealType) {
         try {
             SET_MEAL_TYPE.clearParameters();
-            SET_MEAL_TYPE.setString(1, nutrition != null ? nutrition.getName() : null);
+            SET_MEAL_TYPE.setString(1, mealType != null ? mealType.getId() : null);
             SET_MEAL_TYPE.setString(2, userID.toString());
             SET_MEAL_TYPE.executeUpdate();
         } catch (SQLException e) {
