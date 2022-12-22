@@ -20,6 +20,7 @@ import java.util.UUID;
 import meal.Canteen;
 import meal.LeckerSchmecker;
 import meal.MainMeal;
+import meal.Nutrition;
 import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
 
@@ -32,7 +33,7 @@ public class DatabaseManager {
             new EthernetAddress("00:00:00:00:00:00"));
 
     // STATEMENTS
-    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
+    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, SET_MEAL_TYPE, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
             ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS,
             RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING;
     /////////////
@@ -66,6 +67,10 @@ public class DatabaseManager {
 
     public static void setDefaultCanteen(UUID userID, Canteen canteen) {
         getInstance()._setDefaultCanteen(userID, canteen);
+    }
+
+    public static void setDefaultMealType(UUID userID, Nutrition nutrition) {
+        getInstance()._setDefaultMealType(userID, nutrition);
     }
 
     public static Integer loadMealID(MainMeal meal) {
@@ -127,6 +132,7 @@ public class DatabaseManager {
             LOAD_USER.close();
             ADD_USER.close();
             SET_CANTEEN.close();
+            SET_MEAL_TYPE.close();
             LOAD_MEAL_BY_ALIAS.close();
             LOAD_MEALS_BY_SHORT_ALIAS.close();
             ADD_NEW_MEAL_ALIAS.close();
@@ -155,6 +161,7 @@ public class DatabaseManager {
                     "    userID          UUID                                                                                                                        not null,\n" +
                     "    chatID          BIGINT                                                                                                                      not null,\n" +
                     "    default_canteen ENUM ('academica', 'ahornstrasse', 'vita', 'templergraben', 'bayernallee', 'eupenerstrasse', 'kmac', 'juelich', 'suedpark') null,\n" +
+                    "    default_meal_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'nospicy', 'everything') null,\n" +
                     "    constraint users_pk\n" +
                     "        primary key (userID)\n" +
                     ");\n");
@@ -226,6 +233,8 @@ public class DatabaseManager {
             ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?)");
             SET_CANTEEN = connection.prepareStatement(
                     "UPDATE users SET default_canteen=? WHERE userID like ?");
+            SET_MEAL_TYPE = connection.prepareStatement(
+                    "UPDATE users SET default_meal_type=? WHERE userID like ?");
             LOAD_MEAL_BY_ALIAS = connection.prepareStatement(
                     "SELECT mealID FROM meal_name_alias WHERE alias LIKE ?");
             LOAD_MEALS_BY_SHORT_ALIAS = connection.prepareStatement(
@@ -292,7 +301,13 @@ public class DatabaseManager {
                     defaultCanteen = Canteen.getByURLName(rs.getString("default_canteen")).get();
                 }
 
-                return new ChatContext(bot, userID, chatID, defaultCanteen);
+                String defaultMealTypeRaw = rs.getString("default_meal_type");
+                Nutrition defaultMealType = null;
+                if (defaultMealTypeRaw != null) {
+                    defaultMealType = Nutrition.getByName(rs.getString("default_meal_type")).get();
+                }
+
+                return new ChatContext(bot, userID, chatID, defaultCanteen, defaultMealType);
             }
 
         } catch (SQLException e) {
@@ -307,6 +322,18 @@ public class DatabaseManager {
             SET_CANTEEN.setString(1, canteen != null ? canteen.getUrlName() : null);
             SET_CANTEEN.setString(2, userID.toString());
             SET_CANTEEN.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    protected void _setDefaultMealType(UUID userID, Nutrition nutrition) {
+        try {
+            SET_MEAL_TYPE.clearParameters();
+            SET_MEAL_TYPE.setString(1, nutrition != null ? nutrition.getName() : null);
+            SET_MEAL_TYPE.setString(2, userID.toString());
+            SET_MEAL_TYPE.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
