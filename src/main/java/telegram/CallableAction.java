@@ -194,6 +194,11 @@ public enum CallableAction implements BotAction {
                     message.setText(context.getSelectedCanteen().getDisplayName() + " ✅");
                 }
 
+                if (context.getSelectedMealType() != null) {
+                    context.setDefaultMealType(context.getSelectedMealType());
+                    message.setText(context.getSelectedMealType().getDisplayName() + " ✅");
+                }
+
                 // Reset everything prior to exiting the state
                 context.resetPassthroughInformation();
                 MAIN_MENU.init(context, message);
@@ -208,7 +213,7 @@ public enum CallableAction implements BotAction {
 
                     SendMessage message = new SendMessage();
                     message.setText("Welcher Standardwert soll " + (shouldBeSet ? "gesetzt" : "gelöscht") + " werden?");
-                    message.setReplyMarkup(BotAction.createKeyboardMarkup(1, "Mensa", "Hauptmenü"));
+                    message.setReplyMarkup(BotAction.createKeyboardMarkup(1, "Mensa", "Ernährung", "Hauptmenü"));
                     context.sendMessage(message);
                 }
                 case "Mensa" -> {
@@ -225,6 +230,24 @@ public enum CallableAction implements BotAction {
 
                         SendMessage message = new SendMessage();
                         message.setText("Deine Standardmensa wurde zurückgesetzt!");
+                        MAIN_MENU.init(context, message);
+                    }
+                    return;
+                }
+                case "Ernährung" -> {
+
+                    // Check if the default canteen needs to be set or unset
+                    if (context.getDefaultValueSet()) {
+                        // Canteen should be set
+                        context.setReturnToAction(this); // Needed to make the internal action return to this action
+
+                        InternalAction.SELECT_MEAL_TYPE.init(context, null);
+                    } else {
+                        // Canteen should be unset
+                        context.setDefaultMealType(null);
+
+                        SendMessage message = new SendMessage();
+                        message.setText("Deine Ernährungsart wurde zurückgesetzt!");
                         MAIN_MENU.init(context, message);
                     }
                     return;

@@ -29,6 +29,14 @@ public enum MealType {
         return TYPES.stream().filter(c -> c.getId().equalsIgnoreCase(name)).findFirst();
     }
 
+    public static Optional<MealType> getByDisplayName(String displayName) {
+        return TYPES.stream().filter(c -> c.getDisplayName().equalsIgnoreCase(displayName)).findFirst();
+    }
+
+    public String getDisplayName() {
+        return nameDE;
+    }
+
     public String getNameDE() {
         return nameDE;
     }

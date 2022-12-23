@@ -228,7 +228,7 @@ public class DatabaseManager {
     protected void _setupStatements() {
         try {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
-            ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?)");
+            ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?)");
             SET_CANTEEN = connection.prepareStatement(
                     "UPDATE users SET default_canteen=? WHERE userID like ?");
             SET_MEAL_TYPE = connection.prepareStatement(
@@ -287,9 +287,10 @@ public class DatabaseManager {
                 ADD_USER.setString(1, userID.toString());
                 ADD_USER.setLong(2, chatID);
                 ADD_USER.setString(3, null);
+                ADD_USER.setString(4, null);
                 ADD_USER.execute();
 
-                return new ChatContext(bot, userID, chatID, null);
+                return new ChatContext(bot, userID, chatID, null, null);
             } else {
                 UUID userID = UUID.fromString(rs.getString("userID"));
 
