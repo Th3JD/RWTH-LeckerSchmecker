@@ -159,7 +159,7 @@ public class DatabaseManager {
                     "    userID          UUID                                                                                                                        not null,\n" +
                     "    chatID          BIGINT                                                                                                                      not null,\n" +
                     "    default_canteen ENUM ('academica', 'ahornstrasse', 'vita', 'templergraben', 'bayernallee', 'eupenerstrasse', 'kmac', 'juelich', 'suedpark') null,\n" +
-                    "    default_meal_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'nomilk', 'all') null,\n" +
+                    "    default_meal_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'all') null,\n" +
                     "    constraint users_pk\n" +
                     "        primary key (userID)\n" +
                     ");\n");
