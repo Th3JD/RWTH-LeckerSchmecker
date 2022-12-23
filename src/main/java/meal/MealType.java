@@ -9,10 +9,9 @@ public enum MealType {
     VEGETARIAN("Vegetarisch", "vetegarian", "vegetarian"),
     NOPORK("kein Schweinefleisch", "no pork", "nopork"),
     NOFISH("kein Fisch", "no fish", "nofish"),
-    NOMILK("keine Milchprodukte", "no dairy products", "nomilk"),
     EVERYTHING("Ich esse alles!", "I eat everything!", "all");
 
-    public static final List<MealType> TYPES = List.of(VEGAN, VEGETARIAN, NOPORK, NOFISH, NOMILK,
+    public static final List<MealType> TYPES = List.of(VEGAN, VEGETARIAN, NOPORK, NOFISH,
             EVERYTHING);
 
     private final String nameDE;
@@ -57,10 +56,9 @@ public enum MealType {
                 if (nutrition.equals(Nutrition.VEGAN)) { hasVegan = true; }
                 if (nutrition.equals(Nutrition.VEGETARIAN)) { hasVegetarian = true; }
             }
-            // Still need to check for vegan, vegetarian and lactose
+            // Still need to check for vegan and vegetarian
             switch (mealType) {
                 case VEGAN:
-                case NOMILK: //For now, lactose intolerance is treated like being vegan
                     if (!hasVegan) {
                         return true;
                     }
