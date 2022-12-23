@@ -33,6 +33,51 @@ public enum MealType {
         return TYPES.stream().filter(c -> c.getDisplayName().equalsIgnoreCase(displayName)).findFirst();
     }
 
+    public static boolean filterMealType(List<Nutrition> nutritions, MealType mealType) {
+        if (mealType != null) {
+            boolean hasVegan = false;
+            boolean hasVegetarian = false;
+            for (Nutrition nutrition : nutritions) {
+                switch (mealType) {
+                    case EVERYTHING:
+                        return false; //Do not need to check any further
+                    case NOPORK:
+                        if (nutrition.equals(Nutrition.PORK)) {
+                            return true;
+                        }
+                        break;
+                    case NOFISH:
+                        if (nutrition.equals(Nutrition.FISH)) {
+                            return true;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                if (nutrition.equals(Nutrition.VEGAN)) { hasVegan = true; }
+                if (nutrition.equals(Nutrition.VEGETARIAN)) { hasVegetarian = true; }
+            }
+            // Still need to check for vegan, vegetarian and lactose
+            switch (mealType) {
+                case VEGAN:
+                case NOMILK: //For now, lactose intolerance is treated like being vegan
+                    if (!hasVegan) {
+                        return true;
+                    }
+                    break;
+                case VEGETARIAN:
+                    if (!hasVegetarian) {
+                        return true;
+                    }
+                    break;
+                default:
+                    break; //Do not skip this meal
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
     public String getDisplayName() {
         return nameDE;
     }
