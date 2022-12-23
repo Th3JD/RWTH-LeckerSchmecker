@@ -14,11 +14,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import meal.Canteen;
-import meal.DailyOffer;
-import meal.LeckerSchmecker;
-import meal.MainMeal;
-import meal.SideMeal;
+
+import meal.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -202,6 +199,11 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
         StringBuilder sb = new StringBuilder();
         for (MainMeal meal : offer.getMainMeals()) {
+            // Skip meal if MealType is filtered
+            if (MealType.filterMealType(meal.getNutritions(), context.getDefaultMealType())) {
+                continue;
+            }
+
             Float globalRating = DatabaseManager.getGlobalRating(meal);
             Float userRating = DatabaseManager.getUserRating(context, meal);
 
