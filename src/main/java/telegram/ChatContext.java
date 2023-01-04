@@ -1,6 +1,11 @@
 package telegram;
 
 import database.DatabaseManager;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import meal.Canteen;
 import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
@@ -8,11 +13,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
-
-import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 public class ChatContext {
 
@@ -22,13 +22,17 @@ public class ChatContext {
     private final long chatID;
     private final Map<String, Integer> messageIdByPollId = new HashMap<>();
 
+    // Info about the user
+    private Canteen defaultCanteen;
+    private Locale locale;
+
     // State information
     private BotAction returnToAction; // Action to return to, once the internal actions are done
     private BotAction currentAction;
 
     // Passthrough information
+    private Locale selectedLocale;
     private Canteen selectedCanteen;
-    private Canteen defaultCanteen;
 
     private LocalDate selectedDate;
 
@@ -39,11 +43,13 @@ public class ChatContext {
     private Boolean defaultValueSet; // Couldn't come up with a better name... Sorry :(
 
 
-    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen) {
+    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen,
+            Locale locale) {
         this.bot = bot;
         this.userID = userID;
         this.chatID = chatID;
         this.defaultCanteen = defaultCanteen;
+        this.locale = locale;
     }
 
 
@@ -54,6 +60,7 @@ public class ChatContext {
         this.selectedMeal = null;
         this.ratedPoints = null;
         this.defaultValueSet = null;
+        this.selectedLocale = null;
     }
 
     // Custom Getter & Setter /////////////////////////////////////////////////
@@ -62,7 +69,16 @@ public class ChatContext {
         DatabaseManager.setDefaultCanteen(userID, defaultCanteen);
     }
 
+    public void setLocale(Locale locale) {
+        this.locale = locale;
+        DatabaseManager.setLanguage(userID, locale);
+    }
+
     // Generated Getter & Setter //////////////////////////////////////////////
+    public Locale getLocale() {
+        return locale;
+    }
+
     public Boolean getDefaultValueSet() {
         return defaultValueSet;
     }
@@ -113,6 +129,14 @@ public class ChatContext {
 
     public void setReturnToAction(BotAction returnToAction) {
         this.returnToAction = returnToAction;
+    }
+
+    public void setSelectedLocale(Locale selectedLocale) {
+        this.selectedLocale = selectedLocale;
+    }
+
+    public Locale getSelectedLocale() {
+        return selectedLocale;
     }
 
     public Canteen getSelectedCanteen() {
