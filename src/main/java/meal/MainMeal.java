@@ -4,8 +4,10 @@ import database.DatabaseManager;
 import java.time.DayOfWeek;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import localization.ResourceManager;
 import org.jsoup.nodes.Element;
 import telegram.LeckerSchmeckerBot;
 
@@ -16,7 +18,8 @@ public class MainMeal extends Meal {
     private final List<Nutrition> nutritions;
     private Integer id;
 
-    public MainMeal(String name, String displayName, Type type, float price, List<Nutrition> nutritions, Integer id) {
+    public MainMeal(String name, String displayName, Type type, float price,
+            List<Nutrition> nutritions, Integer id) {
         super(name, displayName);
         this.type = type;
         this.price = price;
@@ -32,7 +35,8 @@ public class MainMeal extends Meal {
         Type type = Type.getMealTypeFromCategory(category, element);
 
         if (type == null) {
-            LeckerSchmecker.getLogger().warning("Could not parse type of meal '" + displayName + "'");
+            LeckerSchmecker.getLogger()
+                    .warning("Could not parse type of meal '" + displayName + "'");
             return null;
         }
 
@@ -139,25 +143,25 @@ public class MainMeal extends Meal {
 
     public enum Type {
 
-        VEGETARISCH("Vegetarisch", 2.2f),
-        KLASSIKER("Klassiker", 2.8f),
-        TELLERGERICHT_VEGETARISCH("Tellergericht Vegetarisch", 2.0f),
-        TELLERGERICHT("Tellergericht", 2.0f),
-        WOK_VEGETARISCH("Wok Vegetarisch", 3.8f),
-        WOK("Wok", 3.8f),
-        EMPFEHLUNG_DES_TAGES("Gericht des Tages", 4.1f),
-        PASTA("Pasta", 3.7f),
-        PIZZA_DES_TAGES("Pizza des Tages", 3.7f),
-        PIZZA_CLASSICS("Pizza Classics", 3.7f),
-        BURGER_CLASSICS("Burger Classics", 4.9f),
-        BURGER_DER_WOCHE("Burger der Woche", 1.8f),
+        VEGETARISCH("mainmealtype_vegetarian", 2.2f),
+        KLASSIKER("mainmealtype_classics", 2.8f),
+        TELLERGERICHT_VEGETARISCH("mainmealtype_vegetarian_table_dish", 2.0f),
+        TELLERGERICHT("mainmealtype_table_dish", 2.0f),
+        WOK_VEGETARISCH("mainmealtype_vegetarian_wok", 3.8f),
+        WOK("mainmealtype_wok", 3.8f),
+        EMPFEHLUNG_DES_TAGES("mainmealtype_meal_of_the_day", 4.1f),
+        PASTA("mainmealtype_pasta", 3.7f),
+        PIZZA_DES_TAGES("mainmealtype_pizza_of_the_day", 3.7f),
+        PIZZA_CLASSICS("mainmealtype_pizza_classics", 3.7f),
+        BURGER_CLASSICS("mainmealtype_burger_classics", 4.9f),
+        BURGER_DER_WOCHE("mainmealtype_burger_of_the_week", 1.8f),
         ;
 
-        private final String displayName;
+        private final String bundleKey;
         private final float price;
 
-        Type(String displayName, float price) {
-            this.displayName = displayName;
+        Type(String bundleKey, float price) {
+            this.bundleKey = bundleKey;
             this.price = price;
         }
 
@@ -177,7 +181,8 @@ public class MainMeal extends Meal {
                 }
                 case "Wok" -> {
                     List<Nutrition> nutritions = Nutrition.searchNutrientsFor(e);
-                    if (nutritions.contains(Nutrition.VEGAN) || nutritions.contains(Nutrition.VEGETARIAN)) {
+                    if (nutritions.contains(Nutrition.VEGAN) || nutritions.contains(
+                            Nutrition.VEGETARIAN)) {
                         return WOK_VEGETARISCH;
                     }
                     return WOK;
@@ -204,8 +209,8 @@ public class MainMeal extends Meal {
             return null;
         }
 
-        public String getDisplayName() {
-            return displayName;
+        public String getDisplayName(Locale locale) {
+            return ResourceManager.getString(bundleKey, locale);
         }
 
         public float getPrice() {

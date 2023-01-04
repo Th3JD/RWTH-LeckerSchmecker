@@ -285,7 +285,8 @@ public class DatabaseManager {
 
             if (!rs.next()) {
                 // User not yet in database
-                LeckerSchmecker.getLogger().info("User with chatID " + chatID + " is not yet registered.");
+                LeckerSchmecker.getLogger()
+                        .info("User with chatID " + chatID + " is not yet registered.");
 
                 UUID userID = generator.generate();
 
@@ -293,7 +294,8 @@ public class DatabaseManager {
                 ADD_USER.setString(1, userID.toString());
                 ADD_USER.setLong(2, chatID);
                 ADD_USER.setString(3, null);
-                ADD_USER.setString(4, "en-GB");
+                ADD_USER.setString(4, ResourceManager.DEFAULTLOCALE.getLanguage() + "-"
+                        + ResourceManager.DEFAULTLOCALE.getCountry());
                 ADD_USER.execute();
 
                 return new ChatContext(bot, userID, chatID, null, ResourceManager.DEFAULTLOCALE);

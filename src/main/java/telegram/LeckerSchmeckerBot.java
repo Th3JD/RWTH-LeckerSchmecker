@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import localization.ResourceManager;
 import meal.Canteen;
 import meal.DailyOffer;
 import meal.LeckerSchmecker;
@@ -97,17 +98,19 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                     if (checkAccessCode(messageText)) {
                         Config.addAllowedUser(chatId);
                         sendTextMessage(chatId,
-                                "Zugriff gewährt. Bitte starte die Konversation mit /start");
+                                ResourceManager.getString("access_granted",
+                                        ResourceManager.DEFAULTLOCALE));
                         return;
                     } else {
-                        sendTextMessage(chatId, "Falscher Code, bitte versuche es erneut.");
+                        sendTextMessage(chatId, ResourceManager.getString("access_denied",
+                                ResourceManager.DEFAULTLOCALE));
                         return;
                     }
                 }
             }
 
             sendTextMessage(chatId,
-                    "Dieser Bot steht momentan noch nicht zur Verfügung. Falls du einen Code hast, gebe diesen bitte ein.");
+                    ResourceManager.getString("bot_unavailable", ResourceManager.DEFAULTLOCALE));
             LeckerSchmecker.getLogger()
                     .info("Unerlaubter Nutzer mit chatID " + chatId + " hat ein Update ausgelöst.");
             return;
@@ -218,8 +221,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
         if (offerOpt.isEmpty()) {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.GERMANY);
-            return canteen.getDisplayName() + " bietet am " + date.format(formatter)
-                    + " keine Gerichte an!";
+            return context.getLocalizedString("no_offer", canteen.getDisplayName(),
+                    date.format(formatter));
         }
 
         DailyOffer offer = offerOpt.get();
@@ -229,25 +232,30 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             Float globalRating = DatabaseManager.getGlobalRating(meal);
             Float userRating = DatabaseManager.getUserRating(context, meal);
 
-            sb.append("*").append(meal.getType().getDisplayName()).append("*")
+            sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
                     .append(" _").append(priceFormat.format(meal.getPrice()))
                     .append("€").append("_")
                     .append("\n")
                     .append(meal.text()).append("\n")
-                    .append("Globales Rating: ").append(globalRating == null ? "_Nicht bewertet_"
+                    .append(context.getLocalizedString("global_rating"))
+                    .append(globalRating == null ? "_" + context.getLocalizedString("not_rated")
+                            + "_"
                             : ratingFormat.format(globalRating)).append("\n")
-                    .append("Dein Rating:         ").append(userRating == null ? "_Nicht bewertet_"
+                    .append(context.getLocalizedString("your_rating"))
+                    .append(userRating == null ? "_" + context.getLocalizedString("not_rated") + "_"
                             : ratingFormat.format(userRating)).append("\n\n");
         }
 
-        sb.append("*Hauptbeilagen*").append("\n");
-        sb.append(String.join(" oder ",
+        sb.append("*").append(context.getLocalizedString("main_side_dish")).append("*")
+                .append("\n");
+        sb.append(String.join(" " + context.getLocalizedString("or") + " ",
                 offer.getSideMeals(SideMeal.Type.MAIN).stream().map(SideMeal::getDisplayName)
                         .toList()));
         sb.append("\n\n");
 
-        sb.append("*Nebenbeilagen*").append("\n");
-        sb.append(String.join(" oder ",
+        sb.append("*").append(context.getLocalizedString("secondary_dish")).append("*")
+                .append("\n");
+        sb.append(String.join(" " + context.getLocalizedString("or") + " ",
                 offer.getSideMeals(SideMeal.Type.SIDE).stream().map(SideMeal::getDisplayName)
                         .toList()));
 
