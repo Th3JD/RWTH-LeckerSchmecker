@@ -20,12 +20,13 @@ public enum InternalAction implements BotAction {
     SELECT_DATE {
 
         private final int LOOKAHEAD_DAYS = Config.getInt("botaction.select_date.daysToPresent");
-        private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
 
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", context.getLocale());
 
             SendMessage message = new SendMessage();
             message.setText(context.getLocalizedString("select_a_date"));
@@ -46,6 +47,8 @@ public enum InternalAction implements BotAction {
             if (!update.hasMessage()) { // User did not answer with a text message
                 this.init(context, null);
             }
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", context.getLocale());
 
             String text = update.getMessage().getText();
             try {
@@ -121,7 +124,6 @@ public enum InternalAction implements BotAction {
             context.getReturnToAction().onUpdate(context, update);
         }
     },
-
     SELECT_LOCALE {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
@@ -148,7 +150,6 @@ public enum InternalAction implements BotAction {
             }
         }
     },
-
     RATE_MEAL() {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
