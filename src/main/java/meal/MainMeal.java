@@ -149,6 +149,8 @@ public class MainMeal extends Meal {
         PASTA("Pasta", 3.7f),
         PIZZA_DES_TAGES("Pizza des Tages", 3.7f),
         PIZZA_CLASSICS("Pizza Classics", 3.7f),
+        BURGER_CLASSICS("Burger Classics", 4.9f),
+        BURGER_DER_WOCHE("Burger der Woche", 1.8f),
         ;
 
         private final String displayName;
@@ -191,6 +193,12 @@ public class MainMeal extends Meal {
                 }
                 case "Pizza des Tages" -> {
                     return PIZZA_DES_TAGES;
+                }
+                case "Burger Classics" -> {
+                    return BURGER_CLASSICS;
+                }
+                case "Burger der Woche" -> {
+                    return BURGER_DER_WOCHE;
                 }
             }
             return null;
