@@ -9,11 +9,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import meal.Canteen;
 import meal.DailyOffer;
 import meal.LeckerSchmecker;
@@ -36,6 +39,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
     private final MultiKeyMap<String, String, MealPollInfo> mealPollInfoByMealNameOrPollId = new MultiKeyMap<>();
 
+    private final Pattern accessCodePattern = Pattern.compile("\\d{5}");
+    private final Set<String> accessCodes = new HashSet<>();
     private static LeckerSchmeckerBot instance;
 
     public static LeckerSchmeckerBot getInstance() {
@@ -83,7 +88,26 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
         // Check if user is allowed to take part in the closed beta
         if (!Config.isAllowedUser(chatId)) {
-            sendTextMessage(chatId, "Dieser Bot steht momentan noch nicht zur Verfügung!");
+
+            // Check if the user sent an access code
+            if (update.hasMessage()) {
+                String messageText = update.getMessage().getText();
+                Matcher matcher = accessCodePattern.matcher(messageText);
+                if (matcher.matches()) {
+                    if (checkAccessCode(messageText)) {
+                        Config.addAllowedUser(chatId);
+                        sendTextMessage(chatId,
+                                "Zugriff gewährt. Bitte starte die Konversation mit /start");
+                        return;
+                    } else {
+                        sendTextMessage(chatId, "Falscher Code, bitte versuche es erneut.");
+                        return;
+                    }
+                }
+            }
+
+            sendTextMessage(chatId,
+                    "Dieser Bot steht momentan noch nicht zur Verfügung. Falls du einen Code hast, gebe diesen bitte ein.");
             LeckerSchmecker.getLogger()
                     .info("Unerlaubter Nutzer mit chatID " + chatId + " hat ein Update ausgelöst.");
             return;
@@ -287,6 +311,22 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
     public void removeMealPollInfo(Poll poll) {
         String mealName = this.mealPollInfoByMealNameOrPollId.get2(poll.getId()).getMealName();
         this.mealPollInfoByMealNameOrPollId.remove(mealName, poll.getId());
+    }
+
+    public boolean addAccessCode(String code) {
+        if (accessCodes.contains(code)) {
+            return false;
+        }
+        accessCodes.add(code);
+        return true;
+    }
+
+    public boolean checkAccessCode(String code) {
+        if (accessCodes.contains(code)) {
+            accessCodes.remove(code);
+            return true;
+        }
+        return false;
     }
 
 }

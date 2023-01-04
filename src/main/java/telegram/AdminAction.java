@@ -3,6 +3,7 @@ package telegram;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -11,10 +12,16 @@ import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 
 public enum AdminAction implements BotAction {
 
-    TEST("Test", List.of("test")) {
+    GENERATE_ACCESS_CODE("Access Code", List.of("/access", "access")) {
+        private final Random rnd = new Random();
+
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
-
+            String code = String.format("%05d", rnd.nextInt(100000));
+            while (!context.getBot().addAccessCode(code)) {
+                code = String.format("%05d", rnd.nextInt(100000));
+            }
+            context.sendMessage("Generated access code: " + code);
         }
 
         @Override
