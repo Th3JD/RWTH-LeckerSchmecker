@@ -28,7 +28,7 @@ public enum InternalAction implements BotAction {
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
-            message.setText("Wähle ein Datum!");
+            message.setText(context.getLocalizedString("select_a_date"));
 
             List<String> queryDates = new LinkedList<>();
             LocalDate today = LocalDate.now();
@@ -51,7 +51,7 @@ public enum InternalAction implements BotAction {
             try {
                 LocalDate selectedDate = LocalDate.parse(text, formatter);
                 if (!selectedDate.isBefore(LocalDate.now().plusDays(LOOKAHEAD_DAYS))) {
-                    context.sendMessage("Ungültiges Datum!");
+                    context.sendLocalizedMessage("invalid_option");
                     this.init(context, null);
                     return;
                 }
@@ -60,7 +60,7 @@ public enum InternalAction implements BotAction {
                 context.getReturnToAction().onUpdate(context, update);
 
             } catch (DateTimeParseException e) {
-                context.sendMessage("Ungültiges Datum!");
+                context.sendLocalizedMessage("invalid_option");
                 this.init(context, null);
             }
 
@@ -74,7 +74,7 @@ public enum InternalAction implements BotAction {
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
-            message.setText("Wähle eine Mensa!");
+            message.setText(context.getLocalizedString("select_a_canteen"));
 
             message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
                     Canteen.TYPES.stream().map(Canteen::getDisplayName).toList()));
@@ -91,7 +91,7 @@ public enum InternalAction implements BotAction {
             Message msg = update.getMessage();
             Optional<Canteen> canteenOpt = Canteen.getByDisplayName(msg.getText());
             if (canteenOpt.isEmpty()) {
-                context.sendMessage("Unbekannte Mensa!");
+                context.sendLocalizedMessage("invalid_option");
                 this.init(context, null);
                 return;
             }
@@ -106,7 +106,7 @@ public enum InternalAction implements BotAction {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
             SendMessage msg = new SendMessage();
-            msg.setText("Wähle ein Gericht!");
+            msg.setText(context.getLocalizedString("select_a_meal"));
             msg.setReplyMarkup(BotAction.createKeyboardMarkup(1,
                     context.getCanteen().getDailyOffer(LocalDate.now()).get()
                             .getMainMeals().stream().map(MainMeal::getDisplayName).toList()));
@@ -129,7 +129,7 @@ public enum InternalAction implements BotAction {
             context.setCurrentAction(this);
 
             SendMessage msg = new SendMessage();
-            msg.setText("Wähle eine Sprache!");
+            msg.setText(context.getLocalizedString("select_a_language"));
             msg.setReplyMarkup(BotAction.createKeyboardMarkup(1,
                     ResourceManager.LOCALES.stream().map(Locale::getDisplayName).toList()));
             context.sendMessage(msg);
@@ -158,7 +158,7 @@ public enum InternalAction implements BotAction {
             MainMeal meal = context.getSelectedMeal();
 
             SendMessage msg = new SendMessage();
-            msg.setText("Gib eine Bewertung für '_" + meal.getDisplayName() + "_' ab!");
+            msg.setText(context.getLocalizedString("rate_meal", meal.getDisplayName()));
             msg.setReplyMarkup(BotAction.createKeyboardMarkup(5,
                     "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Hauptmenü"));
 
@@ -172,12 +172,8 @@ public enum InternalAction implements BotAction {
             try {
                 context.setRatedPoints(Integer.parseInt(updateMsg));
             } catch (NumberFormatException ignored) {
-                if (updateMsg.equals("Hauptmenü")) {
-                    context.resetPassthroughInformation();
-                    CallableAction.MAIN_MENU.init(context, null);
-                    return;
-                }
-                context.sendMessage("Ungültige Bewertung!");
+                context.sendLocalizedMessage("invalid_option");
+                this.init(context, null);
             }
             context.getReturnToAction().onUpdate(context, update);
         }

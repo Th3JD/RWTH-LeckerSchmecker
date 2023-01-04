@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import localization.ResourceManager;
 import meal.Canteen;
 import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
@@ -181,6 +182,22 @@ public class ChatContext {
 
     public boolean hasRated() {
         return this.ratedPoints != null;
+    }
+
+    public void sendLocalizedMessage(String key, Object... objects) {
+        bot.sendTextMessage(chatID, ResourceManager.getString(key, this.locale, objects));
+    }
+
+    public void sendLocalizedMessage(String key) {
+        bot.sendTextMessage(chatID, ResourceManager.getString(key, this.locale));
+    }
+
+    public String getLocalizedString(String key) {
+        return ResourceManager.getString(key, this.locale);
+    }
+
+    public String getLocalizedString(String key, Object... objects) {
+        return ResourceManager.getString(key, this.locale, objects);
     }
 
     public void sendMessage(String text) {

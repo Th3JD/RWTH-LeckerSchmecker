@@ -17,7 +17,8 @@ public enum CallableAction implements BotAction {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
-            context.setReturnToAction(this); // Needed to make the internal action return to this action
+            context.setReturnToAction(
+                    this); // Needed to make the internal action return to this action
 
             // Select date, selecting the canteen is done in onUpdate
             InternalAction.SELECT_DATE.init(context, null);
@@ -38,7 +39,8 @@ public enum CallableAction implements BotAction {
 
                     SendMessage message = new SendMessage();
                     message.enableMarkdownV2(true);
-                    message.setText("*Gerichte (" + selectedCanteen.getDisplayName() + ")*\n\n"
+                    message.setText("*" + context.getLocalizedString("meals") + " ("
+                            + selectedCanteen.getDisplayName() + ")*\n\n"
                             + context.getBot()
                             .getMealsText(selectedCanteen, context.getSelectedDate(), context));
 
@@ -66,8 +68,7 @@ public enum CallableAction implements BotAction {
 
             // Check if user already rated a meal today
             if (DatabaseManager.hasRatedToday(context)) {
-                context.sendMessage(
-                        "Da du heute bereits ein Gericht bewertet hast, wird deine alte Bewertung bei Erhalt der Neuen gelöscht.");
+                context.sendLocalizedMessage("already_rated");
             }
 
             if (context.hasCanteen()) {
@@ -90,7 +91,8 @@ public enum CallableAction implements BotAction {
 
             if (currentTime.isBefore(canteen.getOpeningTime())) {
                 MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
-                        canteen.getDisplayName() + " hat noch nicht geöffnet!"));
+                        context.getLocalizedString("canteen_not_open_yet",
+                                canteen.getDisplayName())));
                 context.resetPassthroughInformation();
                 return;
             }
@@ -98,7 +100,8 @@ public enum CallableAction implements BotAction {
             if (currentTime.isAfter(canteen.getClosingTime().plusMinutes(30))) {
                 context.resetPassthroughInformation();
                 MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
-                        canteen.getDisplayName() + " hat schon geschlossen!"));
+                        context.getLocalizedString("canteen_already_closed",
+                                canteen.getDisplayName())));
                 return;
             }
 
@@ -113,7 +116,7 @@ public enum CallableAction implements BotAction {
             if (meal.getId() == null) {
                 context.resetPassthroughInformation();
                 MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
-                        "'_" + meal.getDisplayName() + "_'" + " kann noch nicht bewertet werden!"));
+                        context.getLocalizedString("meal_not_ratable", meal.getDisplayName())));
                 return;
             }
 
@@ -144,7 +147,7 @@ public enum CallableAction implements BotAction {
             SendMessage message = passthroughMessage;
             if (message == null) {
                 message = new SendMessage();
-                message.setText("Wähle eine Aktion!");
+                message.setText(context.getLocalizedString("choose_action"));
             }
 
             message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
@@ -170,7 +173,7 @@ public enum CallableAction implements BotAction {
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
-            message.setText("Soll ein Standardwert gesetzt oder gelöscht werden?");
+            message.setText(context.getLocalizedString("set_delete_default_value"));
 
             message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
                     "Setzen", "Löschen", "Hauptmenü"));
@@ -223,7 +226,8 @@ public enum CallableAction implements BotAction {
                     // Check if the default canteen needs to be set or unset
                     if (context.getDefaultValueSet()) {
                         // Canteen should be set
-                        context.setReturnToAction(this); // Needed to make the internal action return to this action
+                        context.setReturnToAction(
+                                this); // Needed to make the internal action return to this action
 
                         InternalAction.SELECT_CANTEEN.init(context, null);
                     } else {
@@ -231,7 +235,7 @@ public enum CallableAction implements BotAction {
                         context.setDefaultCanteen(null);
 
                         SendMessage message = new SendMessage();
-                        message.setText("Deine Standardmensa wurde zurückgesetzt!");
+                        message.setText(context.getLocalizedString("deleted_default_canteen"));
                         MAIN_MENU.init(context, message);
                     }
                     return;
@@ -246,14 +250,13 @@ public enum CallableAction implements BotAction {
                         context.setLocale(ResourceManager.DEFAULTLOCALE);
 
                         SendMessage message = new SendMessage();
-                        message.setText("Deine Sprache wurde zurückgesetzt!");
+                        message.setText(context.getLocalizedString("reset_selected_language"));
                         MAIN_MENU.init(context, message);
                     }
                     return;
                 }
                 default -> {
-                    context.sendMessage(
-                            "Ungültige Option. Wähle eine Option oder kehre mit /start zum Hauptmenü zurück.");
+                    context.sendLocalizedMessage("invalid_option");
                     this.init(context, null);
                 }
             }
