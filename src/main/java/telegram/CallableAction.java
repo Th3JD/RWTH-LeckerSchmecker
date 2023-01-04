@@ -4,6 +4,7 @@ import database.DatabaseManager;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import localization.ResourceManager;
 import meal.Canteen;
 import meal.MainMeal;
@@ -13,7 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 public enum CallableAction implements BotAction {
 
-    LIST_MEALS("Gerichte", List.of("gerichte", "essen")) {
+    LIST_MEALS("callableaction_list_meals", List.of("gerichte", "essen")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -58,7 +59,7 @@ public enum CallableAction implements BotAction {
         }
     },
 
-    RATING("Kritik", List.of("bewertung", "kritik", "rating")) {
+    RATING("callableaction_rate", List.of("bewertung", "kritik", "rating")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -136,7 +137,7 @@ public enum CallableAction implements BotAction {
         }
     },
 
-    MAIN_MENU("Hauptmenü", List.of("/start", "start", "exit", "menu", "menü", "hauptmenü")) {
+    MAIN_MENU("callableaction_main_menu", List.of("/start", "start", "exit", "menu", "menü", "hauptmenü")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -152,7 +153,7 @@ public enum CallableAction implements BotAction {
 
             message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
                     Arrays.stream(CallableAction.values())
-                            .map(CallableAction::getDisplayName).toList()));
+                            .map(a -> a.getDisplayName(context.getLocale())).toList()));
 
             context.sendMessage(message);
         }
@@ -161,13 +162,14 @@ public enum CallableAction implements BotAction {
         public void onUpdate(ChatContext context, Update update) {
             Message msg = update.getMessage();
             Arrays.stream(CallableAction.values())
-                    .filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].toLowerCase()))
+                    .filter(a -> a.getCmds().contains(msg.getText().toLowerCase()) || a.getDisplayName(context.getLocale())
+                            .equalsIgnoreCase(msg.getText()))
                     .findFirst()
                     .ifPresent(action -> action.init(context, null));
         }
     },
 
-    SELECT_DEFAULTS("Standardwerte", List.of("standardwerte", "defaults")) {
+    SELECT_DEFAULTS("callableaction_select_defaults", List.of("standardwerte", "defaults")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -175,8 +177,9 @@ public enum CallableAction implements BotAction {
             SendMessage message = new SendMessage();
             message.setText(context.getLocalizedString("set_delete_default_value"));
 
-            message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
-                    "Setzen", "Löschen", "Hauptmenü"));
+            message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(2, context.getLocale(),
+                    context.getLocalizedString("callableaction_set_defaults_set"),
+                    context.getLocalizedString("callableaction_set_defaults_delete")));
 
             context.sendMessage(message);
         }
@@ -208,71 +211,68 @@ public enum CallableAction implements BotAction {
             }
 
             String text = update.getMessage().getText();
-            switch (text) {
-                case "Setzen", "Löschen" -> {
-                    boolean shouldBeSet = text.equals("Setzen");
-                    context.setDefaultValueSet(shouldBeSet);
+            if (text.equals(context.getLocalizedString("callableaction_set_defaults_set")) ||
+                    text.equals(context.getLocalizedString("callableaction_set_defaults_delete"))) {
+
+                boolean shouldBeSet = text.equals(context.getLocalizedString("callableaction_set_defaults_set"));
+                context.setDefaultValueSet(shouldBeSet);
+
+                SendMessage message = new SendMessage();
+                message.setText(
+                        context.getLocalizedString(shouldBeSet ? "which_default_value_should_be_set" : "which_default_value_should_be_deleted"));
+                message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1, context.getLocale(),
+                        context.getLocalizedString("canteen"),
+                        context.getLocalizedString("language")));
+                context.sendMessage(message);
+
+            } else if (text.equals(context.getLocalizedString("canteen"))) {
+
+                // Check if the default canteen needs to be set or unset
+                if (context.getDefaultValueSet()) {
+                    // Canteen should be set
+                    context.setReturnToAction(this);
+
+                    InternalAction.SELECT_CANTEEN.init(context, null);
+                } else {
+                    // Canteen should be unset
+                    context.setDefaultCanteen(null);
 
                     SendMessage message = new SendMessage();
-                    message.setText(
-                            "Welcher Standardwert soll " + (shouldBeSet ? "gesetzt" : "gelöscht")
-                                    + " werden?");
-                    message.setReplyMarkup(
-                            BotAction.createKeyboardMarkup(1, "Mensa", "Sprache", "Hauptmenü"));
-                    context.sendMessage(message);
+                    message.setText(context.getLocalizedString("deleted_default_canteen"));
+                    MAIN_MENU.init(context, message);
                 }
-                case "Mensa" -> {
 
-                    // Check if the default canteen needs to be set or unset
-                    if (context.getDefaultValueSet()) {
-                        // Canteen should be set
-                        context.setReturnToAction(
-                                this); // Needed to make the internal action return to this action
+            } else if (text.equals(context.getLocalizedString("language"))) {
 
-                        InternalAction.SELECT_CANTEEN.init(context, null);
-                    } else {
-                        // Canteen should be unset
-                        context.setDefaultCanteen(null);
+                if (context.getDefaultValueSet()) {
+                    context.setReturnToAction(this);
 
-                        SendMessage message = new SendMessage();
-                        message.setText(context.getLocalizedString("deleted_default_canteen"));
-                        MAIN_MENU.init(context, message);
-                    }
-                    return;
+                    InternalAction.SELECT_LOCALE.init(context, null);
+                } else {
+                    context.setLocale(ResourceManager.DEFAULTLOCALE);
+
+                    SendMessage message = new SendMessage();
+                    message.setText(context.getLocalizedString("reset_selected_language"));
+                    MAIN_MENU.init(context, message);
                 }
-                case "Sprache" -> {
 
-                    if (context.getDefaultValueSet()) {
-                        context.setReturnToAction(this);
-
-                        InternalAction.SELECT_LOCALE.init(context, null);
-                    } else {
-                        context.setLocale(ResourceManager.DEFAULTLOCALE);
-
-                        SendMessage message = new SendMessage();
-                        message.setText(context.getLocalizedString("reset_selected_language"));
-                        MAIN_MENU.init(context, message);
-                    }
-                    return;
-                }
-                default -> {
-                    context.sendLocalizedMessage("invalid_option");
-                    this.init(context, null);
-                }
+            } else {
+                context.sendLocalizedMessage("invalid_option");
+                this.init(context, null);
             }
         }
     };
 
-    private final String displayName;
+    private final String bundleKey;
     private final List<String> cmds;
 
-    CallableAction(String displayName, List<String> cmds) {
-        this.displayName = displayName;
+    CallableAction(String bundleKey, List<String> cmds) {
+        this.bundleKey = bundleKey;
         this.cmds = cmds;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getDisplayName(Locale locale) {
+        return ResourceManager.getString(bundleKey, locale);
     }
 
     public List<String> getCmds() {

@@ -126,8 +126,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         }
 
         // Reset the current action if the user wants to access the main menu
-        if (update.hasMessage() && CallableAction.MAIN_MENU.getCmds()
-                .contains(update.getMessage().getText().split(" ")[0].toLowerCase())) {
+        if (update.hasMessage() && (CallableAction.MAIN_MENU.getCmds()
+                .contains(update.getMessage().getText().toLowerCase()) || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
+                .equalsIgnoreCase(update.getMessage().getText()))) {
             context.setCurrentAction(null);
         }
 
@@ -140,7 +141,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
             // Find action requested by the user
             Optional<CallableAction> action = Arrays.stream(CallableAction.values())
-                    .filter(a -> a.getCmds().contains(msg.getText().split(" ")[0].toLowerCase()))
+                    .filter(a -> a.getCmds().contains(msg.getText().toLowerCase()) || a.getDisplayName(context.getLocale())
+                            .equalsIgnoreCase(msg.getText()))
                     .findFirst();
 
             if (action.isPresent()) {
