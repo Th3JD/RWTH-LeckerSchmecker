@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import localization.ResourceManager;
 import meal.Canteen;
 import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -115,8 +116,36 @@ public enum InternalAction implements BotAction {
         @Override
         public void onUpdate(ChatContext context, Update update) {
             context.setSelectedMeal(context.getCanteen()
-                    .getDailyOffer(LocalDate.now()).get().getMainMealByDisplayName(update.getMessage().getText()).get());
+                    .getDailyOffer(LocalDate.now()).get()
+                    .getMainMealByDisplayName(update.getMessage().getText()).get());
             context.getReturnToAction().onUpdate(context, update);
+        }
+    },
+
+    SELECT_LOCALE {
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage) {
+            context.sendMessage(passthroughMessage);
+            context.setCurrentAction(this);
+
+            SendMessage msg = new SendMessage();
+            msg.setText("Wähle eine Sprache!");
+            msg.setReplyMarkup(BotAction.createKeyboardMarkup(1,
+                    ResourceManager.LOCALES.stream().map(Locale::getDisplayName).toList()));
+            context.sendMessage(msg);
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+            Optional<Locale> loc = ResourceManager.LOCALES.stream()
+                    .filter(a -> a.getDisplayName().equals(update.getMessage().getText()))
+                    .findFirst();
+            if (loc.isPresent()) {
+                context.setSelectedLocale(loc.get());
+                context.getReturnToAction().onUpdate(context, update);
+            } else {
+                this.init(context, null);
+            }
         }
     },
 

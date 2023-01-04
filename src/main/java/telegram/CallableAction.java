@@ -4,6 +4,7 @@ import database.DatabaseManager;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
+import localization.ResourceManager;
 import meal.Canteen;
 import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -192,6 +193,9 @@ public enum CallableAction implements BotAction {
                 if (context.getSelectedCanteen() != null) {
                     context.setDefaultCanteen(context.getSelectedCanteen());
                     message.setText(context.getSelectedCanteen().getDisplayName() + " ✅");
+                } else if (context.getSelectedLocale() != null) {
+                    context.setLocale(context.getSelectedLocale());
+                    message.setText(context.getSelectedLocale().getDisplayName() + " ✅");
                 }
 
                 // Reset everything prior to exiting the state
@@ -207,8 +211,11 @@ public enum CallableAction implements BotAction {
                     context.setDefaultValueSet(shouldBeSet);
 
                     SendMessage message = new SendMessage();
-                    message.setText("Welcher Standardwert soll " + (shouldBeSet ? "gesetzt" : "gelöscht") + " werden?");
-                    message.setReplyMarkup(BotAction.createKeyboardMarkup(1, "Mensa", "Hauptmenü"));
+                    message.setText(
+                            "Welcher Standardwert soll " + (shouldBeSet ? "gesetzt" : "gelöscht")
+                                    + " werden?");
+                    message.setReplyMarkup(
+                            BotAction.createKeyboardMarkup(1, "Mensa", "Sprache", "Hauptmenü"));
                     context.sendMessage(message);
                 }
                 case "Mensa" -> {
@@ -229,8 +236,24 @@ public enum CallableAction implements BotAction {
                     }
                     return;
                 }
+                case "Sprache" -> {
+
+                    if (context.getDefaultValueSet()) {
+                        context.setReturnToAction(this);
+
+                        InternalAction.SELECT_LOCALE.init(context, null);
+                    } else {
+                        context.setLocale(ResourceManager.DEFAULTLOCALE);
+
+                        SendMessage message = new SendMessage();
+                        message.setText("Deine Sprache wurde zurückgesetzt!");
+                        MAIN_MENU.init(context, message);
+                    }
+                    return;
+                }
                 default -> {
-                    context.sendMessage("Ungültige Option. Wähle eine Option oder kehre mit /start zum Hauptmenü zurück.");
+                    context.sendMessage(
+                            "Ungültige Option. Wähle eine Option oder kehre mit /start zum Hauptmenü zurück.");
                     this.init(context, null);
                 }
             }

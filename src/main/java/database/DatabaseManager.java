@@ -15,8 +15,10 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import localization.ResourceManager;
 import meal.Canteen;
 import meal.LeckerSchmecker;
 import meal.MainMeal;
@@ -32,7 +34,7 @@ public class DatabaseManager {
             new EthernetAddress("00:00:00:00:00:00"));
 
     // STATEMENTS
-    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
+    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, SET_LOCALE, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
             ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS,
             RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING;
     /////////////
@@ -66,6 +68,10 @@ public class DatabaseManager {
 
     public static void setDefaultCanteen(UUID userID, Canteen canteen) {
         getInstance()._setDefaultCanteen(userID, canteen);
+    }
+
+    public static void setLanguage(UUID userID, Locale locale) {
+        getInstance()._setLanguage(userID, locale);
     }
 
     public static Integer loadMealID(MainMeal meal) {
@@ -127,6 +133,7 @@ public class DatabaseManager {
             LOAD_USER.close();
             ADD_USER.close();
             SET_CANTEEN.close();
+            SET_LOCALE.close();
             LOAD_MEAL_BY_ALIAS.close();
             LOAD_MEALS_BY_SHORT_ALIAS.close();
             ADD_NEW_MEAL_ALIAS.close();
@@ -152,9 +159,13 @@ public class DatabaseManager {
             // Users
             stmt.addBatch("create table if not exists users\n" +
                     "(\n" +
-                    "    userID          UUID                                                                                                                        not null,\n" +
-                    "    chatID          BIGINT                                                                                                                      not null,\n" +
-                    "    default_canteen ENUM ('academica', 'ahornstrasse', 'vita', 'templergraben', 'bayernallee', 'eupenerstrasse', 'kmac', 'juelich', 'suedpark') null,\n" +
+                    "    userID          UUID                                                                                                                        not null,\n"
+                    +
+                    "    chatID          BIGINT                                                                                                                      not null,\n"
+                    +
+                    "    default_canteen ENUM ('academica', 'ahornstrasse', 'vita', 'templergraben', 'bayernallee', 'eupenerstrasse', 'kmac', 'juelich', 'suedpark') null,\n"
+                    +
+                    "    language        ENUM ('en-GB', 'de-DE') default 'en-GB' not null,\n" +
                     "    constraint users_pk\n" +
                     "        primary key (userID)\n" +
                     ");\n");
@@ -223,9 +234,11 @@ public class DatabaseManager {
     protected void _setupStatements() {
         try {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
-            ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?)");
+            ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?)");
             SET_CANTEEN = connection.prepareStatement(
                     "UPDATE users SET default_canteen=? WHERE userID like ?");
+            SET_LOCALE = connection.prepareStatement(
+                    "UPDATE users SET language=? WHERE userID like ?");
             LOAD_MEAL_BY_ALIAS = connection.prepareStatement(
                     "SELECT mealID FROM meal_name_alias WHERE alias LIKE ?");
             LOAD_MEALS_BY_SHORT_ALIAS = connection.prepareStatement(
@@ -280,9 +293,10 @@ public class DatabaseManager {
                 ADD_USER.setString(1, userID.toString());
                 ADD_USER.setLong(2, chatID);
                 ADD_USER.setString(3, null);
+                ADD_USER.setString(4, "en-GB");
                 ADD_USER.execute();
 
-                return new ChatContext(bot, userID, chatID, null);
+                return new ChatContext(bot, userID, chatID, null, ResourceManager.DEFAULTLOCALE);
             } else {
                 UUID userID = UUID.fromString(rs.getString("userID"));
 
@@ -292,7 +306,10 @@ public class DatabaseManager {
                     defaultCanteen = Canteen.getByURLName(rs.getString("default_canteen")).get();
                 }
 
-                return new ChatContext(bot, userID, chatID, defaultCanteen);
+                String[] languageInfo = rs.getString("language").split("-");
+                Locale locale = new Locale(languageInfo[0], languageInfo[1]);
+
+                return new ChatContext(bot, userID, chatID, defaultCanteen, locale);
             }
 
         } catch (SQLException e) {
@@ -312,6 +329,18 @@ public class DatabaseManager {
         }
 
     }
+
+    protected void _setLanguage(UUID userID, Locale locale) {
+        try {
+            SET_LOCALE.clearParameters();
+            SET_LOCALE.setString(1, locale.getLanguage() + "-" + locale.getCountry());
+            SET_LOCALE.setString(2, userID.toString());
+            SET_LOCALE.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     protected Integer _loadMealID(String mealName) {
         try {
