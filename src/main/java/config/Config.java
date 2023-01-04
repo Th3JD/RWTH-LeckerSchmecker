@@ -1,13 +1,16 @@
 package config;
 
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
+import meal.LeckerSchmecker;
 
 public class Config {
 
@@ -40,6 +43,10 @@ public class Config {
 
     public static boolean isAllowedUser(long chatID) {
         return getInstance()._isAllowedUser(chatID);
+    }
+
+    public static void addAllowedUser(long chatID) {
+        getInstance()._addAllowedUser(chatID);
     }
 
     public static boolean isAdmin(long chatID) {
@@ -98,10 +105,34 @@ public class Config {
         while (scanner.hasNextLine()) {
             allowedUsers.add(Long.valueOf(scanner.nextLine()));
         }
+
+        try {
+            scanner.close();
+            fis.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     protected boolean _isAllowedUser(long chatID) {
         return allowedUsers.contains(chatID);
+    }
+
+    protected void _addAllowedUser(long chatID) {
+        allowedUsers.add(chatID);
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt", true));
+            writer.newLine();
+            writer.write(String.valueOf(chatID));
+            writer.flush();
+            writer.close();
+            LeckerSchmecker.getLogger().info("User " + chatID + " added via access code");
+        } catch (IOException e) {
+            LeckerSchmecker.getLogger()
+                    .severe("User " + chatID + " konnte nicht hinzugefügt werden!");
+            e.printStackTrace();
+        }
     }
 
     protected boolean _isAdmin(long chatID) {
