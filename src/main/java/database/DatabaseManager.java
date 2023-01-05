@@ -19,7 +19,11 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import localization.ResourceManager;
-import meal.*;
+import meal.Canteen;
+import meal.DietType;
+import meal.LeckerSchmecker;
+import meal.MainMeal;
+import rating.RatingInfo;
 import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
 
@@ -108,7 +112,7 @@ public class DatabaseManager {
         return getInstance()._hasRatedToday(context);
     }
 
-    public static Float getGlobalRating(MainMeal meal) {
+    public static RatingInfo getGlobalRating(MainMeal meal) {
         return getInstance()._getGlobalRating(meal);
     }
 
@@ -266,7 +270,7 @@ public class DatabaseManager {
             LOAD_USER_RATING_BY_DATE = connection.prepareStatement(
                     "SELECT * FROM ratings WHERE userID=? AND date=?");
             LOAD_GLOBAL_RATING = connection.prepareStatement(
-                    "SELECT AVG(rating) as average from (ratings r inner join (\n"
+                    "SELECT AVG(rating) as average, COUNT(*) as votes from (ratings r inner join (\n"
                             + "    select userID, mealID, MAX(date) as MaxDate\n"
                             + "    from ratings\n"
                             + "    WHERE mealID=?\n"
@@ -491,7 +495,7 @@ public class DatabaseManager {
         return false;
     }
 
-    protected Float _getGlobalRating(MainMeal meal) {
+    protected RatingInfo _getGlobalRating(MainMeal meal) {
         try {
             LOAD_GLOBAL_RATING.clearParameters();
             LOAD_GLOBAL_RATING.setInt(1, meal.getId());
@@ -505,7 +509,7 @@ public class DatabaseManager {
                 return null; // rs.getFloat returns 0f if the value is null
             }
 
-            return rs.getFloat("average");
+            return new RatingInfo(meal, rs.getFloat("average"), rs.getInt("votes"));
 
         } catch (SQLException e) {
             e.printStackTrace();

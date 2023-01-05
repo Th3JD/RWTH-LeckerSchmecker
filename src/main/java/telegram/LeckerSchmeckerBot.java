@@ -18,7 +18,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import localization.ResourceManager;
-import meal.*;
+import meal.Canteen;
+import meal.DailyOffer;
+import meal.DietType;
+import meal.LeckerSchmecker;
+import meal.MainMeal;
+import meal.SideMeal;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -27,6 +32,7 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import rating.RatingInfo;
 import util.MultiKeyMap;
 
 public class LeckerSchmeckerBot extends TelegramLongPollingBot {
@@ -232,7 +238,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                 continue;
             }
 
-            Float globalRating = DatabaseManager.getGlobalRating(meal);
+            RatingInfo globalRating = DatabaseManager.getGlobalRating(meal);
             Float userRating = DatabaseManager.getUserRating(context, meal);
 
             sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
@@ -243,7 +249,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                     .append(context.getLocalizedString("global_rating"))
                     .append(globalRating == null ? "_" + context.getLocalizedString("not_rated")
                             + "_"
-                            : ratingFormat.format(globalRating)).append("\n")
+                            : ratingFormat.format(globalRating.getAverageRating()) + " (" + globalRating.getNumVotes() + ")").append("\n")
                     .append(context.getLocalizedString("your_rating"))
                     .append(userRating == null ? "_" + context.getLocalizedString("not_rated") + "_"
                             : ratingFormat.format(userRating)).append("\n\n");
