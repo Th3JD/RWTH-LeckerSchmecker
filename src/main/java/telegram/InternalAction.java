@@ -79,7 +79,7 @@ public enum InternalAction implements BotAction {
             SendMessage message = new SendMessage();
             message.setText(context.getLocalizedString("select_a_canteen"));
 
-            message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
+            message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(2, context.getLocale(),
                     Canteen.TYPES.stream().map(Canteen::getDisplayName).toList()));
 
             context.sendMessage(message);
@@ -112,7 +112,7 @@ public enum InternalAction implements BotAction {
             msg.setText(context.getLocalizedString("select_a_meal"));
             msg.setReplyMarkup(BotAction.createKeyboardMarkup(1,
                     context.getCanteen().getDailyOffer(LocalDate.now()).get()
-                            .getMainMeals().stream().map(MainMeal::getDisplayName).toList()));
+                            .getMainMeals().stream().map(a -> a.getDisplayName(context.getLocale())).toList()));
             context.sendMessage(msg);
         }
 
@@ -120,7 +120,7 @@ public enum InternalAction implements BotAction {
         public void onUpdate(ChatContext context, Update update) {
             context.setSelectedMeal(context.getCanteen()
                     .getDailyOffer(LocalDate.now()).get()
-                    .getMainMealByDisplayName(update.getMessage().getText()).get());
+                    .getMainMealByDisplayName(update.getMessage().getText(), context.getLocale()).get());
             context.getReturnToAction().onUpdate(context, update);
         }
     },
@@ -159,9 +159,9 @@ public enum InternalAction implements BotAction {
             MainMeal meal = context.getSelectedMeal();
 
             SendMessage msg = new SendMessage();
-            msg.setText(context.getLocalizedString("rate_meal", meal.getDisplayName()));
-            msg.setReplyMarkup(BotAction.createKeyboardMarkup(5,
-                    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Hauptmenü"));
+            msg.setText(context.getLocalizedString("rate_meal", meal.getDisplayName(context.getLocale())));
+            msg.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(5, context.getLocale(),
+                    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
 
             context.sendMessage(msg);
         }

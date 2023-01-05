@@ -238,7 +238,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                     .append(" _").append(priceFormat.format(meal.getPrice()))
                     .append("€").append("_")
                     .append("\n")
-                    .append(meal.text()).append("\n")
+                    .append(meal.text(context.getLocale())).append("\n")
                     .append(context.getLocalizedString("global_rating"))
                     .append(globalRating == null ? "_" + context.getLocalizedString("not_rated")
                             + "_"
@@ -251,14 +251,14 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         sb.append("*").append(context.getLocalizedString("main_side_dish")).append("*")
                 .append("\n");
         sb.append(String.join(" " + context.getLocalizedString("or") + " ",
-                offer.getSideMeals(SideMeal.Type.MAIN).stream().map(SideMeal::getDisplayName)
+                offer.getSideMeals(SideMeal.Type.MAIN).stream().map(a -> a.getDisplayName(context.getLocale()))
                         .toList()));
         sb.append("\n\n");
 
         sb.append("*").append(context.getLocalizedString("secondary_dish")).append("*")
                 .append("\n");
         sb.append(String.join(" " + context.getLocalizedString("or") + " ",
-                offer.getSideMeals(SideMeal.Type.SIDE).stream().map(SideMeal::getDisplayName)
+                offer.getSideMeals(SideMeal.Type.SIDE).stream().map(a -> a.getDisplayName(context.getLocale()))
                         .toList()));
 
         return sb.toString();
@@ -296,7 +296,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
         SendPoll poll = new SendPoll();
         poll.setIsAnonymous(false);
-        poll.setQuestion("Das Gericht '" + meal.getDisplayName()
+        poll.setQuestion("Das Gericht '" + meal.getDisplayName(new Locale("de", "DE"))
                 + "' ist ähnlich zu den folgenden Gerichten. Bitte wähle eine Option:");
 
         List<String> options = new ArrayList<>(

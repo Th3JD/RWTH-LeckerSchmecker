@@ -18,34 +18,36 @@ public class MainMeal extends Meal {
     private final List<Nutrition> nutritions;
     private Integer id;
 
-    public MainMeal(String name, String displayName, Type type, float price,
+    public MainMeal(String name, String displayNameDE, String displayNameEN, Type type, float price,
             List<Nutrition> nutritions, Integer id) {
-        super(name, displayName);
+        super(name, displayNameDE, displayNameEN);
         this.type = type;
         this.price = price;
         this.nutritions = nutritions;
         this.id = id;
     }
 
-    public static MainMeal parseMeal(DailyOffer offer, Element element) {
+    public static MainMeal parseMeal(DailyOffer offer, Element elementDE, Element elementEN) {
 
         // parse from html
-        String displayName = element.getElementsByClass("expand-nutr").get(0).ownText();
-        String category = element.getElementsByClass("menue-category").get(0).ownText();
-        Type type = Type.getMealTypeFromCategory(category, element);
+        String displayNameDE = elementDE.getElementsByClass("expand-nutr").get(0).ownText();
+        String displayNameEN = elementEN.getElementsByClass("expand-nutr").get(0).ownText();
+
+        String category = elementDE.getElementsByClass("menue-category").get(0).ownText();
+        Type type = Type.getMealTypeFromCategory(category, elementDE);
 
         if (type == null) {
             LeckerSchmecker.getLogger()
-                    .warning("Could not parse type of meal '" + displayName + "'");
+                    .warning("Could not parse type of meal '" + displayNameDE + "'");
             return null;
         }
 
-        String priceStr = element.getElementsByClass("menue-price").get(0).ownText();
+        String priceStr = elementDE.getElementsByClass("menue-price").get(0).ownText();
         float price = Float.parseFloat(priceStr.split(" ")[0].replace(',', '.'));
 
-        String name = compress(displayName);
+        String name = compress(displayNameDE);
 
-        LinkedList<Nutrition> nutritions = Nutrition.searchNutrientsFor(element);
+        LinkedList<Nutrition> nutritions = Nutrition.searchNutrientsFor(elementDE);
 
         if ((type.equals(Type.TELLERGERICHT) || type.equals(Type.TELLERGERICHT_VEGETARISCH))
                 && offer.getDate().getDayOfWeek().equals(DayOfWeek.FRIDAY)) {
@@ -77,8 +79,8 @@ public class MainMeal extends Meal {
     }
 
     public String getShortAlias() {
-        if (displayName.contains("|")) {
-            return compress(displayName.split("\\|")[0]);
+        if (displayNameDE.contains("|")) {
+            return compress(displayNameDE.split("\\|")[0]);
         }
         return name;
     }
@@ -91,7 +93,7 @@ public class MainMeal extends Meal {
         return price;
     }
 
-    public String text() {
+    public String text(Locale locale) {
         String symbols = this.getSymbols();
         return this.getDisplayName() + (symbols.isEmpty() ? "" : " ") + symbols;
     }
@@ -119,6 +121,7 @@ public class MainMeal extends Meal {
                 .replace(":", " ")
                 .replace(",", " ")
                 .replace(".", " ")
+                .replace("&", " ")
                 .toLowerCase()
                 .replace("ß", "ss")
                 .replace(" mit ", " ")
@@ -137,7 +140,7 @@ public class MainMeal extends Meal {
                 "type=" + type +
                 ", price=" + price +
                 ", name='" + name + '\'' +
-                ", displayName='" + displayName + '\'' +
+                ", displayName='" + displayNameDE + '\'' +
                 '}';
     }
 
