@@ -227,8 +227,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
         StringBuilder sb = new StringBuilder();
         for (MainMeal meal : offer.getMainMeals()) {
-            // Skip meal if MealType is filtered
-            if (MealType.filterMealType(meal.getNutritions(), context.getDefaultMealType())) {
+            // Skip meal if DietType is filtered
+            if (DietType.filterDietType(meal.getNutritions(), context.getDefaultDietType())) {
                 continue;
             }
 

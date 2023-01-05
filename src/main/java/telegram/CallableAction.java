@@ -202,9 +202,9 @@ public enum CallableAction implements BotAction {
                 } else if (context.getSelectedLocale() != null) {
                     context.setLocale(context.getSelectedLocale());
                     message.setText(context.getSelectedLocale().getDisplayName() + " ✅");
-                } else if (context.getSelectedMealType() != null) {
-                    context.setDefaultMealType(context.getSelectedMealType());
-                    message.setText(context.getSelectedMealType().getDisplayName() + " ✅");
+                } else if (context.getSelectedDietType() != null) {
+                    context.setDefaultDietType(context.getSelectedDietType());
+                    message.setText(context.getSelectedDietType().getDisplayName(context.getLocale()) + " ✅");
                 }
 
                 // Reset everything prior to exiting the state
@@ -226,7 +226,7 @@ public enum CallableAction implements BotAction {
                 message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1, context.getLocale(),
                         context.getLocalizedString("canteen"),
                         context.getLocalizedString("language"),
-                        "Ernährung"));
+                        context.getLocalizedString("diet")));
                 context.sendMessage(message);
 
             } else if (text.equals(context.getLocalizedString("canteen"))) {
@@ -260,22 +260,21 @@ public enum CallableAction implements BotAction {
                     MAIN_MENU.init(context, message);
                 }
 
-            } else if (text.equals("Ernährung")) {
-                // Check if the default canteen needs to be set or unset
+            } else if (text.equals(context.getLocalizedString("diet"))) {
+                // Check if the default diet needs to be set or unset
                 if (context.getDefaultValueSet()) {
-                    // Canteen should be set
+                    // Diet should be set
                     context.setReturnToAction(this); // Needed to make the internal action return to this action
 
-                    InternalAction.SELECT_MEAL_TYPE.init(context, null);
+                    InternalAction.SELECT_DIET_TYPE.init(context, null);
                 } else {
-                    // Canteen should be unset
-                    context.setDefaultMealType(null);
+                    // Diet should be unset
+                    context.setDefaultDietType(null);
 
                     SendMessage message = new SendMessage();
-                    message.setText("Deine Ernährungsart wurde zurückgesetzt!");
+                    message.setText(context.getLocalizedString("reset_selected_diet"));
                     MAIN_MENU.init(context, message);
                 }
-                return;
             } else {
                 context.sendLocalizedMessage("invalid_option");
                 this.init(context, null);

@@ -1,43 +1,44 @@
 package meal;
 
+import localization.ResourceManager;
+
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
-public enum MealType {
+public enum DietType {
 
-    VEGAN("Vegan", "vegan", "vegan"),
-    VEGETARIAN("Vegetarisch", "vetegarian", "vegetarian"),
-    NOPORK("kein Schweinefleisch", "no pork", "nopork"),
-    NOFISH("kein Fisch", "no fish", "nofish"),
-    EVERYTHING("Ich esse alles!", "I eat everything!", "all");
+    VEGAN("vegan", "vegan"),
+    VEGETARIAN("vegetarian", "vegetarian"),
+    NOPORK("no_pork", "nopork"),
+    NOFISH("no_fish", "nofish"),
+    EVERYTHING("eating_everything", "all");
 
-    public static final List<MealType> TYPES = List.of(VEGAN, VEGETARIAN, NOPORK, NOFISH,
+    public static final List<DietType> TYPES = List.of(VEGAN, VEGETARIAN, NOPORK, NOFISH,
             EVERYTHING);
 
-    private final String nameDE;
-    private final String nameEN;
+    private final String bundleKey;
     private final String id;
 
-    MealType(String nameDE, String nameEN, String id) {
-        this.nameDE = nameDE;
-        this.nameEN = nameEN;
+    DietType(String bundleKey, String id) {
+        this.bundleKey = bundleKey;
         this.id = id;
     }
 
-    public static Optional<MealType> getById(String name) {
+    public static Optional<DietType> getById(String name) {
         return TYPES.stream().filter(c -> c.getId().equalsIgnoreCase(name)).findFirst();
     }
 
-    public static Optional<MealType> getByDisplayName(String displayName) {
-        return TYPES.stream().filter(c -> c.getDisplayName().equalsIgnoreCase(displayName)).findFirst();
+    public static Optional<DietType> getByDisplayName(String displayName, Locale locale) {
+        return TYPES.stream().filter(c -> c.getDisplayName(locale).equalsIgnoreCase(displayName)).findFirst();
     }
 
-    public static boolean filterMealType(List<Nutrition> nutritions, MealType mealType) {
-        if (mealType != null) {
+    public static boolean filterDietType(List<Nutrition> nutritions, DietType dietType) {
+        if (dietType != null) {
             boolean hasVegan = false;
             boolean hasVegetarian = false;
             for (Nutrition nutrition : nutritions) {
-                switch (mealType) {
+                switch (dietType) {
                     case EVERYTHING:
                         return false; //Do not need to check any further
                     case NOPORK:
@@ -57,7 +58,7 @@ public enum MealType {
                 if (nutrition.equals(Nutrition.VEGETARIAN)) { hasVegetarian = true; }
             }
             // Still need to check for vegan and vegetarian
-            switch (mealType) {
+            switch (dietType) {
                 case VEGAN:
                     if (!hasVegan) {
                         return true;
@@ -76,16 +77,8 @@ public enum MealType {
             return false;
         }
     }
-    public String getDisplayName() {
-        return nameDE;
-    }
-
-    public String getNameDE() {
-        return nameDE;
-    }
-
-    public String getNameEN() {
-        return nameEN;
+    public String getDisplayName(Locale locale) {
+        return ResourceManager.getString(bundleKey, locale);
     }
     public String getId() {
         return id;
