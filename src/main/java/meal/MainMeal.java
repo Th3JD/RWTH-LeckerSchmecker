@@ -54,7 +54,7 @@ public class MainMeal extends Meal {
             nutritions.addFirst(Nutrition.SWEET);
         }
 
-        MainMeal meal = new MainMeal(name, displayName, type, price, nutritions, null);
+        MainMeal meal = new MainMeal(name, displayNameDE, displayNameEN, type, price, nutritions, null);
 
         // database
         Integer id = DatabaseManager.loadMealID(meal);
@@ -95,7 +95,7 @@ public class MainMeal extends Meal {
 
     public String text(Locale locale) {
         String symbols = this.getSymbols();
-        return this.getDisplayName() + (symbols.isEmpty() ? "" : " ") + symbols;
+        return this.getDisplayName(locale) + (symbols.isEmpty() ? "" : " ") + symbols;
     }
 
     public String getSymbols() {
