@@ -11,6 +11,7 @@ import java.util.Optional;
 import localization.ResourceManager;
 import meal.Canteen;
 import meal.MainMeal;
+import meal.MealType;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -100,6 +101,39 @@ public enum InternalAction implements BotAction {
             }
 
             context.setSelectedCanteen(canteenOpt.get());
+            context.getReturnToAction().onUpdate(context, update);
+        }
+    },
+    SELECT_MEAL_TYPE {
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage) {
+            context.sendMessage(passthroughMessage);
+            context.setCurrentAction(this);
+
+            SendMessage message = new SendMessage();
+            message.setText("Wähle eine Ernährungsart!");
+
+            message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
+                    MealType.TYPES.stream().map(MealType::getDisplayName).toList()));
+
+            context.sendMessage(message);
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+            if (!update.hasMessage()) {
+                return;
+            }
+
+            Message msg = update.getMessage();
+            Optional<MealType> mealTypeOpt = MealType.getByDisplayName(msg.getText());
+            if (mealTypeOpt.isEmpty()) {
+                context.sendMessage("Unbekannte Ernährungsart!");
+                this.init(context, null);
+                return;
+            }
+
+            context.setSelectedMealType(mealTypeOpt.get());
             context.getReturnToAction().onUpdate(context, update);
         }
     },

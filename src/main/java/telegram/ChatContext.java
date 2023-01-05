@@ -9,6 +9,7 @@ import java.util.UUID;
 import localization.ResourceManager;
 import meal.Canteen;
 import meal.MainMeal;
+import meal.MealType;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -35,6 +36,9 @@ public class ChatContext {
     private Locale selectedLocale;
     private Canteen selectedCanteen;
 
+    private MealType selectedMealType;
+    private MealType defaultMealType;
+
     private LocalDate selectedDate;
 
     private MainMeal selectedMeal;
@@ -44,12 +48,13 @@ public class ChatContext {
     private Boolean defaultValueSet; // Couldn't come up with a better name... Sorry :(
 
 
-    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen,
-            Locale locale) {
+    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen, MealType mealType,
+                       Locale locale) {
         this.bot = bot;
         this.userID = userID;
         this.chatID = chatID;
         this.defaultCanteen = defaultCanteen;
+        this.defaultMealType = mealType;
         this.locale = locale;
     }
 
@@ -57,6 +62,7 @@ public class ChatContext {
     public void resetPassthroughInformation() {
         this.returnToAction = null;
         this.selectedCanteen = null;
+        this.selectedMealType = null;
         this.selectedDate = null;
         this.selectedMeal = null;
         this.ratedPoints = null;
@@ -73,6 +79,11 @@ public class ChatContext {
     public void setLocale(Locale locale) {
         this.locale = locale;
         DatabaseManager.setLanguage(userID, locale);
+    }
+
+    public void setDefaultMealType(MealType mealType) {
+        this.defaultMealType = mealType;
+        DatabaseManager.setDefaultMealType(userID, mealType);
     }
 
     // Generated Getter & Setter //////////////////////////////////////////////
@@ -160,6 +171,26 @@ public class ChatContext {
         return defaultCanteen;
     }
 
+    public MealType getSelectedMealType() {
+        return selectedMealType;
+    }
+
+    public void setSelectedMealType(MealType selectedMealType) {
+        this.selectedMealType = selectedMealType;
+    }
+
+    public boolean hasMealType() {
+        return this.getDefaultMealType() != null || this.getSelectedMealType() != null;
+    }
+
+    public MealType getMealType() {
+        return this.getDefaultMealType() != null ? this.getDefaultMealType() : this.getSelectedMealType();
+    }
+
+    public MealType getDefaultMealType() {
+        return defaultMealType;
+    }
+
     public MainMeal getSelectedMeal() {
         return selectedMeal;
     }
@@ -170,6 +201,10 @@ public class ChatContext {
 
     public boolean hasMealSelected() {
         return this.selectedMeal != null;
+    }
+
+    public boolean hasMealTypeSelected() {
+        return this.selectedMealType != null;
     }
 
     public Integer getRatedPoints() {

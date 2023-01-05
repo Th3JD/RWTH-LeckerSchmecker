@@ -202,6 +202,9 @@ public enum CallableAction implements BotAction {
                 } else if (context.getSelectedLocale() != null) {
                     context.setLocale(context.getSelectedLocale());
                     message.setText(context.getSelectedLocale().getDisplayName() + " ✅");
+                } else if (context.getSelectedMealType() != null) {
+                    context.setDefaultMealType(context.getSelectedMealType());
+                    message.setText(context.getSelectedMealType().getDisplayName() + " ✅");
                 }
 
                 // Reset everything prior to exiting the state
@@ -222,7 +225,8 @@ public enum CallableAction implements BotAction {
                         context.getLocalizedString(shouldBeSet ? "which_default_value_should_be_set" : "which_default_value_should_be_deleted"));
                 message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1, context.getLocale(),
                         context.getLocalizedString("canteen"),
-                        context.getLocalizedString("language")));
+                        context.getLocalizedString("language"),
+                        "Ernährung"));
                 context.sendMessage(message);
 
             } else if (text.equals(context.getLocalizedString("canteen"))) {
@@ -256,6 +260,22 @@ public enum CallableAction implements BotAction {
                     MAIN_MENU.init(context, message);
                 }
 
+            } else if (text.equals("Ernährung")) {
+                // Check if the default canteen needs to be set or unset
+                if (context.getDefaultValueSet()) {
+                    // Canteen should be set
+                    context.setReturnToAction(this); // Needed to make the internal action return to this action
+
+                    InternalAction.SELECT_MEAL_TYPE.init(context, null);
+                } else {
+                    // Canteen should be unset
+                    context.setDefaultMealType(null);
+
+                    SendMessage message = new SendMessage();
+                    message.setText("Deine Ernährungsart wurde zurückgesetzt!");
+                    MAIN_MENU.init(context, message);
+                }
+                return;
             } else {
                 context.sendLocalizedMessage("invalid_option");
                 this.init(context, null);
