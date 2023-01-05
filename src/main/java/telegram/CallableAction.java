@@ -117,7 +117,7 @@ public enum CallableAction implements BotAction {
             if (meal.getId() == null) {
                 context.resetPassthroughInformation();
                 MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
-                        context.getLocalizedString("meal_not_ratable", meal.getDisplayName())));
+                        context.getLocalizedString("meal_not_ratable", meal.getDisplayName(context.getLocale()))));
                 return;
             }
 
@@ -133,7 +133,7 @@ public enum CallableAction implements BotAction {
 
             context.resetPassthroughInformation();
             MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
-                    "_" + meal.getDisplayName() + "_: *" + ratedPoints + "*"));
+                    "_" + meal.getDisplayName(context.getLocale()) + "_: *" + ratedPoints + "*"));
         }
     },
 

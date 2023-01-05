@@ -27,6 +27,12 @@ public interface BotAction {
         return createKeyboardMarkup(elementsInRow, buttons);
     }
 
+    static ReplyKeyboardMarkup createKeyboardMarkupWithMenu(int elementsInRow, Locale locale, List<String> elements) {
+        List<String> buttons = new LinkedList<>(elements);
+        buttons.add(ResourceManager.getString("callableaction_main_menu", locale));
+        return createKeyboardMarkup(elementsInRow, buttons);
+    }
+
     static ReplyKeyboardMarkup createKeyboardMarkup(int elementsInRow, List<String> elements) {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setSelective(true);

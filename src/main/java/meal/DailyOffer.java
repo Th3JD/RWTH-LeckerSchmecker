@@ -1,13 +1,18 @@
 package meal;
 
 import config.Config;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class DailyOffer {
 
@@ -30,12 +35,12 @@ public class DailyOffer {
         this.sideMeals.add(meal);
     }
 
-    public static DailyOffer parseOffer(Element element) {
+    public static DailyOffer parseOffer(Element elementDE, Element elementEN) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
 
-        Elements headLineElements = element.getElementsByClass("active-headline");
+        Elements headLineElements = elementDE.getElementsByClass("active-headline");
         if (headLineElements.isEmpty()) {
-            headLineElements = element.getElementsByClass("default-headline");
+            headLineElements = elementDE.getElementsByClass("default-headline");
         }
         String fullDate = headLineElements.get(0).text();
         LocalDate date = LocalDate.parse(fullDate, formatter);
@@ -53,17 +58,20 @@ public class DailyOffer {
 
         DailyOffer res = new DailyOffer(date);
 
-        Elements htmlMeals = element.getElementsByClass("menues").get(0)
+        Elements htmlMealsDE = elementDE.getElementsByClass("menues").get(0)
+                .getElementsByClass("menue-wrapper");
+        Elements htmlMealsEN = elementEN.getElementsByClass("menues").get(0)
                 .getElementsByClass("menue-wrapper");
 
-        for (Element htmlMeal : htmlMeals) {
-            MainMeal meal = MainMeal.parseMeal(res, htmlMeal);
+        for (int i = 0; i < htmlMealsDE.size(); i++) {
+            MainMeal meal = MainMeal.parseMeal(res, htmlMealsDE.get(i), htmlMealsEN.get(i));
             res.addMeal(meal);
         }
 
-        Elements htmlExtras = element.getElementsByClass("extras").get(0).getElementsByClass("menue-wrapper");
-        for (Element htmlExtra : htmlExtras) {
-            SideMeal.parseSideMeals(htmlExtra).forEach(res::addSideMeal);
+        Elements htmlExtrasDE = elementDE.getElementsByClass("extras").get(0).getElementsByClass("menue-wrapper");
+        Elements htmlExtrasEN = elementEN.getElementsByClass("extras").get(0).getElementsByClass("menue-wrapper");
+        for (int i = 0; i < htmlExtrasDE.size(); i++) {
+            SideMeal.parseSideMeals(htmlExtrasDE.get(i), htmlExtrasEN.get(i)).forEach(res::addSideMeal);
         }
 
         return res;
@@ -81,11 +89,11 @@ public class DailyOffer {
         return sideMeals.stream().filter(m -> m.getType().equals(type)).collect(Collectors.toSet());
     }
 
-    public Optional<MainMeal> getMainMealByDisplayName(String displayName) {
+    public Optional<MainMeal> getMainMealByDisplayName(String displayName, Locale locale) {
         if (displayName == null) {
             return Optional.empty();
         }
-        return this.getMainMeals().stream().filter(m -> displayName.equals(m.getDisplayName())).findFirst();
+        return this.getMainMeals().stream().filter(m -> displayName.equals(m.getDisplayName(locale))).findFirst();
     }
 
     public LocalDate getDate() {

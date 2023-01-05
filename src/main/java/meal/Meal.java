@@ -1,19 +1,27 @@
 package meal;
 
-public class Meal {
-    protected final String name;
-    protected final String displayName;
+import java.util.Locale;
 
-    public Meal(String name, String displayName) {
+public class Meal {
+
+    protected final String name;
+    protected final String displayNameDE;
+    protected final String displayNameEN;
+
+    public Meal(String name, String displayNameDE, String displayNameEN) {
         this.name = name;
-        this.displayName = displayName;
+        this.displayNameDE = displayNameDE;
+        this.displayNameEN = displayNameEN;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getDisplayName(Locale locale) {
+        if (locale.equals(new Locale("de", "DE"))) {
+            return displayNameDE;
+        }
+        return displayNameEN;
     }
 }

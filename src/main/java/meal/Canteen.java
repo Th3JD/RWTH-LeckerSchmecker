@@ -1,10 +1,5 @@
 package meal;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -12,6 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 public class Canteen {
 
@@ -77,17 +75,22 @@ public class Canteen {
     public void fetchDailyOffers() {
         dailyOffers.clear();
 
-        Document doc;
+        Document docDE;
+        Document docEN;
         try {
-            doc = Jsoup.connect("https://www.studierendenwerk-aachen.de/speiseplaene/" + urlName + "-w.html").get();
+            docDE = Jsoup.connect("https://www.studierendenwerk-aachen.de/speiseplaene/" + urlName + "-w.html").get();
+            docEN = Jsoup.connect("https://www.studierendenwerk-aachen.de/speiseplaene/" + urlName + "-w-en.html").get();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        Elements elements = doc.getElementsByClass("preventBreak");
-        for (Element e : elements) {
-            DailyOffer offer = DailyOffer.parseOffer(e);
-            if (offer != null)
+
+        Elements elementsDE = docDE.getElementsByClass("preventBreak");
+        Elements elementsEN = docEN.getElementsByClass("preventBreak");
+        for (int i = 0; i < elementsDE.size(); i++) {
+            DailyOffer offer = DailyOffer.parseOffer(elementsDE.get(i), elementsEN.get(i));
+            if (offer != null) {
                 dailyOffers.put(offer.getDate(), offer);
+            }
         }
         LeckerSchmecker.getLogger().info("Fetched " + this.dailyOffers.values().stream()
                 .mapToInt(d -> d.getMainMeals().size()).sum() + " meals for canteen '" + this.getDisplayName() + "'");
