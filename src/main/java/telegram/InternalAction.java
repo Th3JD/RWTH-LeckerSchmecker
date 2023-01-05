@@ -10,8 +10,8 @@ import java.util.Locale;
 import java.util.Optional;
 import localization.ResourceManager;
 import meal.Canteen;
+import meal.DietType;
 import meal.MainMeal;
-import meal.MealType;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -104,18 +104,16 @@ public enum InternalAction implements BotAction {
             context.getReturnToAction().onUpdate(context, update);
         }
     },
-    SELECT_MEAL_TYPE {
+    SELECT_DIET_TYPE {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
-            message.setText("Wähle eine Ernährungsart!");
-
+            message.setText(context.getLocalizedString("choose_diet"));
             message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
-                    MealType.TYPES.stream().map(MealType::getDisplayName).toList()));
-
+                    DietType.TYPES.stream().map(a -> a.getDisplayName(context.getLocale())).toList()));
             context.sendMessage(message);
         }
 
@@ -126,14 +124,14 @@ public enum InternalAction implements BotAction {
             }
 
             Message msg = update.getMessage();
-            Optional<MealType> mealTypeOpt = MealType.getByDisplayName(msg.getText());
-            if (mealTypeOpt.isEmpty()) {
-                context.sendMessage("Unbekannte Ernährungsart!");
+            Optional<DietType> dietTypeOpt = DietType.getByDisplayName(msg.getText(), context.getLocale());
+            if (dietTypeOpt.isEmpty()) {
+                context.sendLocalizedMessage("invalid_option");
                 this.init(context, null);
                 return;
             }
 
-            context.setSelectedMealType(mealTypeOpt.get());
+            context.setSelectedDietType(dietTypeOpt.get());
             context.getReturnToAction().onUpdate(context, update);
         }
     },

@@ -32,7 +32,7 @@ public class DatabaseManager {
             new EthernetAddress("00:00:00:00:00:00"));
 
     // STATEMENTS
-    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, SET_MEAL_TYPE, SET_LOCALE, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
+    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
             ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS,
             RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING;
     /////////////
@@ -72,8 +72,8 @@ public class DatabaseManager {
         getInstance()._setLanguage(userID, locale);
     }
 
-    public static void setDefaultMealType(UUID userID, MealType mealType) {
-        getInstance()._setDefaultMealType(userID, mealType);
+    public static void setDefaultDietType(UUID userID, DietType dietType) {
+        getInstance()._setDefaultDietType(userID, dietType);
     }
 
     public static Integer loadMealID(MainMeal meal) {
@@ -135,7 +135,7 @@ public class DatabaseManager {
             LOAD_USER.close();
             ADD_USER.close();
             SET_CANTEEN.close();
-            SET_MEAL_TYPE.close();
+            SET_DIET_TYPE.close();
             SET_LOCALE.close();
             LOAD_MEAL_BY_ALIAS.close();
             LOAD_MEALS_BY_SHORT_ALIAS.close();
@@ -168,7 +168,7 @@ public class DatabaseManager {
                     +
                     "    default_canteen ENUM ('academica', 'ahornstrasse', 'vita', 'templergraben', 'bayernallee', 'eupenerstrasse', 'kmac', 'juelich', 'suedpark') null,\n"
                     +
-                    "    default_meal_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'all') null,\n"
+                    "    default_diet_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'all') null,\n"
                     +
                     "    language        ENUM ('en-GB', 'de-DE') default 'en-GB' not null,\n" +
                     "    constraint users_pk\n" +
@@ -242,8 +242,8 @@ public class DatabaseManager {
             ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, ?)");
             SET_CANTEEN = connection.prepareStatement(
                     "UPDATE users SET default_canteen=? WHERE userID like ?");
-            SET_MEAL_TYPE = connection.prepareStatement(
-                    "UPDATE users SET default_meal_type=? WHERE userID like ?");
+            SET_DIET_TYPE = connection.prepareStatement(
+                    "UPDATE users SET default_diet_type=? WHERE userID like ?");
             SET_LOCALE = connection.prepareStatement(
                     "UPDATE users SET language=? WHERE userID like ?");
             LOAD_MEAL_BY_ALIAS = connection.prepareStatement(
@@ -316,16 +316,16 @@ public class DatabaseManager {
                     defaultCanteen = Canteen.getByURLName(rs.getString("default_canteen")).get();
                 }
 
-                String defaultMealTypeRaw = rs.getString("default_meal_type");
-                MealType defaultMealType = null;
-                if (defaultMealTypeRaw != null) {
-                    defaultMealType = MealType.getById(rs.getString("default_meal_type")).get();
+                String defaultDietTypeRaw = rs.getString("default_diet_type");
+                DietType defaultDietType = null;
+                if (defaultDietTypeRaw != null) {
+                    defaultDietType = DietType.getById(rs.getString("default_diet_type")).get();
                 }
 
                 String[] languageInfo = rs.getString("language").split("-");
                 Locale locale = new Locale(languageInfo[0], languageInfo[1]);
 
-                return new ChatContext(bot, userID, chatID, defaultCanteen, defaultMealType, locale);
+                return new ChatContext(bot, userID, chatID, defaultCanteen, defaultDietType, locale);
             }
 
         } catch (SQLException e) {
@@ -346,12 +346,12 @@ public class DatabaseManager {
 
     }
 
-    protected void _setDefaultMealType(UUID userID, MealType mealType) {
+    protected void _setDefaultDietType(UUID userID, DietType dietType) {
         try {
-            SET_MEAL_TYPE.clearParameters();
-            SET_MEAL_TYPE.setString(1, mealType != null ? mealType.getId() : null);
-            SET_MEAL_TYPE.setString(2, userID.toString());
-            SET_MEAL_TYPE.executeUpdate();
+            SET_DIET_TYPE.clearParameters();
+            SET_DIET_TYPE.setString(1, dietType != null ? dietType.getId() : null);
+            SET_DIET_TYPE.setString(2, userID.toString());
+            SET_DIET_TYPE.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
