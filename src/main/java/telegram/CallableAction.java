@@ -14,7 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 public enum CallableAction implements BotAction {
 
-    LIST_MEALS("callableaction_list_meals", List.of("gerichte", "essen")) {
+    LIST_MEALS("callableaction_list_meals", List.of("gerichte", "essen", "meals", "comidas")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -59,7 +59,7 @@ public enum CallableAction implements BotAction {
         }
     },
 
-    RATING("callableaction_rate", List.of("bewertung", "kritik", "rating")) {
+    RATING("callableaction_rate", List.of("bewertung", "kritik", "rating", "evaluar")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -137,7 +137,8 @@ public enum CallableAction implements BotAction {
         }
     },
 
-    MAIN_MENU("callableaction_main_menu", List.of("/start", "start", "exit", "menu", "menü", "hauptmenü")) {
+    MAIN_MENU("callableaction_main_menu", List.of("/start", "start", "exit", "menu", "menü", "hauptmenü",
+            "inicio")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
