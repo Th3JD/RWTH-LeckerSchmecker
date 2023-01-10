@@ -285,6 +285,21 @@ public enum CallableAction implements BotAction {
                 this.init(context, null);
             }
         }
+    },
+
+    TUTORIAL("tutorial_name", List.of("/tutorial", "anleitung")) {
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage) {
+            SendMessage message = new SendMessage();
+            message.enableMarkdownV2(true);
+            message.setText(context.getLocalizedString("tutorial"));
+            MAIN_MENU.init(context, message);
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+
+        }
     };
 
     private final String bundleKey;
