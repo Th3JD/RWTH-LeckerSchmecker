@@ -169,7 +169,6 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             return;
         }
         message.setChatId(chatId);
-        message.enableMarkdown(true);
         try {
             this.execute(message);
         } catch (TelegramApiException e) {

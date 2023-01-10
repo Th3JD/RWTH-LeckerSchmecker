@@ -192,6 +192,7 @@ public enum InternalAction implements BotAction {
 
             SendMessage msg = new SendMessage();
             msg.setText(context.getLocalizedString("rate_meal", meal.getDisplayName(context.getLocale())));
+            msg.enableMarkdown(true);
             msg.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(5, context.getLocale(),
                     "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
 

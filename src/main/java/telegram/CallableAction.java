@@ -39,7 +39,7 @@ public enum CallableAction implements BotAction {
                     Canteen selectedCanteen = context.getCanteen();
 
                     SendMessage message = new SendMessage();
-                    message.enableMarkdownV2(true);
+                    message.enableMarkdown(true);
                     message.setText("*" + context.getLocalizedString("meals") + " ("
                             + selectedCanteen.getDisplayName() + ")*\n\n"
                             + context.getBot()
@@ -116,8 +116,10 @@ public enum CallableAction implements BotAction {
 
             if (meal.getId() == null) {
                 context.resetPassthroughInformation();
-                MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
-                        context.getLocalizedString("meal_not_ratable", meal.getDisplayName(context.getLocale()))));
+                SendMessage msg = new SendMessage(String.valueOf(context.getChatID()),
+                        context.getLocalizedString("meal_not_ratable", meal.getDisplayName(context.getLocale())));
+                msg.enableMarkdown(true);
+                MAIN_MENU.init(context, msg);
                 return;
             }
 
@@ -132,8 +134,10 @@ public enum CallableAction implements BotAction {
             DatabaseManager.rateMeal(context, meal, ratedPoints);
 
             context.resetPassthroughInformation();
-            MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
-                    "_" + meal.getDisplayName(context.getLocale()) + "_: *" + ratedPoints + "*"));
+            SendMessage msg = new SendMessage(String.valueOf(context.getChatID()),
+                    "_" + meal.getDisplayName(context.getLocale()) + "_: *" + ratedPoints + "*");
+            msg.enableMarkdown(true);
+            MAIN_MENU.init(context, msg);
         }
     },
 
