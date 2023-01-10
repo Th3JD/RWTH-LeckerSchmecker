@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import localization.ResourceManager;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import telegram.LeckerSchmeckerBot;
 
 public class MainMeal extends Meal {
@@ -42,8 +43,15 @@ public class MainMeal extends Meal {
             return null;
         }
 
-        String priceStr = elementDE.getElementsByClass("menue-price").get(0).ownText();
-        float price = Float.parseFloat(priceStr.split(" ")[0].replace(',', '.'));
+        Elements priceElements = elementDE.getElementsByClass("menue-price");
+        float price;
+        if (priceElements.size() == 1) {
+            String priceStr = elementDE.getElementsByClass("menue-price").get(0).ownText();
+            price = Float.parseFloat(priceStr.split(" ")[0].replace(',', '.'));
+        } else {
+            LeckerSchmecker.getLogger().warning("Meal " + displayNameDE + "does not have a price. Using the estimated price instead.");
+            price = type.getPrice();
+        }
 
         String name = compress(displayNameDE);
 
