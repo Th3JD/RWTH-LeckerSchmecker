@@ -84,6 +84,10 @@ public class DatabaseManager {
         return getInstance()._loadMealID(meal);
     }
 
+    public static Integer loadMealIDByName(String name) {
+        return getInstance()._loadMealIDByName(name);
+    }
+
     public static Integer loadMealID(String mealName) {
         return getInstance()._loadMealID(mealName);
     }
@@ -394,6 +398,10 @@ public class DatabaseManager {
 
     protected Integer _loadMealID(MainMeal meal) {
         return this._loadMealID(meal.getName());
+    }
+
+    protected Integer _loadMealIDByName(String name) {
+        return this._loadMealID(name);
     }
 
     protected Set<Integer> _loadMealIDsByShortAlias(MainMeal meal) {

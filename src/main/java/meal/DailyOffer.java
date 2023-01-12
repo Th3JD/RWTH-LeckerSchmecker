@@ -3,8 +3,10 @@ package meal;
 import config.Config;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -28,6 +30,10 @@ public class DailyOffer {
     public void addMeal(MainMeal meal) {
         if (meal == null) return;
         this.meals.add(meal);
+    }
+
+    public void addMeals(Collection<MainMeal> meals) {
+        meals.forEach(this::addMeal);
     }
 
     public void addSideMeal(SideMeal meal) {
@@ -64,8 +70,7 @@ public class DailyOffer {
                 .getElementsByClass("menue-wrapper");
 
         for (int i = 0; i < htmlMealsDE.size(); i++) {
-            MainMeal meal = MainMeal.parseMeal(res, htmlMealsDE.get(i), htmlMealsEN.get(i));
-            res.addMeal(meal);
+            res.addMeals(MainMeal.parseMeal(res, htmlMealsDE.get(i), htmlMealsEN.get(i)));
         }
 
         Elements htmlExtrasDE = elementDE.getElementsByClass("extras").get(0).getElementsByClass("menue-wrapper");
