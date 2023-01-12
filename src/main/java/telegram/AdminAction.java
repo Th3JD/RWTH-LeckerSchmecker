@@ -10,9 +10,10 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 
-public enum AdminAction implements BotAction {
+public abstract class AdminAction implements BotAction {
 
-    GENERATE_ACCESS_CODE("Access Code", List.of("/access", "access")) {
+    public static final AdminAction GENERATE_ACCESS_CODE = new AdminAction("Access Code",
+            List.of("/access", "access")) {
         private final Random rnd = new Random();
 
         @Override
@@ -63,6 +64,12 @@ public enum AdminAction implements BotAction {
 
             context.deletePoll(poll);
         }
+    }
+
+    public static final AdminAction[] VALUES = {GENERATE_ACCESS_CODE};
+
+    public static AdminAction[] values() {
+        return VALUES;
     }
 
     private final String displayName;

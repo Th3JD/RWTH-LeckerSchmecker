@@ -16,9 +16,9 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-public enum InternalAction implements BotAction {
+public abstract class InternalAction implements BotAction {
 
-    SELECT_DATE {
+    public static final InternalAction SELECT_DATE = new InternalAction() {
 
         private final int LOOKAHEAD_DAYS = Config.getInt("botaction.select_date.daysToPresent");
 
@@ -70,8 +70,9 @@ public enum InternalAction implements BotAction {
 
 
         }
-    },
-    SELECT_CANTEEN {
+    };
+
+    public static final InternalAction SELECT_CANTEEN = new InternalAction() {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -103,8 +104,9 @@ public enum InternalAction implements BotAction {
             context.setSelectedCanteen(canteenOpt.get());
             context.getReturnToAction().onUpdate(context, update);
         }
-    },
-    SELECT_DIET_TYPE {
+    };
+
+    public static final InternalAction SELECT_DIET_TYPE = new InternalAction() {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -134,8 +136,9 @@ public enum InternalAction implements BotAction {
             context.setSelectedDietType(dietTypeOpt.get());
             context.getReturnToAction().onUpdate(context, update);
         }
-    },
-    SELECT_MEAL {
+    };
+
+    public static final InternalAction SELECT_MEAL = new InternalAction() {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -155,8 +158,9 @@ public enum InternalAction implements BotAction {
                     .getMainMealByDisplayName(update.getMessage().getText(), context.getLocale()).get());
             context.getReturnToAction().onUpdate(context, update);
         }
-    },
-    SELECT_LOCALE {
+    };
+
+    public static final InternalAction SELECT_LOCALE = new InternalAction() {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -181,8 +185,9 @@ public enum InternalAction implements BotAction {
                 this.init(context, null);
             }
         }
-    },
-    RATE_MEAL() {
+    };
+
+    public static final InternalAction RATE_MEAL = new InternalAction() {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -211,7 +216,12 @@ public enum InternalAction implements BotAction {
             }
             context.getReturnToAction().onUpdate(context, update);
         }
+    };
+
+    public static final InternalAction[] VALUES = {SELECT_DATE, SELECT_CANTEEN, SELECT_DIET_TYPE,
+            SELECT_MEAL, SELECT_LOCALE, RATE_MEAL};
+
+    public static InternalAction[] values() {
+        return VALUES;
     }
-
-
 }
