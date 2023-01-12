@@ -2,6 +2,7 @@ package meal;
 
 import database.DatabaseManager;
 import java.time.DayOfWeek;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -14,21 +15,23 @@ import telegram.LeckerSchmeckerBot;
 
 public class MainMeal extends Meal {
 
+    private static final String MEAL_SEPARATOR_DE = "ODER";
+    private static final String MEAL_SEPARATOR_EN = "OR";
+
     private final Type type;
     private final float price;
     private final List<Nutrition> nutritions;
     private Integer id;
 
-    public MainMeal(String name, String displayNameDE, String displayNameEN, Type type, float price,
-            List<Nutrition> nutritions, Integer id) {
-        super(name, displayNameDE, displayNameEN);
-        this.type = type;
-        this.price = price;
-        this.nutritions = nutritions;
-        this.id = id;
+    public MainMeal(Builder builder) {
+        super(builder.name, builder.displayNameDE, builder.displayNameEN);
+        this.type = builder.type;
+        this.price = builder.price;
+        this.nutritions = builder.nutritions;
+        this.id = builder.id;
     }
 
-    public static MainMeal parseMeal(DailyOffer offer, Element elementDE, Element elementEN) {
+    public static List<MainMeal> parseMeal(DailyOffer offer, Element elementDE, Element elementEN) {
 
         // parse from html
         String displayNameDE = elementDE.getElementsByClass("expand-nutr").get(0).ownText();
@@ -49,11 +52,9 @@ public class MainMeal extends Meal {
             String priceStr = elementDE.getElementsByClass("menue-price").get(0).ownText();
             price = Float.parseFloat(priceStr.split(" ")[0].replace(',', '.'));
         } else {
-            LeckerSchmecker.getLogger().warning("Meal " + displayNameDE + "does not have a price. Using the estimated price instead.");
+            LeckerSchmecker.getLogger().info("Meal " + displayNameDE + " does not have a price. Using default price instead.");
             price = type.getPrice();
         }
-
-        String name = compress(displayNameDE);
 
         LinkedList<Nutrition> nutritions = Nutrition.searchNutrientsFor(elementDE);
 
@@ -62,28 +63,56 @@ public class MainMeal extends Meal {
             nutritions.addFirst(Nutrition.SWEET);
         }
 
-        MainMeal meal = new MainMeal(name, displayNameDE, displayNameEN, type, price, nutritions, null);
+        // split name by separator
+        String[] nameDE = displayNameDE.split(MEAL_SEPARATOR_DE);
+        String[] nameEN = displayNameEN.split(MEAL_SEPARATOR_EN);
 
-        // database
-        Integer id = DatabaseManager.loadMealID(meal);
+        // build meal basis
+        MainMeal.Builder builder = new Builder()
+                .setType(type)
+                .setPrice(price)
+                .setNutritions(nutritions);
 
-        // meal already exists
-        if (id != null) {
-            meal.id = id;
-            return meal;
+        List<MainMeal> meals = new ArrayList<>(1);
+
+        // create meals for each derived name
+        for (int i = 0; i < nameDE.length && i < nameEN.length; i++) {
+            String name = compress(nameDE[i]);
+
+            // set name and display names
+            builder.setName(name)
+                    .setDisplayNameDE(displayNameDE)
+                    .setDisplayNameEN(displayNameEN);
+
+            // database
+            Integer id = DatabaseManager.loadMealIDByName(name);
+
+            // meal already exists
+            if (id != null) {
+                // set id and create meal
+                builder.setId(id);
+                meals.add(builder.createMainMeal());
+                continue;
+            }
+
+            // create meal with builder
+            MainMeal meal = builder.createMainMeal();
+            meals.add(meal);
+
+            Set<Integer> similarIDs = DatabaseManager.loadMealIDsByShortAlias(meal);
+
+            // if no short name matches,then insert meal into database, else ask admins
+            if (similarIDs.isEmpty()) {
+                meal.id = DatabaseManager.addMeal(meal);
+            } else {
+                LeckerSchmecker.getLogger()
+                        .info("Found similar meal for '" + meal.getName() + "', asking admins");
+                LeckerSchmeckerBot.getInstance().askAdmins(meal, similarIDs);
+            }
+
         }
 
-        Set<Integer> similarIDs = DatabaseManager.loadMealIDsByShortAlias(meal);
-
-        // if no short name matches,then insert meal into database, else ask admins
-        if (similarIDs.isEmpty()) {
-            meal.id = DatabaseManager.addMeal(meal);
-        } else {
-            LeckerSchmecker.getLogger()
-                    .info("Found similar meal for '" + meal.getName() + "', asking admins");
-            LeckerSchmeckerBot.getInstance().askAdmins(meal, similarIDs);
-        }
-        return meal;
+        return meals;
     }
 
     public String getShortAlias() {
@@ -226,6 +255,55 @@ public class MainMeal extends Meal {
 
         public float getPrice() {
             return price;
+        }
+    }
+
+    public static class Builder {
+        private String name;
+        private String displayNameDE;
+        private String displayNameEN;
+        private Type type;
+        private float price;
+        private List<Nutrition> nutritions;
+        private Integer id;
+
+        public Builder setName(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder setDisplayNameDE(String displayNameDE) {
+            this.displayNameDE = displayNameDE;
+            return this;
+        }
+
+        public Builder setDisplayNameEN(String displayNameEN) {
+            this.displayNameEN = displayNameEN;
+            return this;
+        }
+
+        public Builder setType(Type type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder setPrice(float price) {
+            this.price = price;
+            return this;
+        }
+
+        public Builder setNutritions(List<Nutrition> nutritions) {
+            this.nutritions = nutritions;
+            return this;
+        }
+
+        public Builder setId(Integer id) {
+            this.id = id;
+            return this;
+        }
+
+        public MainMeal createMainMeal() {
+            return new MainMeal(this);
         }
     }
 }
