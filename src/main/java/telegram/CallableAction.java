@@ -12,9 +12,10 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-public enum CallableAction implements BotAction {
+public abstract class CallableAction implements BotAction {
 
-    LIST_MEALS("callableaction_list_meals", List.of("gerichte", "essen", "meals", "comidas")) {
+    public static final CallableAction LIST_MEALS = new CallableAction("callableaction_list_meals",
+            List.of("gerichte", "essen", "meals", "comidas")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -57,9 +58,10 @@ public enum CallableAction implements BotAction {
 
             }
         }
-    },
+    };
 
-    RATING("callableaction_rate", List.of("bewertung", "kritik", "rating", "evaluar")) {
+    public static final CallableAction RATING = new CallableAction("callableaction_rate",
+            List.of("bewertung", "kritik", "rating", "evaluar")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -139,10 +141,10 @@ public enum CallableAction implements BotAction {
             msg.enableMarkdown(true);
             MAIN_MENU.init(context, msg);
         }
-    },
+    };
 
-    MAIN_MENU("callableaction_main_menu", List.of("/start", "start", "exit", "menu", "menü", "hauptmenü",
-            "inicio")) {
+    public static final CallableAction MAIN_MENU = new CallableAction("callableaction_main_menu",
+            List.of("/start", "start", "exit", "menu", "menü", "hauptmenü", "inicio")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -157,7 +159,7 @@ public enum CallableAction implements BotAction {
             }
 
             message.setReplyMarkup(BotAction.createKeyboardMarkup(2,
-                    Arrays.stream(CallableAction.values())
+                    Arrays.stream(CallableAction.MAIN_MENU_ACTIONS)
                             .map(a -> a.getDisplayName(context.getLocale())).toList()));
 
             context.sendMessage(message);
@@ -172,9 +174,10 @@ public enum CallableAction implements BotAction {
                     .findFirst()
                     .ifPresent(action -> action.init(context, null));
         }
-    },
+    };
 
-    SELECT_DEFAULTS("callableaction_select_defaults", List.of("standardwerte", "defaults")) {
+    public static final CallableAction SELECT_DEFAULTS = new CallableAction("callableaction_select_defaults",
+            List.of("standardwerte", "defaults")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -226,8 +229,8 @@ public enum CallableAction implements BotAction {
                 context.setDefaultValueSet(shouldBeSet);
 
                 SendMessage message = new SendMessage();
-                message.setText(
-                        context.getLocalizedString(shouldBeSet ? "which_default_value_should_be_set" : "which_default_value_should_be_deleted"));
+                message.setText(context.getLocalizedString(shouldBeSet ?
+                        "which_default_value_should_be_set" : "which_default_value_should_be_deleted"));
                 message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1, context.getLocale(),
                         context.getLocalizedString("canteen"),
                         context.getLocalizedString("language"),
@@ -285,9 +288,10 @@ public enum CallableAction implements BotAction {
                 this.init(context, null);
             }
         }
-    },
+    };
 
-    TUTORIAL("tutorial_name", List.of("/tutorial", "anleitung")) {
+    public static final CallableAction TUTORIAL = new CallableAction("tutorial_name",
+            List.of("/tutorial", "anleitung")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             SendMessage message = new SendMessage();
@@ -301,6 +305,13 @@ public enum CallableAction implements BotAction {
 
         }
     };
+
+    public static final CallableAction[] VALUES = {LIST_MEALS, RATING, MAIN_MENU, SELECT_DEFAULTS, TUTORIAL};
+    public static final CallableAction[] MAIN_MENU_ACTIONS = {LIST_MEALS, RATING, SELECT_DEFAULTS, TUTORIAL};
+
+    public static CallableAction[] values() {
+        return VALUES;
+    }
 
     private final String bundleKey;
     private final List<String> cmds;
