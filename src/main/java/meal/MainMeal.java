@@ -64,10 +64,8 @@ public class MainMeal extends Meal {
         }
 
         // split name by separator
-        String[] nameDE = displayNameDE.split(MEAL_SEPARATOR_DE);
-        String[] nameEN = displayNameEN.split(MEAL_SEPARATOR_EN);
-
-        System.out.println(nameDE.length);
+        String[] namesDE = displayNameDE.split(MEAL_SEPARATOR_DE);
+        String[] namesEN = displayNameEN.split(MEAL_SEPARATOR_EN);
 
         // build meal basis
         MainMeal.Builder builder = new Builder()
@@ -78,13 +76,24 @@ public class MainMeal extends Meal {
         List<MainMeal> meals = new ArrayList<>(1);
 
         // create meals for each derived name
-        for (int i = 0; i < nameDE.length && i < nameEN.length; i++) {
-            String name = compress(nameDE[i]);
+        for (int i = 0; i < namesDE.length; i++) {
+            String nameDE = namesDE[i];
+
+            // try to get EN name, if not present use DE as fallback
+            String nameEN;
+            try {
+                nameEN = namesEN[i];
+            } catch (IndexOutOfBoundsException e) {
+                LeckerSchmecker.getLogger().warning("");
+                nameEN = nameDE;
+            }
+
+            String name = compress(nameDE);
 
             // set name and display names
             builder.setName(name)
-                    .setDisplayNameDE(nameDE[i])
-                    .setDisplayNameEN(nameEN[i]);
+                    .setDisplayNameDE(nameDE)
+                    .setDisplayNameEN(nameEN);
 
             // database
             Integer id = DatabaseManager.loadMealIDByName(name);
