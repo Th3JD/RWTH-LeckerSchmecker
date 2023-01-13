@@ -67,6 +67,8 @@ public class MainMeal extends Meal {
         String[] nameDE = displayNameDE.split(MEAL_SEPARATOR_DE);
         String[] nameEN = displayNameEN.split(MEAL_SEPARATOR_EN);
 
+        System.out.println(nameDE.length);
+
         // build meal basis
         MainMeal.Builder builder = new Builder()
                 .setType(type)
@@ -81,8 +83,8 @@ public class MainMeal extends Meal {
 
             // set name and display names
             builder.setName(name)
-                    .setDisplayNameDE(displayNameDE)
-                    .setDisplayNameEN(displayNameEN);
+                    .setDisplayNameDE(nameDE[i])
+                    .setDisplayNameEN(nameEN[i]);
 
             // database
             Integer id = DatabaseManager.loadMealIDByName(name);
