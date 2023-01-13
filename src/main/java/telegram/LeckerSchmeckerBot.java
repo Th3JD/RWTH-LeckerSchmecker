@@ -102,9 +102,12 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                         sendTextMessage(chatId,
                                 ResourceManager.getString("access_granted",
                                         ResourceManager.DEFAULTLOCALE));
-                        sendTextMessage(chatId,
-                                ResourceManager.getString("introduction",
-                                        ResourceManager.DEFAULTLOCALE));
+
+                        SendMessage msg = new SendMessage();
+                        msg.enableMarkdownV2(true);
+                        msg.setText(ResourceManager.getString("introduction", ResourceManager.DEFAULTLOCALE));
+                        sendMessage(chatId, msg);
+
                         return;
                     } else {
                         sendTextMessage(chatId, ResourceManager.getString("access_denied",
