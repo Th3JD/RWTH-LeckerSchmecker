@@ -34,15 +34,15 @@ public class MainMeal extends Meal {
     public static List<MainMeal> parseMeal(DailyOffer offer, Element elementDE, Element elementEN) {
 
         // parse from html
-        String displayNameDE = elementDE.getElementsByClass("expand-nutr").get(0).ownText();
-        String displayNameEN = elementEN.getElementsByClass("expand-nutr").get(0).ownText();
+        String htmlNameDE = elementDE.getElementsByClass("expand-nutr").get(0).ownText();
+        String htmlNameEN = elementEN.getElementsByClass("expand-nutr").get(0).ownText();
 
         String category = elementDE.getElementsByClass("menue-category").get(0).ownText();
         Type type = Type.getMealTypeFromCategory(category, elementDE);
 
         if (type == null) {
             LeckerSchmecker.getLogger()
-                    .warning("Could not parse type of meal '" + displayNameDE + "'");
+                    .warning("Could not parse type of meal '" + htmlNameDE + "'");
             return null;
         }
 
@@ -52,7 +52,7 @@ public class MainMeal extends Meal {
             String priceStr = elementDE.getElementsByClass("menue-price").get(0).ownText();
             price = Float.parseFloat(priceStr.split(" ")[0].replace(',', '.'));
         } else {
-            LeckerSchmecker.getLogger().info("Meal " + displayNameDE + " does not have a price. Using default price instead.");
+            LeckerSchmecker.getLogger().info("Meal " + htmlNameDE + " does not have a price. Using default price instead.");
             price = type.getPrice();
         }
 
@@ -64,8 +64,8 @@ public class MainMeal extends Meal {
         }
 
         // split name by separator
-        String[] namesDE = displayNameDE.split(MEAL_SEPARATOR_DE);
-        String[] namesEN = displayNameEN.split(MEAL_SEPARATOR_EN);
+        String[] displayNamesDE = htmlNameDE.split(MEAL_SEPARATOR_DE);
+        String[] displayNamesEN = htmlNameEN.split(MEAL_SEPARATOR_EN);
 
         // build meal basis
         MainMeal.Builder builder = new Builder()
@@ -76,24 +76,24 @@ public class MainMeal extends Meal {
         List<MainMeal> meals = new ArrayList<>(1);
 
         // create meals for each derived name
-        for (int i = 0; i < namesDE.length; i++) {
-            String nameDE = namesDE[i];
+        for (int i = 0; i < displayNamesDE.length; i++) {
+            String displayNameDE = displayNamesDE[i];
 
             // try to get EN name, if not present use DE as fallback
-            String nameEN;
+            String displayNameEN;
             try {
-                nameEN = namesEN[i];
+                displayNameEN = displayNamesEN[i];
             } catch (IndexOutOfBoundsException e) {
                 LeckerSchmecker.getLogger().warning("");
-                nameEN = nameDE;
+                displayNameEN = displayNameDE;
             }
 
-            String name = compress(nameDE);
+            String name = compress(displayNameDE);
 
             // set name and display names
             builder.setName(name)
-                    .setDisplayNameDE(nameDE)
-                    .setDisplayNameEN(nameEN);
+                    .setDisplayNameDE(displayNameDE)
+                    .setDisplayNameEN(displayNameEN);
 
             // database
             Integer id = DatabaseManager.loadMealIDByName(name);
