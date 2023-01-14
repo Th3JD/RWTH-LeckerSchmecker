@@ -178,7 +178,7 @@ public class DatabaseManager {
                     +
                     "    default_diet_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'all') null,\n"
                     +
-                    "    language        ENUM ('en-GB', 'de-DE', 'es-ES') default 'en-GB' not null,\n" +
+                    "    language        ENUM ('en-GB', 'de-DE', 'es-ES', 'zh-CN') default 'en-GB' not null,\n" +
                     "    constraint users_pk\n" +
                     "        primary key (userID)\n" +
                     ");\n");
