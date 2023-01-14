@@ -1,3 +1,7 @@
+/*
+ * Copyright (c)  RWTH-LeckerSchmecker
+ */
+
 package database;
 
 import com.fasterxml.uuid.EthernetAddress;

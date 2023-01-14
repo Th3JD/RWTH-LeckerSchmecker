@@ -1,3 +1,7 @@
+/*
+ * Copyright (c)  RWTH-LeckerSchmecker
+ */
+
 package meal;
 
 import java.io.IOException;

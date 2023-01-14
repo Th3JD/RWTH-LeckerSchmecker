@@ -1,3 +1,7 @@
+/*
+ * Copyright (c)  RWTH-LeckerSchmecker
+ */
+
 package telegram;
 
 import java.util.Arrays;

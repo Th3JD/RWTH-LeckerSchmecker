@@ -1,3 +1,7 @@
+/*
+ * Copyright (c)  RWTH-LeckerSchmecker
+ */
+
 package localization;
 
 import java.util.List;

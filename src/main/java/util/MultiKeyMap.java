@@ -1,3 +1,7 @@
+/*
+ * Copyright (c)  RWTH-LeckerSchmecker
+ */
+
 package util;
 
 import java.util.Collection;
