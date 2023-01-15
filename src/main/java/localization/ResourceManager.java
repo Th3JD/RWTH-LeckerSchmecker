@@ -27,8 +27,9 @@ public class ResourceManager {
     protected static final String BASENAME = "localization.bundle";
     public static final Locale DEFAULTLOCALE = new Locale("en", "GB");
     public static final List<Locale> LOCALES = List.of(DEFAULTLOCALE,
-            new Locale("de", "DE"),
-            new Locale("es", "ES"));
+            Locale.GERMANY,
+            new Locale("es", "ES"),
+            Locale.SIMPLIFIED_CHINESE);
 
     private static ResourceManager getInstance() {
         if (instance == null) {
