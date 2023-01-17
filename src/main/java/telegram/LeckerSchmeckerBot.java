@@ -21,6 +21,7 @@ import config.Config;
 import database.DatabaseManager;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,8 +59,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
     private final MultiKeyMap<String, String, MealPollInfo> mealPollInfoByMealNameOrPollId = new MultiKeyMap<>();
 
-    private final Pattern accessCodePattern = Pattern.compile("\\d{5}");
-    private final Set<String> accessCodes = new HashSet<>();
+    private final Pattern accessCodePattern = Pattern.compile("\\d{4,5}");
+    private final Set<String> oneTimeAccessCodes = new HashSet<>();
+    private final Map<String, LocalDateTime> timedAccessCodes = new HashMap<>();
     private static LeckerSchmeckerBot instance;
 
     public static LeckerSchmeckerBot getInstance() {
@@ -180,7 +182,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
     }
 
     public void sendTextMessage(Long chatId, String message) {
-        if (message == null) return;
+        if (message == null) {
+            return;
+        }
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText(message);
         this.sendMessage(chatId, sendMessage);
@@ -352,17 +356,33 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
     }
 
     public boolean addAccessCode(String code) {
-        if (accessCodes.contains(code)) {
+        if (code.length() == 4) {
+            if (oneTimeAccessCodes.contains(code)) {
+                return false;
+            }
+            oneTimeAccessCodes.add(code);
+        }
+        if (timedAccessCodes.containsKey(code)) {
             return false;
         }
-        accessCodes.add(code);
+        timedAccessCodes.put(code, LocalDateTime.now().plusDays(1));
         return true;
     }
 
     public boolean checkAccessCode(String code) {
-        if (accessCodes.contains(code)) {
-            accessCodes.remove(code);
-            return true;
+        if (code.length() == 4) {
+            if (oneTimeAccessCodes.contains(code)) {
+                oneTimeAccessCodes.remove(code);
+                return true;
+            }
+        }
+        if (timedAccessCodes.containsKey(code)) {
+            if (LocalDateTime.now().isBefore(timedAccessCodes.get(code))) {
+                return true;
+            } else {
+                timedAccessCodes.remove(code);
+                return false;
+            }
         }
         return false;
     }

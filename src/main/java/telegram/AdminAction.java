@@ -28,8 +28,8 @@ import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 
 public abstract class AdminAction implements BotAction {
 
-    public static final AdminAction GENERATE_ACCESS_CODE = new AdminAction("Access Code",
-            List.of("/access", "access")) {
+    public static final AdminAction GENERATE_TIMED_ACCESS_CODE = new AdminAction("Timed Access Code",
+            List.of("/timedaccess", "timedaccess")) {
         private final Random rnd = new Random();
 
         @Override
@@ -37,6 +37,25 @@ public abstract class AdminAction implements BotAction {
             String code = String.format("%05d", rnd.nextInt(100000));
             while (!context.getBot().addAccessCode(code)) {
                 code = String.format("%05d", rnd.nextInt(100000));
+            }
+            context.sendMessage("Generated timed access code: " + code);
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+
+        }
+    };
+
+    public static final AdminAction GENERATE_ACCESS_CODE = new AdminAction("Access Code",
+            List.of("/access", "access")) {
+        private final Random rnd = new Random();
+
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage) {
+            String code = String.format("%04d", rnd.nextInt(10000));
+            while (!context.getBot().addAccessCode(code)) {
+                code = String.format("%04d", rnd.nextInt(10000));
             }
             context.sendMessage("Generated access code: " + code);
         }
@@ -82,7 +101,7 @@ public abstract class AdminAction implements BotAction {
         }
     }
 
-    public static final AdminAction[] VALUES = {GENERATE_ACCESS_CODE};
+    public static final AdminAction[] VALUES = {GENERATE_TIMED_ACCESS_CODE, GENERATE_ACCESS_CODE};
 
     public static AdminAction[] values() {
         return VALUES;
