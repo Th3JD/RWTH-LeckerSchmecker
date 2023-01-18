@@ -53,7 +53,7 @@ public class DatabaseManager {
 
     // STATEMENTS
     private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
-            ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS,
+            ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS, LOAD_NUMBER_OF_VOTES,
             RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING;
     /////////////
 
@@ -172,6 +172,7 @@ public class DatabaseManager {
             LOAD_USER_RATING_BY_DATE.close();
             LOAD_GLOBAL_RATING.close();
             LOAD_USER_RATING.close();
+            LOAD_NUMBER_OF_VOTES.close();
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -264,6 +265,7 @@ public class DatabaseManager {
         try {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
             ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, ?)");
+            LOAD_NUMBER_OF_VOTES = connection.prepareStatement("SELECT COUNT(*) as amount from ratings WHERE userID like ?");
             SET_CANTEEN = connection.prepareStatement(
                     "UPDATE users SET default_canteen=? WHERE userID like ?");
             SET_DIET_TYPE = connection.prepareStatement(
@@ -330,7 +332,7 @@ public class DatabaseManager {
                         + ResourceManager.DEFAULTLOCALE.getCountry());
                 ADD_USER.execute();
 
-                return new ChatContext(bot, userID, chatID, null, null, ResourceManager.DEFAULTLOCALE);
+                return new ChatContext(bot, userID, chatID, null, null, ResourceManager.DEFAULTLOCALE, 0);
             } else {
                 UUID userID = UUID.fromString(rs.getString("userID"));
 
@@ -349,7 +351,14 @@ public class DatabaseManager {
                 String[] languageInfo = rs.getString("language").split("-");
                 Locale locale = new Locale(languageInfo[0], languageInfo[1]);
 
-                return new ChatContext(bot, userID, chatID, defaultCanteen, defaultDietType, locale);
+                LOAD_NUMBER_OF_VOTES.clearParameters();
+                LOAD_NUMBER_OF_VOTES.setString(1, userID.toString());
+                ResultSet rsNOV = LOAD_NUMBER_OF_VOTES.executeQuery();
+
+                rsNOV.next();
+                int numberOfVotes = rsNOV.getInt("amount");
+
+                return new ChatContext(bot, userID, chatID, defaultCanteen, defaultDietType, locale, numberOfVotes);
             }
 
         } catch (SQLException e) {

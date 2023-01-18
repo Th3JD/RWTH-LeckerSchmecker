@@ -204,6 +204,8 @@ public abstract class InternalAction implements BotAction {
     };
 
     public static final InternalAction RATE_MEAL = new InternalAction() {
+        private final int ratingThreshold = Config.getInt("botaction.rate_meal.tutorial_threshold");
+
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.sendMessage(passthroughMessage);
@@ -212,7 +214,12 @@ public abstract class InternalAction implements BotAction {
             MainMeal meal = context.getSelectedMeal();
 
             SendMessage msg = new SendMessage();
-            msg.setText(context.getLocalizedString("rate_meal", meal.getDisplayName(context.getLocale())));
+            if (context.getNumberOfVotes() < ratingThreshold) {
+                msg.setText(context.getLocalizedString("rate_meal_tutorial", meal.getDisplayName(context.getLocale())));
+            } else {
+                msg.setText(context.getLocalizedString("rate_meal", meal.getDisplayName(context.getLocale())));
+            }
+
             msg.enableMarkdown(true);
             msg.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(5, context.getLocale(),
                     "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
