@@ -150,6 +150,7 @@ public abstract class CallableAction implements BotAction {
             int ratedPoints = context.getRatedPoints();
 
             DatabaseManager.rateMeal(context, meal, ratedPoints);
+            context.incrementNumberOfVotes();
 
             context.resetPassthroughInformation();
             SendMessage msg = new SendMessage(String.valueOf(context.getChatID()),
