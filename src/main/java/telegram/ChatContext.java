@@ -43,6 +43,7 @@ public class ChatContext {
     // Info about the user
     private Canteen defaultCanteen;
     private Locale locale;
+    private int numberOfVotes;
 
     // State information
     private BotAction returnToAction; // Action to return to, once the internal actions are done
@@ -65,13 +66,14 @@ public class ChatContext {
 
 
     public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen, DietType dietType,
-                       Locale locale) {
+            Locale locale, int numberOfVotes) {
         this.bot = bot;
         this.userID = userID;
         this.chatID = chatID;
         this.defaultCanteen = defaultCanteen;
         this.defaultDietType = dietType;
         this.locale = locale;
+        this.numberOfVotes = numberOfVotes;
     }
 
 
@@ -103,6 +105,14 @@ public class ChatContext {
     }
 
     // Generated Getter & Setter //////////////////////////////////////////////
+    public int getNumberOfVotes() {
+        return numberOfVotes;
+    }
+
+    public void incrementNumberOfVotes() {
+        this.numberOfVotes++;
+    }
+
     public Locale getLocale() {
         return locale;
     }
