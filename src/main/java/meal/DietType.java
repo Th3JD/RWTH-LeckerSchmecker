@@ -14,9 +14,6 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/*
- */
-
 package meal;
 
 import java.util.List;
