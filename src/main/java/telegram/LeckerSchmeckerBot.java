@@ -275,25 +275,28 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                     .append("\n")
                     .append(meal.text(context.getLocale())).append("\n")
                     .append(context.getLocalizedString("global_rating"))
-                    .append(globalRating == null ? "_" + context.getLocalizedString("not_rated")
-                            + "_"
-                            : ratingFormat.format(globalRating.getAverageRating()) + " (" + globalRating.getNumVotes() + ")").append("\n")
+                    .append(globalRating == null ? "_" +
+                            context.getLocalizedString("not_rated") +
+                            "_" : ratingFormat.format(globalRating.getAverageRating()) + " (" +
+                                    globalRating.getNumVotes() + ")").append("\n")
                     .append(context.getLocalizedString("your_rating"))
-                    .append(userRating == null ? "_" + context.getLocalizedString("not_rated") + "_"
-                            : ratingFormat.format(userRating)).append("\n\n");
+                    .append(userRating == null ? "_" + context.getLocalizedString("not_rated") +
+                            "_" : ratingFormat.format(userRating)).append("\n\n");
         }
 
         sb.append("*").append(context.getLocalizedString("main_side_dish")).append("*")
                 .append("\n");
         sb.append(String.join(" " + context.getLocalizedString("or") + " ",
-                offer.getSideMeals(SideMeal.Type.MAIN).stream().map(a -> a.getDisplayName(context.getLocale()))
+                offer.getSideMeals(SideMeal.Type.MAIN).stream()
+                        .map(a -> a.getDisplayName(context.getLocale()))
                         .toList()));
         sb.append("\n\n");
 
         sb.append("*").append(context.getLocalizedString("secondary_dish")).append("*")
                 .append("\n");
         sb.append(String.join(" " + context.getLocalizedString("or") + " ",
-                offer.getSideMeals(SideMeal.Type.SIDE).stream().map(a -> a.getDisplayName(context.getLocale()))
+                offer.getSideMeals(SideMeal.Type.SIDE).stream()
+                        .map(a -> a.getDisplayName(context.getLocale()))
                         .toList()));
 
         return sb.toString();

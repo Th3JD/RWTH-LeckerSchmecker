@@ -60,7 +60,8 @@ public enum Nutrition {
 
         }
 
-        if (e.getElementsByClass("expand-nutr").get(0).text().toLowerCase().contains(SPICY.getHtmlKey())) {
+        if (e.getElementsByClass("expand-nutr").get(0).text().toLowerCase()
+                .contains(SPICY.getHtmlKey())) {
             nutritions.addLast(SPICY);
         }
 

@@ -28,8 +28,8 @@ import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 
 public abstract class AdminAction implements BotAction {
 
-    public static final AdminAction GENERATE_TIMED_ACCESS_CODE = new AdminAction("Timed Access Code",
-            List.of("/timedaccess", "timedaccess")) {
+    public static final AdminAction GENERATE_TIMED_ACCESS_CODE = new AdminAction(
+                    "Timed Access Code", List.of("/timedaccess", "timedaccess")) {
         private final Random rnd = new Random();
 
         @Override

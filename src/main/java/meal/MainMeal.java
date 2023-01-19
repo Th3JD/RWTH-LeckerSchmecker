@@ -73,7 +73,8 @@ public class MainMeal extends Meal {
             String priceStr = elementDE.getElementsByClass("menue-price").get(0).ownText();
             price = Float.parseFloat(priceStr.split(" ")[0].replace(',', '.'));
         } else {
-            LeckerSchmecker.getLogger().info("Meal " + htmlNameDE + " does not have a price. Using default price instead.");
+            LeckerSchmecker.getLogger().info("Meal " + htmlNameDE + " does not have a price. "
+                    + "Using default price instead.");
             price = type.getPrice();
         }
 
@@ -202,10 +203,8 @@ public class MainMeal extends Meal {
                 .replace(" mit ", " ")
                 .replace(" und ", " ")
                 .replace(" oder ", " ")
-                .replace("   ", " ")
-                .replace("  ", " ")
                 .trim()
-                .replace(" ", "_");
+                .replaceAll(" +", "_");
         return res;
     }
 
