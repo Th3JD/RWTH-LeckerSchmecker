@@ -14,6 +14,9 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+/*
+ */
+
 package meal;
 
 import database.DatabaseManager;
@@ -30,6 +33,8 @@ import org.jsoup.select.Elements;
 import telegram.LeckerSchmeckerBot;
 
 public class MainMeal extends Meal {
+
+    private static final String NO_NUTRITION_SYMBOL = "\uD83C\uDF74";
 
     private static final String MEAL_SEPARATOR_DE = "ODER";
     private static final String MEAL_SEPARATOR_EN = "OR";
@@ -83,6 +88,11 @@ public class MainMeal extends Meal {
         String[] displayNamesDE = htmlNameDE.split(MEAL_SEPARATOR_DE);
         String[] displayNamesEN = htmlNameEN.split(MEAL_SEPARATOR_EN);
 
+        // nutrition specification not possible if meal is a multi meal
+        if (displayNamesDE.length > 1) {
+            nutritions.clear();
+        }
+
         // build meal basis
         MainMeal.Builder builder = new Builder()
                 .setType(type)
@@ -93,12 +103,12 @@ public class MainMeal extends Meal {
 
         // create meals for each derived name
         for (int i = 0; i < displayNamesDE.length; i++) {
-            String displayNameDE = displayNamesDE[i];
+            String displayNameDE = displayNamesDE[i].trim();
 
             // try to get EN name, if not present use DE as fallback
             String displayNameEN;
             try {
-                displayNameEN = displayNamesEN[i];
+                displayNameEN = displayNamesEN[i].trim();
             } catch (IndexOutOfBoundsException e) {
                 LeckerSchmecker.getLogger().warning("");
                 displayNameEN = displayNameDE;
@@ -163,6 +173,7 @@ public class MainMeal extends Meal {
     }
 
     public String getSymbols() {
+        if (this.nutritions.isEmpty()) return NO_NUTRITION_SYMBOL;
         return this.nutritions.stream().map(Nutrition::getSymbol).collect(Collectors.joining());
     }
 

@@ -14,13 +14,15 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-package meal;
+/*
+ */
 
-import localization.ResourceManager;
+package meal;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import localization.ResourceManager;
 
 public enum DietType {
 
@@ -46,56 +48,38 @@ public enum DietType {
     }
 
     public static Optional<DietType> getByDisplayName(String displayName, Locale locale) {
-        return TYPES.stream().filter(c -> c.getDisplayName(locale).equalsIgnoreCase(displayName)).findFirst();
+        return TYPES.stream().filter(c -> c.getDisplayName(locale).equalsIgnoreCase(displayName))
+                .findFirst();
     }
 
-    public static boolean filterDietType(List<Nutrition> nutritions, DietType dietType) {
-        if (dietType != null) {
-            boolean hasVegan = false;
-            boolean hasVegetarian = false;
-            for (Nutrition nutrition : nutritions) {
-                switch (dietType) {
-                    case EVERYTHING:
-                        return false; //Do not need to check any further
-                    case NOPORK:
-                        if (nutrition.equals(Nutrition.PORK)) {
-                            return true;
-                        }
-                        break;
-                    case NOFISH:
-                        if (nutrition.equals(Nutrition.FISH)) {
-                            return true;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                if (nutrition.equals(Nutrition.VEGAN)) { hasVegan = true; }
-                if (nutrition.equals(Nutrition.VEGETARIAN)) { hasVegetarian = true; }
-            }
-            // Still need to check for vegan and vegetarian
-            switch (dietType) {
-                case VEGAN:
-                    if (!hasVegan) {
-                        return true;
-                    }
-                    break;
-                case VEGETARIAN:
-                    if (!hasVegetarian) {
-                        return true;
-                    }
-                    break;
-                default:
-                    break; //Do not skip this meal
-            }
-            return false;
-        } else {
+    public static boolean isMealInDiet(List<Nutrition> nutritions, DietType dietType) {
+        if (nutritions.isEmpty() || dietType == null || dietType.equals(EVERYTHING)) {
+            return true;
+        }
+
+        if (dietType.equals(NOPORK) && nutritions.contains(Nutrition.PORK)) {
             return false;
         }
+
+        if (dietType.equals(NOFISH) && nutritions.contains(Nutrition.FISH)) {
+            return false;
+        }
+
+        if (dietType.equals(VEGAN) && nutritions.contains(Nutrition.VEGAN)) {
+            return true;
+        }
+
+        if (dietType.equals(VEGETARIAN) && nutritions.contains(Nutrition.VEGETARIAN)) {
+            return true;
+        }
+
+        return false;
     }
+
     public String getDisplayName(Locale locale) {
         return ResourceManager.getString(bundleKey, locale);
     }
+
     public String getId() {
         return id;
     }

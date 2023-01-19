@@ -14,6 +14,9 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+/*
+ */
+
 package telegram;
 
 
@@ -259,7 +262,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         StringBuilder sb = new StringBuilder();
         for (MainMeal meal : offer.getMainMeals()) {
             // Skip meal if DietType is filtered
-            if (DietType.filterDietType(meal.getNutritions(), context.getDefaultDietType())) {
+            if (!DietType.isMealInDiet(meal.getNutritions(), context.getDefaultDietType())) {
                 continue;
             }
 
