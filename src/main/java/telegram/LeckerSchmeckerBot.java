@@ -101,83 +101,88 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
      */
     @Override
     public void onUpdateReceived(Update update) {
-        Long chatId = getChatID(update);
+        try {
+            Long chatId = getChatID(update);
 
-        if (chatId == null) {
-            return;
-        }
-
-        // Check if user is allowed to take part in the closed beta
-        if (!Config.isAllowedUser(chatId)) {
-
-            // Check if the user sent an access code
-            if (update.hasMessage()) {
-                String messageText = update.getMessage().getText();
-                Matcher matcher = accessCodePattern.matcher(messageText);
-                if (matcher.matches()) {
-                    if (checkAccessCode(messageText)) {
-                        Config.addAllowedUser(chatId);
-                        sendTextMessage(chatId,
-                                ResourceManager.getString("access_granted",
-                                        ResourceManager.DEFAULTLOCALE));
-
-                        SendMessage msg = new SendMessage();
-                        msg.enableMarkdownV2(true);
-                        msg.setText(ResourceManager.getString("introduction", ResourceManager.DEFAULTLOCALE));
-                        sendMessage(chatId, msg);
-
-                        return;
-                    } else {
-                        sendTextMessage(chatId, ResourceManager.getString("access_denied",
-                                ResourceManager.DEFAULTLOCALE));
-                        return;
-                    }
-                }
+            if (chatId == null) {
+                return;
             }
 
-            sendTextMessage(chatId,
-                    ResourceManager.getString("bot_unavailable", ResourceManager.DEFAULTLOCALE));
-            LeckerSchmecker.getLogger()
-                    .info("Unerlaubter Nutzer mit chatID " + chatId + " hat ein Update ausgelöst.");
-            return;
-        }
+            // Check if user is allowed to take part in the closed beta
+            if (!Config.isAllowedUser(chatId)) {
 
-        // Create ChatContext if it does not exist
-        ChatContext context = getContext(chatId);
+                // Check if the user sent an access code
+                if (update.hasMessage()) {
+                    String messageText = update.getMessage().getText();
+                    Matcher matcher = accessCodePattern.matcher(messageText);
+                    if (matcher.matches()) {
+                        if (checkAccessCode(messageText)) {
+                            Config.addAllowedUser(chatId);
+                            sendTextMessage(chatId,
+                                    ResourceManager.getString("access_granted",
+                                            ResourceManager.DEFAULTLOCALE));
 
-        // Check if the message is from an admin
-        if (Config.isAdmin(chatId)) {
-            AdminAction.processUpdate(context, update);
-            return;
-        }
+                            SendMessage msg = new SendMessage();
+                            msg.enableMarkdownV2(true);
+                            msg.setText(ResourceManager.getString("introduction", ResourceManager.DEFAULTLOCALE));
+                            sendMessage(chatId, msg);
 
-        // Reset the current action if the user wants to access the main menu
-        if (update.hasMessage() && (CallableAction.MAIN_MENU.getCmds()
-                .contains(update.getMessage().getText().toLowerCase()) || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
-                .equalsIgnoreCase(update.getMessage().getText()))) {
-            context.setCurrentAction(null);
-        }
+                            return;
+                        } else {
+                            sendTextMessage(chatId, ResourceManager.getString("access_denied",
+                                    ResourceManager.DEFAULTLOCALE));
+                            return;
+                        }
+                    }
+                }
 
-        // An action is currently running -> update
-        if (context.hasCurrentAction()) {
-            context.getCurrentAction().onUpdate(context, update);
-            // No action is currently running -> start new action
-        } else if (update.hasMessage()) {
-            Message msg = update.getMessage();
+                sendTextMessage(chatId,
+                        ResourceManager.getString("bot_unavailable", ResourceManager.DEFAULTLOCALE));
+                LeckerSchmecker.getLogger()
+                        .info("Unerlaubter Nutzer mit chatID " + chatId + " hat ein Update ausgelöst.");
+                return;
+            }
 
-            // Find action requested by the user
-            Optional<CallableAction> action = Arrays.stream(CallableAction.values())
-                    .filter(a -> a.getCmds().contains(msg.getText().toLowerCase()) || a.getDisplayName(context.getLocale())
-                            .equalsIgnoreCase(msg.getText()))
-                    .findFirst();
+            // Create ChatContext if it does not exist
+            ChatContext context = getContext(chatId);
 
-            if (action.isPresent()) {
-                action.get().init(context, null);
+            // Check if the message is from an admin
+            if (Config.isAdmin(chatId)) {
+                AdminAction.processUpdate(context, update);
+                return;
+            }
+
+            // Reset the current action if the user wants to access the main menu
+            if (update.hasMessage() && (CallableAction.MAIN_MENU.getCmds()
+                    .contains(update.getMessage().getText().toLowerCase()) || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
+                    .equalsIgnoreCase(update.getMessage().getText()))) {
+                context.setCurrentAction(null);
+            }
+
+            // An action is currently running -> update
+            if (context.hasCurrentAction()) {
+                context.getCurrentAction().onUpdate(context, update);
+                // No action is currently running -> start new action
+            } else if (update.hasMessage()) {
+                Message msg = update.getMessage();
+
+                // Find action requested by the user
+                Optional<CallableAction> action = Arrays.stream(CallableAction.values())
+                        .filter(a -> a.getCmds().contains(msg.getText().toLowerCase()) || a.getDisplayName(context.getLocale())
+                                .equalsIgnoreCase(msg.getText()))
+                        .findFirst();
+
+                if (action.isPresent()) {
+                    action.get().init(context, null);
+                } else {
+                    CallableAction.MAIN_MENU.init(context, null);
+                }
             } else {
                 CallableAction.MAIN_MENU.init(context, null);
             }
-        } else {
-            CallableAction.MAIN_MENU.init(context, null);
+        } catch (Exception e) {
+            LeckerSchmecker.getLogger().severe("Caught the following exception whilst processing an update: " + update);
+            e.printStackTrace();
         }
     }
 
