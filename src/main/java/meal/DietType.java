@@ -66,7 +66,7 @@ public enum DietType {
             return true;
         }
 
-        if (dietType.equals(VEGETARIAN) && nutritions.contains(Nutrition.VEGETARIAN)) {
+        if (dietType.equals(VEGETARIAN) && (nutritions.contains(Nutrition.VEGETARIAN) || nutritions.contains(Nutrition.VEGAN))) {
             return true;
         }
 
