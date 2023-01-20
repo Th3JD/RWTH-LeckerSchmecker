@@ -16,9 +16,8 @@
 
 package meal;
 
-import org.jsoup.nodes.Element;
-
 import java.util.LinkedList;
+import org.jsoup.nodes.Element;
 
 public enum Nutrition {
 
@@ -57,7 +56,10 @@ public enum Nutrition {
                     nutritions.add(nutrition);
                 }
             }
+        }
 
+        if (nutritions.contains(VEGAN)) {
+            nutritions.remove(VEGETARIAN);
         }
 
         if (e.getElementsByClass("expand-nutr").get(0).text().toLowerCase()
