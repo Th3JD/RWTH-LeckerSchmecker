@@ -31,6 +31,8 @@ import telegram.LeckerSchmeckerBot;
 
 public class MainMeal extends Meal {
 
+    private static final String NO_NUTRITION_SYMBOL = "\uD83C\uDF74";
+
     private static final String MEAL_SEPARATOR_DE = "ODER";
     private static final String MEAL_SEPARATOR_EN = "OR";
 
@@ -68,7 +70,8 @@ public class MainMeal extends Meal {
             String priceStr = elementDE.getElementsByClass("menue-price").get(0).ownText();
             price = Float.parseFloat(priceStr.split(" ")[0].replace(',', '.'));
         } else {
-            LeckerSchmecker.getLogger().info("Meal " + htmlNameDE + " does not have a price. Using default price instead.");
+            LeckerSchmecker.getLogger().info("Meal " + htmlNameDE + " does not have a price. "
+                    + "Using default price instead.");
             price = type.getPrice();
         }
 
@@ -83,6 +86,11 @@ public class MainMeal extends Meal {
         String[] displayNamesDE = htmlNameDE.split(MEAL_SEPARATOR_DE);
         String[] displayNamesEN = htmlNameEN.split(MEAL_SEPARATOR_EN);
 
+        // nutrition specification not possible if meal is a multi meal
+        if (displayNamesDE.length > 1) {
+            nutritions.clear();
+        }
+
         // build meal basis
         MainMeal.Builder builder = new Builder()
                 .setType(type)
@@ -93,12 +101,12 @@ public class MainMeal extends Meal {
 
         // create meals for each derived name
         for (int i = 0; i < displayNamesDE.length; i++) {
-            String displayNameDE = displayNamesDE[i];
+            String displayNameDE = displayNamesDE[i].trim();
 
             // try to get EN name, if not present use DE as fallback
             String displayNameEN;
             try {
-                displayNameEN = displayNamesEN[i];
+                displayNameEN = displayNamesEN[i].trim();
             } catch (IndexOutOfBoundsException e) {
                 LeckerSchmecker.getLogger().warning("");
                 displayNameEN = displayNameDE;
@@ -163,6 +171,7 @@ public class MainMeal extends Meal {
     }
 
     public String getSymbols() {
+        if (this.nutritions.isEmpty()) return NO_NUTRITION_SYMBOL;
         return this.nutritions.stream().map(Nutrition::getSymbol).collect(Collectors.joining());
     }
 
@@ -191,10 +200,8 @@ public class MainMeal extends Meal {
                 .replace(" mit ", " ")
                 .replace(" und ", " ")
                 .replace(" oder ", " ")
-                .replace("   ", " ")
-                .replace("  ", " ")
                 .trim()
-                .replace(" ", "_");
+                .replaceAll(" +", "_");
         return res;
     }
 

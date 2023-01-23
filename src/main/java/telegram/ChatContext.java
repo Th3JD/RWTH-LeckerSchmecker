@@ -65,8 +65,8 @@ public class ChatContext {
     private Boolean defaultValueSet; // Couldn't come up with a better name... Sorry :(
 
 
-    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen, DietType dietType,
-            Locale locale, int numberOfVotes) {
+    public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen,
+            DietType dietType, Locale locale, int numberOfVotes) {
         this.bot = bot;
         this.userID = userID;
         this.chatID = chatID;

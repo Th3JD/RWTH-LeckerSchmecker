@@ -186,15 +186,16 @@ public abstract class CallableAction implements BotAction {
         public void onUpdate(ChatContext context, Update update) {
             Message msg = update.getMessage();
             Arrays.stream(CallableAction.values())
-                    .filter(a -> a.getCmds().contains(msg.getText().toLowerCase()) || a.getDisplayName(context.getLocale())
+                    .filter(a -> a.getCmds().contains(msg.getText().toLowerCase())
+                            || a.getDisplayName(context.getLocale())
                             .equalsIgnoreCase(msg.getText()))
                     .findFirst()
                     .ifPresent(action -> action.init(context, null));
         }
     };
 
-    public static final CallableAction SELECT_DEFAULTS = new CallableAction("callableaction_select_defaults",
-            List.of("standardwerte", "defaults")) {
+    public static final CallableAction SELECT_DEFAULTS = new CallableAction(
+            "callableaction_select_defaults", List.of("standardwerte", "defaults")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage) {
             context.setCurrentAction(this);
@@ -202,7 +203,8 @@ public abstract class CallableAction implements BotAction {
             SendMessage message = new SendMessage();
             message.setText(context.getLocalizedString("set_delete_default_value"));
 
-            message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(2, context.getLocale(),
+            message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(2,
+                    context.getLocale(),
                     context.getLocalizedString("callableaction_set_defaults_set"),
                     context.getLocalizedString("callableaction_set_defaults_delete")));
 

@@ -43,7 +43,8 @@ public abstract class InternalAction implements BotAction {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", context.getLocale());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy",
+                    context.getLocale());
 
             SendMessage message = new SendMessage();
             message.setText(context.getLocalizedString("select_a_date"));
@@ -65,7 +66,8 @@ public abstract class InternalAction implements BotAction {
                 this.init(context, null);
             }
 
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", context.getLocale());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy",
+                    context.getLocale());
 
             String text = update.getMessage().getText();
             try {
@@ -163,7 +165,8 @@ public abstract class InternalAction implements BotAction {
             msg.setText(context.getLocalizedString("select_a_meal"));
             msg.setReplyMarkup(BotAction.createKeyboardMarkup(1,
                     context.getCanteen().getDailyOffer(LocalDate.now()).get()
-                            .getMainMeals().stream().map(a -> a.getDisplayName(context.getLocale())).toList()));
+                            .getMainMeals().stream()
+                            .map(a -> a.getDisplayName(context.getLocale())).toList()));
             context.sendMessage(msg);
         }
 
@@ -215,13 +218,16 @@ public abstract class InternalAction implements BotAction {
 
             SendMessage msg = new SendMessage();
             if (context.getNumberOfVotes() < ratingThreshold) {
-                msg.setText(context.getLocalizedString("rate_meal_tutorial", meal.getDisplayName(context.getLocale())));
+                msg.setText(context.getLocalizedString("rate_meal_tutorial",
+                        meal.getDisplayName(context.getLocale())));
             } else {
-                msg.setText(context.getLocalizedString("rate_meal", meal.getDisplayName(context.getLocale())));
+                msg.setText(context.getLocalizedString("rate_meal",
+                        meal.getDisplayName(context.getLocale())));
             }
 
             msg.enableMarkdown(true);
-            msg.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(5, context.getLocale(),
+            msg.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(5,
+                    context.getLocale(),
                     "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"));
 
             context.sendMessage(msg);
