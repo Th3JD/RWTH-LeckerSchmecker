@@ -22,7 +22,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -31,6 +30,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import util.DateUtils;
 
 public class DailyOffer {
 
@@ -75,7 +75,7 @@ public class DailyOffer {
         }
 
         // Check if the date is too far in the future
-        if (!date.isBefore(LocalDate.now().plusDays(Config.getInt("meals.daysToFetch")))) {
+        if (!date.isBefore(DateUtils.addDaysSkippingWeekends(LocalDate.now(), Config.getInt("meals.daysToFetch")))) {
             // Meals this far in the future are prone to contain typos and are oftentimes subject to change
             return null;
         }
