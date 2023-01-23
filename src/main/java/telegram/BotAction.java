@@ -37,13 +37,15 @@ public interface BotAction {
         return createKeyboardMarkup(elementsInRow, List.of(elements));
     }
 
-    static ReplyKeyboardMarkup createKeyboardMarkupWithMenu(int elementsInRow, Locale locale, String... elements) {
+    static ReplyKeyboardMarkup createKeyboardMarkupWithMenu(int elementsInRow, Locale locale,
+            String... elements) {
         List<String> buttons = new LinkedList<>(Arrays.asList(elements));
         buttons.add(ResourceManager.getString("callableaction_main_menu", locale));
         return createKeyboardMarkup(elementsInRow, buttons);
     }
 
-    static ReplyKeyboardMarkup createKeyboardMarkupWithMenu(int elementsInRow, Locale locale, List<String> elements) {
+    static ReplyKeyboardMarkup createKeyboardMarkupWithMenu(int elementsInRow, Locale locale,
+            List<String> elements) {
         List<String> buttons = new LinkedList<>(elements);
         buttons.add(ResourceManager.getString("callableaction_main_menu", locale));
         return createKeyboardMarkup(elementsInRow, buttons);

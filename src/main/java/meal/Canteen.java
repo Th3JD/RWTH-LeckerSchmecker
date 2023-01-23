@@ -29,18 +29,18 @@ import org.jsoup.select.Elements;
 
 public class Canteen {
 
-    public static final Canteen ACADEMICA = new Canteen("Mensa Academica", "academica",
-            LocalTime.of(11, 30), LocalTime.of(14, 30));
-    public static final Canteen AHORNSTRASSE = new Canteen("Mensa Ahornstraße", "ahornstrasse",
-            LocalTime.of(11, 30), LocalTime.of(14, 30));
+    public static final Canteen ACADEMICA = new Canteen("Mensa Academica",
+            "academica", LocalTime.of(11, 30), LocalTime.of(14, 30));
+    public static final Canteen AHORNSTRASSE = new Canteen("Mensa Ahornstraße",
+            "ahornstrasse", LocalTime.of(11, 30), LocalTime.of(14, 30));
     public static final Canteen VITA = new Canteen("Mensa Vita", "vita",
             LocalTime.of(11, 30), LocalTime.of(14, 30));
-    public static final Canteen TEMPLERGRABEN = new Canteen("Bistro Templergraben", "templergraben",
-            LocalTime.of(11, 30), LocalTime.of(15, 00));
-    public static final Canteen BAYERNALLEE = new Canteen("Mensa Bayernallee", "bayernallee",
-            LocalTime.of(11, 30), LocalTime.of(14, 30));
-    public static final Canteen EUPENERSTRASSE = new Canteen("Mensa Eupener Straße", "eupenerstrasse",
-            LocalTime.of(11, 15), LocalTime.of(14, 15));
+    public static final Canteen TEMPLERGRABEN = new Canteen("Bistro Templergraben",
+            "templergraben", LocalTime.of(11, 30), LocalTime.of(15, 0));
+    public static final Canteen BAYERNALLEE = new Canteen("Mensa Bayernallee",
+            "bayernallee", LocalTime.of(11, 30), LocalTime.of(14, 30));
+    public static final Canteen EUPENERSTRASSE = new Canteen("Mensa Eupener Straße",
+            "eupenerstrasse", LocalTime.of(11, 15), LocalTime.of(14, 15));
     public static final Canteen KMAC = new Canteen("Mensa KMAC", "kmac",
             LocalTime.of(11, 30), LocalTime.of(14, 30));
     public static final Canteen JUELICH = new Canteen("Mensa Jülich", "juelich",
@@ -94,8 +94,10 @@ public class Canteen {
         Document docDE;
         Document docEN;
         try {
-            docDE = Jsoup.connect("https://www.studierendenwerk-aachen.de/speiseplaene/" + urlName + "-w.html").get();
-            docEN = Jsoup.connect("https://www.studierendenwerk-aachen.de/speiseplaene/" + urlName + "-w-en.html").get();
+            docDE = Jsoup.connect("https://www.studierendenwerk-aachen.de/speiseplaene/" +
+                    urlName + "-w.html").get();
+            docEN = Jsoup.connect("https://www.studierendenwerk-aachen.de/speiseplaene/" +
+                    urlName + "-w-en.html").get();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -109,7 +111,8 @@ public class Canteen {
             }
         }
         LeckerSchmecker.getLogger().info("Fetched " + this.dailyOffers.values().stream()
-                .mapToInt(d -> d.getMainMeals().size()).sum() + " meals for canteen '" + this.getDisplayName() + "'");
+                .mapToInt(d -> d.getMainMeals().size()).sum() + " meals for canteen '" +
+                this.getDisplayName() + "'");
     }
 
     public Map<LocalDate, DailyOffer> getDailyOffers() {

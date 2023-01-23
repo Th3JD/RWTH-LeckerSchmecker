@@ -51,13 +51,15 @@ public class SideMeal extends Meal {
         String htmlDE = elementDE.getElementsByClass("menue-item extra menue-desc").get(0).html();
         String htmlEN = elementEN.getElementsByClass("menue-item extra menue-desc").get(0).html();
 
-        List<String> displayNameDE = Arrays.stream(htmlDE.replace("<span class=\"menue-nutr\">+</span>", "")
+        List<String> displayNameDE =
+                Arrays.stream(htmlDE.replace("<span class=\"menue-nutr\">+</span>", "")
                 .replace("<br>", "")
                 .replaceAll("<sup>.*?</sup>", "")
                 .replace("|", "")
                 .split("<span class=\"seperator\">oder</span>")).map(String::trim).toList();
 
-        List<String> displayNameEN = Arrays.stream(htmlEN.replace("<span class=\"menue-nutr\">+</span>", "")
+        List<String> displayNameEN =
+                Arrays.stream(htmlEN.replace("<span class=\"menue-nutr\">+</span>", "")
                 .replace("<br>", "")
                 .replaceAll("<sup>.*?</sup>", "")
                 .replace("|", "")
@@ -65,7 +67,8 @@ public class SideMeal extends Meal {
 
         List<SideMeal> res = new LinkedList<>();
         for (int i = 0; i < displayNameDE.size(); i++) {
-            res.add(new SideMeal(displayNameDE.get(i).toLowerCase().replace(' ', '_'), displayNameDE.get(i), displayNameEN.get(i), finalType));
+            res.add(new SideMeal(displayNameDE.get(i).toLowerCase().replace(' ', '_'),
+                    displayNameDE.get(i), displayNameEN.get(i), finalType));
         }
         return res;
     }

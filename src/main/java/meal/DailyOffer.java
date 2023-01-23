@@ -34,7 +34,8 @@ import org.jsoup.select.Elements;
 
 public class DailyOffer {
 
-    private final SortedSet<MainMeal> meals = new TreeSet<>(Comparator.comparing(MainMeal::getType).thenComparing(Meal::getName));
+    private final SortedSet<MainMeal> meals = new TreeSet<>(Comparator.comparing(MainMeal::getType)
+            .thenComparing(Meal::getName));
     private final Set<SideMeal> sideMeals = new HashSet<>();
     private final LocalDate date;
 
@@ -58,7 +59,8 @@ public class DailyOffer {
     }
 
     public static DailyOffer parseOffer(Element elementDE, Element elementEN) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy", Locale.GERMANY);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy",
+                Locale.GERMANY);
 
         Elements headLineElements = elementDE.getElementsByClass("active-headline");
         if (headLineElements.isEmpty()) {
@@ -89,10 +91,13 @@ public class DailyOffer {
             res.addMeals(MainMeal.parseMeal(res, htmlMealsDE.get(i), htmlMealsEN.get(i)));
         }
 
-        Elements htmlExtrasDE = elementDE.getElementsByClass("extras").get(0).getElementsByClass("menue-wrapper");
-        Elements htmlExtrasEN = elementEN.getElementsByClass("extras").get(0).getElementsByClass("menue-wrapper");
+        Elements htmlExtrasDE = elementDE.getElementsByClass("extras").get(0)
+                .getElementsByClass("menue-wrapper");
+        Elements htmlExtrasEN = elementEN.getElementsByClass("extras").get(0)
+                .getElementsByClass("menue-wrapper");
         for (int i = 0; i < htmlExtrasDE.size(); i++) {
-            SideMeal.parseSideMeals(htmlExtrasDE.get(i), htmlExtrasEN.get(i)).forEach(res::addSideMeal);
+            SideMeal.parseSideMeals(htmlExtrasDE.get(i), htmlExtrasEN.get(i))
+                    .forEach(res::addSideMeal);
         }
 
         return res;
@@ -114,7 +119,9 @@ public class DailyOffer {
         if (displayName == null) {
             return Optional.empty();
         }
-        return this.getMainMeals().stream().filter(m -> displayName.equals(m.getDisplayName(locale))).findFirst();
+        return this.getMainMeals().stream()
+                .filter(m -> displayName.equals(m.getDisplayName(locale)))
+                .findFirst();
     }
 
     public LocalDate getDate() {
