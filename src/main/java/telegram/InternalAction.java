@@ -31,6 +31,7 @@ import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import util.DateUtils;
 
 public abstract class InternalAction implements BotAction {
 
@@ -50,9 +51,13 @@ public abstract class InternalAction implements BotAction {
             message.setText(context.getLocalizedString("select_a_date"));
 
             List<String> queryDates = new LinkedList<>();
-            LocalDate today = LocalDate.now();
-            for (int i = 0; i < LOOKAHEAD_DAYS; i++) {
-                queryDates.add(today.plusDays(i).format(formatter));
+            LocalDate current = LocalDate.now();
+            LocalDate max = DateUtils.addDaysSkippingWeekends(current, LOOKAHEAD_DAYS);
+            while (current.isBefore(max)) {
+                if (!DateUtils.isWeekend(current)) {
+                    queryDates.add(current.format(formatter));
+                }
+                current = current.plusDays(1);
             }
 
             message.setReplyMarkup(BotAction.createKeyboardMarkup(1, queryDates));
@@ -72,7 +77,8 @@ public abstract class InternalAction implements BotAction {
             String text = update.getMessage().getText();
             try {
                 LocalDate selectedDate = LocalDate.parse(text, formatter);
-                if (!selectedDate.isBefore(LocalDate.now().plusDays(LOOKAHEAD_DAYS))) {
+                if (!selectedDate.isBefore(DateUtils.addDaysSkippingWeekends(LocalDate.now(), LOOKAHEAD_DAYS)) ||
+                        DateUtils.isWeekend(selectedDate)) {
                     context.sendLocalizedMessage("invalid_option");
                     this.init(context, null);
                     return;
