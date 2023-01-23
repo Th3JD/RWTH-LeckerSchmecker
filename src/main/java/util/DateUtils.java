@@ -27,7 +27,6 @@ public class DateUtils {
      *
      * @param date Starting date
      * @param days Days to add
-     * @return
      */
     public static LocalDate addDaysSkippingWeekends(LocalDate date, int days) {
         LocalDate result = date;
