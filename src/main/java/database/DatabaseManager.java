@@ -193,7 +193,7 @@ public class DatabaseManager {
                     +
                     "    default_canteen ENUM ('academica', 'ahornstrasse', 'vita', 'templergraben', 'bayernallee', 'eupenerstrasse', 'kmac', 'juelich', 'suedpark') null,\n"
                     +
-                    "    default_diet_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'all') null,\n"
+                    "    default_diet_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'all') default 'all' not null,\n"
                     +
                     "    language        ENUM ('en-GB', 'de-DE', 'es-ES', 'zh-CN') default 'en-GB' not null,\n" +
                     "    constraint users_pk\n" +
@@ -327,12 +327,12 @@ public class DatabaseManager {
                 ADD_USER.setString(1, userID.toString());
                 ADD_USER.setLong(2, chatID);
                 ADD_USER.setString(3, null);
-                ADD_USER.setString(4, null);
+                ADD_USER.setString(4, DietType.EVERYTHING.getId());
                 ADD_USER.setString(5, ResourceManager.DEFAULTLOCALE.getLanguage() + "-"
                         + ResourceManager.DEFAULTLOCALE.getCountry());
                 ADD_USER.execute();
 
-                return new ChatContext(bot, userID, chatID, null, null, ResourceManager.DEFAULTLOCALE, 0);
+                return new ChatContext(bot, userID, chatID, null, DietType.EVERYTHING, ResourceManager.DEFAULTLOCALE, 0);
             } else {
                 UUID userID = UUID.fromString(rs.getString("userID"));
 
@@ -342,11 +342,7 @@ public class DatabaseManager {
                     defaultCanteen = Canteen.getByURLName(rs.getString("default_canteen")).get();
                 }
 
-                String defaultDietTypeRaw = rs.getString("default_diet_type");
-                DietType defaultDietType = null;
-                if (defaultDietTypeRaw != null) {
-                    defaultDietType = DietType.getById(rs.getString("default_diet_type")).get();
-                }
+                DietType dietType = DietType.getById(rs.getString("default_diet_type")).get();
 
                 String[] languageInfo = rs.getString("language").split("-");
                 Locale locale = new Locale(languageInfo[0], languageInfo[1]);
@@ -358,7 +354,7 @@ public class DatabaseManager {
                 rsNOV.next();
                 int numberOfVotes = rsNOV.getInt("amount");
 
-                return new ChatContext(bot, userID, chatID, defaultCanteen, defaultDietType, locale, numberOfVotes);
+                return new ChatContext(bot, userID, chatID, defaultCanteen, dietType, locale, numberOfVotes);
             }
 
         } catch (SQLException e) {

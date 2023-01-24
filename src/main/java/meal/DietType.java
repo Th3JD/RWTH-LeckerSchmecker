@@ -50,7 +50,7 @@ public enum DietType {
     }
 
     public static boolean isMealInDiet(List<Nutrition> nutritions, DietType dietType) {
-        if (nutritions.isEmpty() || dietType == null || dietType.equals(EVERYTHING)) {
+        if (nutritions.isEmpty() || dietType.equals(EVERYTHING)) {
             return true;
         }
 
