@@ -52,7 +52,7 @@ public class DatabaseManager {
             new EthernetAddress("00:00:00:00:00:00"));
 
     // STATEMENTS
-    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
+    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, SET_COMPACT_LAYOUT, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
             ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS, LOAD_NUMBER_OF_VOTES,
             RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING;
     /////////////
@@ -90,6 +90,10 @@ public class DatabaseManager {
 
     public static void setLanguage(UUID userID, Locale locale) {
         getInstance()._setLanguage(userID, locale);
+    }
+
+    public static void setCompactLayout(UUID userID, boolean value) {
+        getInstance()._setCompactLayout(userID, value);
     }
 
     public static void setDefaultDietType(UUID userID, DietType dietType) {
@@ -161,6 +165,7 @@ public class DatabaseManager {
             SET_CANTEEN.close();
             SET_DIET_TYPE.close();
             SET_LOCALE.close();
+            SET_COMPACT_LAYOUT.close();
             LOAD_MEAL_BY_ALIAS.close();
             LOAD_MEALS_BY_SHORT_ALIAS.close();
             ADD_NEW_MEAL_ALIAS.close();
@@ -195,7 +200,10 @@ public class DatabaseManager {
                     +
                     "    default_diet_type ENUM ('vegan', 'vegetarian', 'nopork', 'nofish', 'all') null,\n"
                     +
-                    "    language        ENUM ('en-GB', 'de-DE', 'es-ES', 'zh-CN') default 'en-GB' not null,\n" +
+                    "    language        ENUM ('en-GB', 'de-DE', 'es-ES', 'zh-CN') default 'en-GB' not null,\n"
+                    +
+                    "    compact_layout  TINYINT                                   default 0,\n"
+                    +
                     "    constraint users_pk\n" +
                     "        primary key (userID)\n" +
                     ");\n");
@@ -272,6 +280,8 @@ public class DatabaseManager {
                     "UPDATE users SET default_diet_type=? WHERE userID like ?");
             SET_LOCALE = connection.prepareStatement(
                     "UPDATE users SET language=? WHERE userID like ?");
+            SET_COMPACT_LAYOUT = connection.prepareStatement(
+                    "UPDATE users SET compact_layout=? WHERE userID like ?");
             LOAD_MEAL_BY_ALIAS = connection.prepareStatement(
                     "SELECT mealID FROM meal_name_alias WHERE alias LIKE ?");
             LOAD_MEALS_BY_SHORT_ALIAS = connection.prepareStatement(
@@ -330,6 +340,7 @@ public class DatabaseManager {
                 ADD_USER.setString(4, null);
                 ADD_USER.setString(5, ResourceManager.DEFAULTLOCALE.getLanguage() + "-"
                         + ResourceManager.DEFAULTLOCALE.getCountry());
+                ADD_USER.setBoolean(6, false);
                 ADD_USER.execute();
 
                 return new ChatContext(bot, userID, chatID, null, null, ResourceManager.DEFAULTLOCALE, 0);
@@ -397,6 +408,17 @@ public class DatabaseManager {
             SET_LOCALE.setString(1, locale.getLanguage() + "-" + locale.getCountry());
             SET_LOCALE.setString(2, userID.toString());
             SET_LOCALE.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void _setCompactLayout(UUID userID, boolean value) {
+        try {
+            SET_COMPACT_LAYOUT.clearParameters();;
+            SET_COMPACT_LAYOUT.setBoolean(1, value);
+            SET_COMPACT_LAYOUT.setString(2, userID.toString());
+            SET_COMPACT_LAYOUT.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
