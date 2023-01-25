@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import localization.ResourceManager;
 import meal.Canteen;
+import meal.DietType;
 import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -297,7 +298,7 @@ public abstract class CallableAction implements BotAction {
                     InternalAction.SELECT_DIET_TYPE.init(context, null);
                 } else {
                     // Diet should be unset
-                    context.setDefaultDietType(null);
+                    context.setDefaultDietType(DietType.EVERYTHING);
 
                     SendMessage message = new SendMessage();
                     message.setText(context.getLocalizedString("reset_selected_diet"));
