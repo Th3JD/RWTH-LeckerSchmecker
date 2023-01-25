@@ -202,7 +202,7 @@ public class DatabaseManager {
                     +
                     "    language        ENUM ('en-GB', 'de-DE', 'es-ES', 'zh-CN') default 'en-GB' not null,\n"
                     +
-                    "    compact_layout  TINYINT                                   default 0,\n"
+                    "    compact_layout  TINYINT                                   default 0 not null,\n"
                     +
                     "    constraint users_pk\n" +
                     "        primary key (userID)\n" +
@@ -343,7 +343,7 @@ public class DatabaseManager {
                 ADD_USER.setBoolean(6, false);
                 ADD_USER.execute();
 
-                return new ChatContext(bot, userID, chatID, null, null, ResourceManager.DEFAULTLOCALE, 0);
+                return new ChatContext(bot, userID, chatID, null, null, ResourceManager.DEFAULTLOCALE, false, 0);
             } else {
                 UUID userID = UUID.fromString(rs.getString("userID"));
 
@@ -362,6 +362,8 @@ public class DatabaseManager {
                 String[] languageInfo = rs.getString("language").split("-");
                 Locale locale = new Locale(languageInfo[0], languageInfo[1]);
 
+                boolean value = rs.getBoolean("compact_layout");
+
                 LOAD_NUMBER_OF_VOTES.clearParameters();
                 LOAD_NUMBER_OF_VOTES.setString(1, userID.toString());
                 ResultSet rsNOV = LOAD_NUMBER_OF_VOTES.executeQuery();
@@ -369,7 +371,7 @@ public class DatabaseManager {
                 rsNOV.next();
                 int numberOfVotes = rsNOV.getInt("amount");
 
-                return new ChatContext(bot, userID, chatID, defaultCanteen, defaultDietType, locale, numberOfVotes);
+                return new ChatContext(bot, userID, chatID, defaultCanteen, defaultDietType, locale, value, numberOfVotes);
             }
 
         } catch (SQLException e) {
