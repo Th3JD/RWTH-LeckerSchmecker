@@ -50,16 +50,16 @@ public enum DietType {
     }
 
     public static boolean isMealInDiet(List<Nutrition> nutritions, DietType dietType) {
-        if (nutritions.isEmpty() || dietType.equals(EVERYTHING)) {
+        if (nutritions.isEmpty()) {
             return true;
         }
 
         return switch (dietType) {
+            case EVERYTHING -> true;
             case NOPORK -> !nutritions.contains(Nutrition.PORK);
             case NOFISH -> !nutritions.contains(Nutrition.FISH);
             case VEGAN -> nutritions.contains(Nutrition.VEGAN);
             case VEGETARIAN -> nutritions.contains(Nutrition.VEGAN) || nutritions.contains(Nutrition.VEGETARIAN);
-            default -> false;
         };
     }
 
