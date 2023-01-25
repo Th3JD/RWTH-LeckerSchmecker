@@ -50,27 +50,17 @@ public enum DietType {
     }
 
     public static boolean isMealInDiet(List<Nutrition> nutritions, DietType dietType) {
-        if (nutritions.isEmpty() || dietType == null) {
+        if (nutritions.isEmpty() || dietType.equals(EVERYTHING)) {
             return true;
         }
-        switch (dietType) {
-            case EVERYTHING:
-                return true;
-            case NOPORK:
-                return !nutritions.contains(Nutrition.PORK);
-            case NOFISH:
-                return !nutritions.contains(Nutrition.FISH);
-            case VEGAN:
-                return nutritions.contains(Nutrition.VEGAN);
-            case VEGETARIAN:
-                if (nutritions.contains(Nutrition.VEGAN)) {
-                    return true;
-                } else {
-                    return nutritions.contains(Nutrition.VEGETARIAN);
-                }
-            default:
-                return false;
-        }
+
+        return switch (dietType) {
+            case NOPORK -> !nutritions.contains(Nutrition.PORK);
+            case NOFISH -> !nutritions.contains(Nutrition.FISH);
+            case VEGAN -> nutritions.contains(Nutrition.VEGAN);
+            case VEGETARIAN -> nutritions.contains(Nutrition.VEGAN) || nutritions.contains(Nutrition.VEGETARIAN);
+            default -> false;
+        };
     }
 
     public String getDisplayName(Locale locale) {
