@@ -29,7 +29,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 
 public interface BotAction {
 
-    void init(ChatContext context, SendMessage passthroughMessage);
+    void init(ChatContext context, SendMessage passthroughMessage, Update update);
 
     void onUpdate(ChatContext context, Update update);
 

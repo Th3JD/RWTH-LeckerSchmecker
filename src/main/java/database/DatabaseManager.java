@@ -52,7 +52,7 @@ public class DatabaseManager {
             new EthernetAddress("00:00:00:00:00:00"));
 
     // STATEMENTS
-    private PreparedStatement LOAD_USER, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
+    private PreparedStatement LOAD_USER, LOAD_USER_CHAT_IDS, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
             ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS, LOAD_NUMBER_OF_VOTES,
             RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING;
     /////////////
@@ -82,6 +82,10 @@ public class DatabaseManager {
 
     public static ChatContext loadUser(LeckerSchmeckerBot bot, long chatID) {
         return getInstance()._loadUser(bot, chatID);
+    }
+
+    public static Set<Long> getUserChatIds() {
+        return getInstance()._getUserChatIds();
     }
 
     public static void setDefaultCanteen(UUID userID, Canteen canteen) {
@@ -157,6 +161,7 @@ public class DatabaseManager {
     protected void _disconnect() {
         try {
             LOAD_USER.close();
+            LOAD_USER_CHAT_IDS.close();
             ADD_USER.close();
             SET_CANTEEN.close();
             SET_DIET_TYPE.close();
@@ -264,6 +269,7 @@ public class DatabaseManager {
     protected void _setupStatements() {
         try {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
+            LOAD_USER_CHAT_IDS = connection.prepareStatement("SELECT chatID FROM users");
             ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, ?)");
             LOAD_NUMBER_OF_VOTES = connection.prepareStatement("SELECT COUNT(*) as amount from ratings WHERE userID like ?");
             SET_CANTEEN = connection.prepareStatement(
@@ -342,7 +348,7 @@ public class DatabaseManager {
                     defaultCanteen = Canteen.getByURLName(rs.getString("default_canteen")).get();
                 }
 
-                DietType dietType = DietType.getById(rs.getString("default_diet_type")).get();
+                DietType dietType = DietType.getById(rs.getString("default_diet_type")).orElse(DietType.EVERYTHING);
 
                 String[] languageInfo = rs.getString("language").split("-");
                 Locale locale = new Locale(languageInfo[0], languageInfo[1]);
@@ -361,6 +367,22 @@ public class DatabaseManager {
             e.printStackTrace();
         }
         return null;
+    }
+
+    protected Set<Long> _getUserChatIds() {
+        Set<Long> ids = new HashSet<>();
+
+        try {
+            ResultSet rs = LOAD_USER_CHAT_IDS.executeQuery();
+
+            while (rs.next()) {
+                ids.add(rs.getLong("chatID"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return ids;
     }
 
     protected void _setDefaultCanteen(UUID userID, Canteen canteen) {
