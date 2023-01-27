@@ -525,6 +525,12 @@ public class DatabaseManager {
     }
 
     protected RatingInfo _getGlobalRating(MainMeal meal) {
+
+        // Cannot return global rating for meals which are still waiting for admin input
+        if (meal.getId() == null) {
+            return null;
+        }
+
         try {
             LOAD_GLOBAL_RATING.clearParameters();
             LOAD_GLOBAL_RATING.setInt(1, meal.getId());
