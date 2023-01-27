@@ -40,7 +40,7 @@ public abstract class InternalAction implements BotAction {
         private final int LOOKAHEAD_DAYS = Config.getInt("botaction.select_date.daysToPresent");
 
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
@@ -68,7 +68,7 @@ public abstract class InternalAction implements BotAction {
         @Override
         public void onUpdate(ChatContext context, Update update) {
             if (!update.hasMessage()) { // User did not answer with a text message
-                this.init(context, null);
+                this.init(context, null, update);
             }
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE',' dd.MM.yyyy",
@@ -80,7 +80,7 @@ public abstract class InternalAction implements BotAction {
                 if (!selectedDate.isBefore(DateUtils.addDaysSkippingWeekends(LocalDate.now(), LOOKAHEAD_DAYS)) ||
                         DateUtils.isWeekend(selectedDate)) {
                     context.sendLocalizedMessage("invalid_option");
-                    this.init(context, null);
+                    this.init(context, null, update);
                     return;
                 }
 
@@ -89,7 +89,7 @@ public abstract class InternalAction implements BotAction {
 
             } catch (DateTimeParseException e) {
                 context.sendLocalizedMessage("invalid_option");
-                this.init(context, null);
+                this.init(context, null, update);
             }
 
 
@@ -98,7 +98,7 @@ public abstract class InternalAction implements BotAction {
 
     public static final InternalAction SELECT_CANTEEN = new InternalAction() {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
@@ -121,7 +121,7 @@ public abstract class InternalAction implements BotAction {
             Optional<Canteen> canteenOpt = Canteen.getByDisplayName(msg.getText());
             if (canteenOpt.isEmpty()) {
                 context.sendLocalizedMessage("invalid_option");
-                this.init(context, null);
+                this.init(context, null, update);
                 return;
             }
 
@@ -132,7 +132,7 @@ public abstract class InternalAction implements BotAction {
 
     public static final InternalAction SELECT_DIET_TYPE = new InternalAction() {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
@@ -153,7 +153,7 @@ public abstract class InternalAction implements BotAction {
             Optional<DietType> dietTypeOpt = DietType.getByDisplayName(msg.getText(), context.getLocale());
             if (dietTypeOpt.isEmpty()) {
                 context.sendLocalizedMessage("invalid_option");
-                this.init(context, null);
+                this.init(context, null, update);
                 return;
             }
 
@@ -164,7 +164,7 @@ public abstract class InternalAction implements BotAction {
 
     public static final InternalAction SELECT_MEAL = new InternalAction() {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
             SendMessage msg = new SendMessage();
@@ -187,7 +187,7 @@ public abstract class InternalAction implements BotAction {
 
     public static final InternalAction SELECT_LOCALE = new InternalAction() {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
@@ -207,7 +207,7 @@ public abstract class InternalAction implements BotAction {
                 context.setSelectedLocale(loc.get());
                 context.getReturnToAction().onUpdate(context, update);
             } else {
-                this.init(context, null);
+                this.init(context, null, update);
             }
         }
     };
@@ -216,7 +216,7 @@ public abstract class InternalAction implements BotAction {
         private final int ratingThreshold = Config.getInt("botaction.rate_meal.tutorial_threshold");
 
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.sendMessage(passthroughMessage);
             context.setCurrentAction(this);
 
@@ -247,7 +247,7 @@ public abstract class InternalAction implements BotAction {
                 context.setRatedPoints(Integer.parseInt(updateMsg));
             } catch (NumberFormatException ignored) {
                 context.sendLocalizedMessage("invalid_option");
-                this.init(context, null);
+                this.init(context, null, update);
             }
             context.getReturnToAction().onUpdate(context, update);
         }
