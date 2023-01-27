@@ -80,7 +80,7 @@ public abstract class AdminAction implements BotAction {
 
             LeckerSchmeckerBot.getInstance().broadcastMessage(
                 update.getMessage().getReplyToMessage().getText(),
-                message.equalsIgnoreCase("broadcast"), true);
+                message.equalsIgnoreCase("/broadcast"), true);
         }
 
         @Override
