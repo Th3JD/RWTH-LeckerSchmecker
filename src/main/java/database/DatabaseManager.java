@@ -272,7 +272,7 @@ public class DatabaseManager {
     protected void _setupStatements() {
         try {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
-            ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, ?)");
+            ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?)");
             LOAD_NUMBER_OF_VOTES = connection.prepareStatement("SELECT COUNT(*) as amount from ratings WHERE userID like ?");
             SET_CANTEEN = connection.prepareStatement(
                     "UPDATE users SET default_canteen=? WHERE userID like ?");
