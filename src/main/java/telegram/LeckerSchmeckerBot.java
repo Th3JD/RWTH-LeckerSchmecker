@@ -395,11 +395,11 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         return false;
     }
 
-    public void broadcastMessage(String text, boolean notificate, boolean markdownV2) {
+    public void broadcastMessage(String text, boolean notify, boolean markdown) {
         SendMessage message = new SendMessage();
         message.setText(text);
-        message.setDisableNotification(!notificate);
-        message.enableMarkdownV2(markdownV2);
+        message.setDisableNotification(!notify);
+        message.enableMarkdown(markdown);
 
         for (Long chatId : DatabaseManager.getUserChatIds()) {
             message.setChatId(chatId);

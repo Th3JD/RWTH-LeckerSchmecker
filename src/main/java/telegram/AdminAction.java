@@ -71,15 +71,16 @@ public abstract class AdminAction implements BotAction {
 
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
-            String[] message = update.getMessage().getText().split(" ", 2);
+            String message = update.getMessage().getText();
 
-            if (message.length < 2) {
+            if (update.getMessage().getReplyToMessage() == null) {
                 context.sendMessage("Message is missing");
                 return;
             }
 
-            LeckerSchmeckerBot.getInstance().broadcastMessage(message[1],
-                message[0].equalsIgnoreCase("broadcast"), true);
+            LeckerSchmeckerBot.getInstance().broadcastMessage(
+                update.getMessage().getReplyToMessage().getText(),
+                message.equalsIgnoreCase("broadcast"), true);
         }
 
         @Override
