@@ -173,12 +173,12 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                         .findFirst();
 
                 if (action.isPresent()) {
-                    action.get().init(context, null);
+                    action.get().init(context, null, update);
                 } else {
-                    CallableAction.MAIN_MENU.init(context, null);
+                    CallableAction.MAIN_MENU.init(context, null, update);
                 }
             } else {
-                CallableAction.MAIN_MENU.init(context, null);
+                CallableAction.MAIN_MENU.init(context, null, update);
             }
         } catch (Exception e) {
             LeckerSchmecker.getLogger().severe("Caught the following exception whilst processing an update: " + update);
@@ -395,4 +395,19 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         return false;
     }
 
+    public void broadcastMessage(String text, boolean notify, boolean markdown) {
+        SendMessage message = new SendMessage();
+        message.setText(text);
+        message.setDisableNotification(!notify);
+        message.enableMarkdown(markdown);
+
+        for (Long chatId : DatabaseManager.getUserChatIds()) {
+            message.setChatId(chatId);
+            try {
+                this.execute(message);
+            } catch (TelegramApiException ignored) {
+
+            }
+        }
+    }
 }

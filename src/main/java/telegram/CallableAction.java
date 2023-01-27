@@ -35,13 +35,13 @@ public abstract class CallableAction implements BotAction {
     public static final CallableAction LIST_MEALS = new CallableAction("callableaction_list_meals",
             List.of("gerichte", "essen", "meals", "comidas")) {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.setCurrentAction(this);
             context.setReturnToAction(
                     this); // Needed to make the internal action return to this action
 
             // Select date, selecting the canteen is done in onUpdate
-            InternalAction.SELECT_DATE.init(context, null);
+            InternalAction.SELECT_DATE.init(context, null, update);
         }
 
         @Override
@@ -67,11 +67,11 @@ public abstract class CallableAction implements BotAction {
                     // Reset everything prior to exiting the state
                     context.resetPassthroughInformation();
 
-                    MAIN_MENU.init(context, message);
+                    MAIN_MENU.init(context, message, update);
                 } else {
 
                     // No canteen chosen so far
-                    InternalAction.SELECT_CANTEEN.init(context, null);
+                    InternalAction.SELECT_CANTEEN.init(context, null, update);
                 }
 
             }
@@ -81,7 +81,7 @@ public abstract class CallableAction implements BotAction {
     public static final CallableAction RATING = new CallableAction("callableaction_rate",
             List.of("bewertung", "kritik", "rating", "evaluar")) {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.setCurrentAction(this);
             context.sendMessage(passthroughMessage);
 
@@ -93,9 +93,9 @@ public abstract class CallableAction implements BotAction {
             }
 
             if (context.hasCanteen()) {
-                InternalAction.SELECT_MEAL.init(context, null);
+                InternalAction.SELECT_MEAL.init(context, null, update);
             } else {
-                InternalAction.SELECT_CANTEEN.init(context, null);
+                InternalAction.SELECT_CANTEEN.init(context, null, update);
             }
         }
 
@@ -103,7 +103,7 @@ public abstract class CallableAction implements BotAction {
         public void onUpdate(ChatContext context, Update update) {
             if (!context.hasCanteen()) {
                 context.setReturnToAction(this);
-                InternalAction.SELECT_CANTEEN.init(context, null);
+                InternalAction.SELECT_CANTEEN.init(context, null, update);
                 return;
             }
 
@@ -113,7 +113,7 @@ public abstract class CallableAction implements BotAction {
             if (currentTime.isBefore(canteen.getOpeningTime())) {
                 MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
                         context.getLocalizedString("canteen_not_open_yet",
-                                canteen.getDisplayName())));
+                                canteen.getDisplayName())), update);
                 context.resetPassthroughInformation();
                 return;
             }
@@ -122,13 +122,13 @@ public abstract class CallableAction implements BotAction {
                 context.resetPassthroughInformation();
                 MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
                         context.getLocalizedString("canteen_already_closed",
-                                canteen.getDisplayName())));
+                                canteen.getDisplayName())), update);
                 return;
             }
 
             if (!context.hasMealSelected()) {
                 context.setReturnToAction(this);
-                InternalAction.SELECT_MEAL.init(context, null);
+                InternalAction.SELECT_MEAL.init(context, null, update);
                 return;
             }
 
@@ -139,13 +139,13 @@ public abstract class CallableAction implements BotAction {
                 SendMessage msg = new SendMessage(String.valueOf(context.getChatID()),
                         context.getLocalizedString("meal_not_ratable", meal.getDisplayName(context.getLocale())));
                 msg.enableMarkdown(true);
-                MAIN_MENU.init(context, msg);
+                MAIN_MENU.init(context, msg, update);
                 return;
             }
 
             if (!context.hasRated()) {
                 context.setReturnToAction(this);
-                InternalAction.RATE_MEAL.init(context, null);
+                InternalAction.RATE_MEAL.init(context, null, update);
                 return;
             }
 
@@ -158,14 +158,14 @@ public abstract class CallableAction implements BotAction {
             SendMessage msg = new SendMessage(String.valueOf(context.getChatID()),
                     "_" + meal.getDisplayName(context.getLocale()) + "_: *" + ratedPoints + "*");
             msg.enableMarkdown(true);
-            MAIN_MENU.init(context, msg);
+            MAIN_MENU.init(context, msg, update);
         }
     };
 
     public static final CallableAction MAIN_MENU = new CallableAction("callableaction_main_menu",
             List.of("/start", "start", "exit", "menu", "menü", "hauptmenü", "inicio")) {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.setCurrentAction(this);
 
             // Reset context in case the user quit while in an internal state
@@ -192,14 +192,14 @@ public abstract class CallableAction implements BotAction {
                             || a.getDisplayName(context.getLocale())
                             .equalsIgnoreCase(msg.getText()))
                     .findFirst()
-                    .ifPresent(action -> action.init(context, null));
+                    .ifPresent(action -> action.init(context, null, update));
         }
     };
 
     public static final CallableAction SELECT_DEFAULTS = new CallableAction(
             "callableaction_select_defaults", List.of("standardwerte", "defaults")) {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
@@ -238,7 +238,7 @@ public abstract class CallableAction implements BotAction {
 
                 // Reset everything prior to exiting the state
                 context.resetPassthroughInformation();
-                MAIN_MENU.init(context, message);
+                MAIN_MENU.init(context, message, update);
                 return;
             }
 
@@ -265,14 +265,14 @@ public abstract class CallableAction implements BotAction {
                     // Canteen should be set
                     context.setReturnToAction(this);
 
-                    InternalAction.SELECT_CANTEEN.init(context, null);
+                    InternalAction.SELECT_CANTEEN.init(context, null, update);
                 } else {
                     // Canteen should be unset
                     context.setDefaultCanteen(null);
 
                     SendMessage message = new SendMessage();
                     message.setText(context.getLocalizedString("deleted_default_canteen"));
-                    MAIN_MENU.init(context, message);
+                    MAIN_MENU.init(context, message, update);
                 }
 
             } else if (text.equals(context.getLocalizedString("language"))) {
@@ -280,13 +280,13 @@ public abstract class CallableAction implements BotAction {
                 if (context.getDefaultValueSet()) {
                     context.setReturnToAction(this);
 
-                    InternalAction.SELECT_LOCALE.init(context, null);
+                    InternalAction.SELECT_LOCALE.init(context, null, update);
                 } else {
                     context.setLocale(ResourceManager.DEFAULTLOCALE);
 
                     SendMessage message = new SendMessage();
                     message.setText(context.getLocalizedString("reset_selected_language"));
-                    MAIN_MENU.init(context, message);
+                    MAIN_MENU.init(context, message, update);
                 }
 
             } else if (text.equals(context.getLocalizedString("diet"))) {
@@ -295,18 +295,18 @@ public abstract class CallableAction implements BotAction {
                     // Diet should be set
                     context.setReturnToAction(this); // Needed to make the internal action return to this action
 
-                    InternalAction.SELECT_DIET_TYPE.init(context, null);
+                    InternalAction.SELECT_DIET_TYPE.init(context, null, update);
                 } else {
                     // Diet should be unset
                     context.setDefaultDietType(DietType.EVERYTHING);
 
                     SendMessage message = new SendMessage();
                     message.setText(context.getLocalizedString("reset_selected_diet"));
-                    MAIN_MENU.init(context, message);
+                    MAIN_MENU.init(context, message, update);
                 }
             } else {
                 context.sendLocalizedMessage("invalid_option");
-                this.init(context, null);
+                this.init(context, null, update);
             }
         }
     };
@@ -314,11 +314,11 @@ public abstract class CallableAction implements BotAction {
     public static final CallableAction TUTORIAL = new CallableAction("tutorial_name",
             List.of("/tutorial", "anleitung")) {
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             SendMessage message = new SendMessage();
             message.enableMarkdownV2(true);
             message.setText(context.getLocalizedString("tutorial"));
-            MAIN_MENU.init(context, message);
+            MAIN_MENU.init(context, message, update);
         }
 
         @Override
