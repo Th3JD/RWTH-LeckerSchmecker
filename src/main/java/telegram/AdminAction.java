@@ -33,7 +33,7 @@ public abstract class AdminAction implements BotAction {
         private final Random rnd = new Random();
 
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             String code = String.format("%05d", rnd.nextInt(100000));
             while (!context.getBot().addAccessCode(code)) {
                 code = String.format("%05d", rnd.nextInt(100000));
@@ -52,12 +52,35 @@ public abstract class AdminAction implements BotAction {
         private final Random rnd = new Random();
 
         @Override
-        public void init(ChatContext context, SendMessage passthroughMessage) {
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             String code = String.format("%04d", rnd.nextInt(10000));
             while (!context.getBot().addAccessCode(code)) {
                 code = String.format("%04d", rnd.nextInt(10000));
             }
             context.sendMessage("Generated access code: " + code);
+        }
+
+        @Override
+        public void onUpdate(ChatContext context, Update update) {
+
+        }
+    };
+
+    public static final AdminAction BROADCAST = new AdminAction("Broadcast",
+        List.of("/broadcast", "/info")) {
+
+        @Override
+        public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
+            String message = update.getMessage().getText();
+
+            if (update.getMessage().getReplyToMessage() == null) {
+                context.sendMessage("Message is missing");
+                return;
+            }
+
+            LeckerSchmeckerBot.getInstance().broadcastMessage(
+                update.getMessage().getReplyToMessage().getText(),
+                message.equalsIgnoreCase("/broadcast"), true);
         }
 
         @Override
@@ -78,7 +101,7 @@ public abstract class AdminAction implements BotAction {
                         .filter(a -> a.getCmds()
                                 .contains(msg.getText().split(" ")[0].toLowerCase()))
                         .findFirst()
-                        .ifPresent(adminAction -> adminAction.init(context, null));
+                        .ifPresent(adminAction -> adminAction.init(context, null, update));
             }
         } else if (update.hasPoll()) {
 
@@ -101,7 +124,7 @@ public abstract class AdminAction implements BotAction {
         }
     }
 
-    public static final AdminAction[] VALUES = {GENERATE_TIMED_ACCESS_CODE, GENERATE_ACCESS_CODE};
+    public static final AdminAction[] VALUES = {GENERATE_TIMED_ACCESS_CODE, GENERATE_ACCESS_CODE, BROADCAST};
 
     public static AdminAction[] values() {
         return VALUES;
