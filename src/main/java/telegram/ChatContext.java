@@ -43,6 +43,7 @@ public class ChatContext {
     // Info about the user
     private Canteen defaultCanteen;
     private Locale locale;
+    private boolean compactLayout;
     private int numberOfVotes;
 
     // State information
@@ -66,13 +67,14 @@ public class ChatContext {
 
 
     public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen,
-            DietType dietType, Locale locale, int numberOfVotes) {
+            DietType dietType, Locale locale, boolean compactLayout, int numberOfVotes) {
         this.bot = bot;
         this.userID = userID;
         this.chatID = chatID;
         this.defaultCanteen = defaultCanteen;
         this.defaultDietType = dietType;
         this.locale = locale;
+        this.compactLayout = compactLayout;
         this.numberOfVotes = numberOfVotes;
     }
 
@@ -99,6 +101,11 @@ public class ChatContext {
         DatabaseManager.setLanguage(userID, locale);
     }
 
+    public void setCompactLayout(boolean compactLayout) {
+        this.compactLayout = compactLayout;
+        DatabaseManager.setCompactLayout(userID, compactLayout);
+    }
+
     public void setDefaultDietType(DietType dietType) {
         this.defaultDietType = dietType;
         DatabaseManager.setDefaultDietType(userID, dietType);
@@ -116,6 +123,8 @@ public class ChatContext {
     public Locale getLocale() {
         return locale;
     }
+
+    public boolean isCompactLayout() { return compactLayout; }
 
     public Boolean getDefaultValueSet() {
         return defaultValueSet;

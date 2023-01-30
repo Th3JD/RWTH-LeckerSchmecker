@@ -252,10 +252,11 @@ public abstract class CallableAction implements BotAction {
                 SendMessage message = new SendMessage();
                 message.setText(context.getLocalizedString(shouldBeSet ?
                         "which_default_value_should_be_set" : "which_default_value_should_be_deleted"));
-                message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1, context.getLocale(),
+                message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(2, context.getLocale(),
                         context.getLocalizedString("canteen"),
                         context.getLocalizedString("language"),
-                        context.getLocalizedString("diet")));
+                        context.getLocalizedString("diet"),
+                        context.getLocalizedString("compact_layout")));
                 context.sendMessage(message);
 
             } else if (text.equals(context.getLocalizedString("canteen"))) {
@@ -303,6 +304,23 @@ public abstract class CallableAction implements BotAction {
                     SendMessage message = new SendMessage();
                     message.setText(context.getLocalizedString("reset_selected_diet"));
                     MAIN_MENU.init(context, message, update);
+                }
+            } else if (text.equals(context.getLocalizedString("compact_layout"))) {
+                // Check if the compact layout needs to be set or unset
+                if (context.getDefaultValueSet()) {
+                    // Compact layout should be set
+                    context.setCompactLayout(true);
+
+                    SendMessage message = new SendMessage();
+                    message.setText(context.getLocalizedString("set_compact_layout"));
+                    MAIN_MENU.init(context, message);
+                } else {
+                    // Compact layout should be unset
+                    context.setCompactLayout(false);
+
+                    SendMessage message = new SendMessage();
+                    message.setText(context.getLocalizedString("reset_compact_layout"));
+                    MAIN_MENU.init(context, message);
                 }
             } else {
                 context.sendLocalizedMessage("invalid_option");

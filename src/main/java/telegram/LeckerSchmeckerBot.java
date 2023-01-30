@@ -271,19 +271,29 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             RatingInfo globalRating = DatabaseManager.getGlobalRating(meal);
             Float userRating = DatabaseManager.getUserRating(context, meal);
 
-            sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
-                    .append(" _").append(priceFormat.format(meal.getPrice()))
-                    .append("€").append("_")
-                    .append("\n")
-                    .append(meal.text(context.getLocale())).append("\n")
-                    .append(context.getLocalizedString("global_rating"))
-                    .append(globalRating == null ? "_" +
-                            context.getLocalizedString("not_rated") +
-                            "_" : ratingFormat.format(globalRating.getAverageRating()) + " (" +
-                                    globalRating.getNumVotes() + ")").append("\n")
-                    .append(context.getLocalizedString("your_rating"))
-                    .append(userRating == null ? "_" + context.getLocalizedString("not_rated") +
-                            "_" : ratingFormat.format(userRating)).append("\n\n");
+            if (context.isCompactLayout()) {
+                sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
+                        .append(" _").append(priceFormat.format(meal.getPrice()))
+                        .append("€").append("_    ")
+                        .append(globalRating == null ? "_-_" : ratingFormat.format(globalRating.getAverageRating()))
+                        .append(" / ")
+                        .append(userRating == null ? "_-_" : ratingFormat.format(userRating)).append("\n")
+                        .append(meal.text(context.getLocale())).append("\n\n");
+            } else {
+                sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
+                        .append(" _").append(priceFormat.format(meal.getPrice()))
+                        .append("€").append("_")
+                        .append("\n")
+                        .append(meal.text(context.getLocale())).append("\n")
+                        .append(context.getLocalizedString("global_rating"))
+                        .append(globalRating == null ? "_" +
+                                context.getLocalizedString("not_rated") +
+                                "_" : ratingFormat.format(globalRating.getAverageRating()) + " (" +
+                                globalRating.getNumVotes() + ")").append("\n")
+                        .append(context.getLocalizedString("your_rating"))
+                        .append(userRating == null ? "_" + context.getLocalizedString("not_rated") +
+                                "_" : ratingFormat.format(userRating)).append("\n\n");
+            }
         }
 
         sb.append("*").append(context.getLocalizedString("main_side_dish")).append("*")
