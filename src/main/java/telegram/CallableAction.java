@@ -251,7 +251,7 @@ public abstract class CallableAction implements BotAction {
                 SendMessage message = new SendMessage();
                 message.setText(context.getLocalizedString(shouldBeSet ?
                         "which_default_value_should_be_set" : "which_default_value_should_be_deleted"));
-                message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1, context.getLocale(),
+                message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(2, context.getLocale(),
                         context.getLocalizedString("canteen"),
                         context.getLocalizedString("language"),
                         context.getLocalizedString("diet"),
