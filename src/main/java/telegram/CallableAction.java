@@ -313,14 +313,14 @@ public abstract class CallableAction implements BotAction {
 
                     SendMessage message = new SendMessage();
                     message.setText(context.getLocalizedString("set_compact_layout"));
-                    MAIN_MENU.init(context, message);
+                    MAIN_MENU.init(context, message, update);
                 } else {
                     // Compact layout should be unset
                     context.setCompactLayout(false);
 
                     SendMessage message = new SendMessage();
                     message.setText(context.getLocalizedString("reset_compact_layout"));
-                    MAIN_MENU.init(context, message);
+                    MAIN_MENU.init(context, message, update);
                 }
             } else {
                 context.sendLocalizedMessage("invalid_option");
