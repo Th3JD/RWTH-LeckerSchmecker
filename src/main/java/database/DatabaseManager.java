@@ -599,6 +599,12 @@ public class DatabaseManager {
     }
 
     protected Float _getUserRating(ChatContext context, MainMeal meal) {
+
+        // Cannot return global rating for meals which are still waiting for admin input
+        if (meal.getId() == null) {
+            return null;
+        }
+
         try {
             LOAD_USER_RATING.clearParameters();
             LOAD_USER_RATING.setInt(1, meal.getId());
