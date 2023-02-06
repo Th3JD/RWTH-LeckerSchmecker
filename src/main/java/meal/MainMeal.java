@@ -55,6 +55,11 @@ public class MainMeal extends Meal {
         String htmlNameDE = elementDE.getElementsByClass("expand-nutr").get(0).ownText();
         String htmlNameEN = elementEN.getElementsByClass("expand-nutr").get(0).ownText();
 
+        if (htmlNameDE.isEmpty() || htmlNameDE.isBlank()) {
+            LeckerSchmecker.getLogger().warning("Encountered meal without a name!");
+            return null;
+        }
+
         String category = elementDE.getElementsByClass("menue-category").get(0).ownText();
         Type type = Type.getMealTypeFromCategory(category, elementDE);
 

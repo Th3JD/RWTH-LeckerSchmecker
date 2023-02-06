@@ -22,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
@@ -88,7 +89,10 @@ public class DailyOffer {
                 .getElementsByClass("menue-wrapper");
 
         for (int i = 0; i < htmlMealsDE.size(); i++) {
-            res.addMeals(MainMeal.parseMeal(res, htmlMealsDE.get(i), htmlMealsEN.get(i)));
+            List<MainMeal> meals = MainMeal.parseMeal(res, htmlMealsDE.get(i), htmlMealsEN.get(i));
+            if (meals != null) {
+                res.addMeals(meals);
+            }
         }
 
         Elements htmlExtrasDE = elementDE.getElementsByClass("extras").get(0)
