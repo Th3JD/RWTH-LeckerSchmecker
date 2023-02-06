@@ -55,9 +55,9 @@ public class MainMeal extends Meal {
         String htmlNameDE = elementDE.getElementsByClass("expand-nutr").get(0).ownText();
         String htmlNameEN = elementEN.getElementsByClass("expand-nutr").get(0).ownText();
 
-        if (htmlNameDE.isEmpty() || htmlNameDE.isBlank()) {
+        if (htmlNameDE.isBlank()) {
             LeckerSchmecker.getLogger().warning("Encountered meal without a name!");
-            return null;
+            return List.of();
         }
 
         String category = elementDE.getElementsByClass("menue-category").get(0).ownText();
@@ -66,7 +66,7 @@ public class MainMeal extends Meal {
         if (type == null) {
             LeckerSchmecker.getLogger()
                     .warning("Could not parse type of meal '" + htmlNameDE + "'");
-            return null;
+            return List.of();
         }
 
         Elements priceElements = elementDE.getElementsByClass("menue-price");

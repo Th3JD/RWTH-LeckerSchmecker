@@ -89,10 +89,7 @@ public class DailyOffer {
                 .getElementsByClass("menue-wrapper");
 
         for (int i = 0; i < htmlMealsDE.size(); i++) {
-            List<MainMeal> meals = MainMeal.parseMeal(res, htmlMealsDE.get(i), htmlMealsEN.get(i));
-            if (meals != null) {
-                res.addMeals(meals);
-            }
+            res.addMeals(MainMeal.parseMeal(res, htmlMealsDE.get(i), htmlMealsEN.get(i)));
         }
 
         Elements htmlExtrasDE = elementDE.getElementsByClass("extras").get(0)
