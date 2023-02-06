@@ -16,7 +16,6 @@
 
 package telegram;
 
-import config.Config;
 import database.DatabaseManager;
 import java.time.LocalTime;
 import java.util.Arrays;
@@ -115,14 +114,6 @@ public abstract class CallableAction implements BotAction {
                         context.getLocalizedString("canteen_not_open_yet",
                                 canteen.getDisplayName())), update);
                 context.resetPassthroughInformation();
-                return;
-            }
-
-            if (currentTime.isAfter(canteen.getClosingTime().plusMinutes(Config.getExtraRatingTime()))) {
-                context.resetPassthroughInformation();
-                MAIN_MENU.init(context, new SendMessage(String.valueOf(context.getChatID()),
-                        context.getLocalizedString("canteen_already_closed",
-                                canteen.getDisplayName())), update);
                 return;
             }
 

@@ -81,10 +81,6 @@ public class Config {
         return getInstance()._getMaxLogFiles();
     }
 
-  public static int getExtraRatingTime() {
-    return getInstance()._getExtraRatingTime();
-  }
-
   // ///////////////////////////////////////////////////////////////////////////////////////
 
     // protected implementations /////////////////////////////////////////////////////////////
@@ -169,10 +165,6 @@ public class Config {
 
     protected int _getMaxLogFiles() {
         return Integer.parseInt(properties.getProperty("log.maxFiles"));
-    }
-
-    protected int _getExtraRatingTime() {
-      return Integer.parseInt(properties.getProperty("rating.extraTime", "30"));
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////
