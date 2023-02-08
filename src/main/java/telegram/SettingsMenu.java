@@ -67,6 +67,7 @@ public class SettingsMenu {
             return;
         }
 
+        boolean settingsModified = false;
         CallbackQuery query = update.getCallbackQuery();
         String pressedButton = query.getData();
         Message message = query.getMessage();
@@ -78,8 +79,11 @@ public class SettingsMenu {
 
             // Another button was pressed, adjust the list of selected buttons
             if (singleChoice) {
-                selected.clear();
-                selected.add(pressedButton);
+                if (!selected.contains(pressedButton)) {
+                    selected.clear();
+                    selected.add(pressedButton);
+                    settingsModified = true;
+                }
             } else {
 
                 if (selected.contains(pressedButton)) {
@@ -90,21 +94,23 @@ public class SettingsMenu {
             }
         }
 
-        // Edit inline keyboard
-        InlineKeyboardMarkup markup = null;
-        if (!done) {
-            markup = generateMarkup();
-        }
+        if (settingsModified || done) {
+            // Edit inline keyboard
+            InlineKeyboardMarkup markup = null;
+            if (!done) {
+                markup = generateMarkup();
+            }
 
-        EditMessageReplyMarkup editMessage = new EditMessageReplyMarkup();
-        editMessage.setChatId(context.getChatID());
-        editMessage.setMessageId(message.getMessageId());
-        editMessage.setReplyMarkup(markup);
+            EditMessageReplyMarkup editMessage = new EditMessageReplyMarkup();
+            editMessage.setChatId(context.getChatID());
+            editMessage.setMessageId(message.getMessageId());
+            editMessage.setReplyMarkup(markup);
 
-        try {
-            LeckerSchmeckerBot.getInstance().execute(editMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+            try {
+                LeckerSchmeckerBot.getInstance().execute(editMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
         }
 
     }
