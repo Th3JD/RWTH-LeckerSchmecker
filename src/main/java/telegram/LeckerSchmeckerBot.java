@@ -157,6 +157,10 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                     .contains(update.getMessage().getText().toLowerCase()) || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
                     .equalsIgnoreCase(update.getMessage().getText()))) {
                 context.setCurrentAction(null);
+                if (context.getSettingsMenu() != null) {
+                    context.getSettingsMenu().delete();
+                    context.setSettingsMenu(null);
+                }
             }
 
             // An action is currently running -> update

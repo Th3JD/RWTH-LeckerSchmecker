@@ -205,7 +205,6 @@ public abstract class CallableAction implements BotAction {
                     context.getLocalizedString("language"),
                     context.getLocalizedString("diet"),
                     context.getLocalizedString("compact_layout"));
-            markup.setOneTimeKeyboard(true);
             message.setReplyMarkup(markup);
             context.sendMessage(message);
         }
