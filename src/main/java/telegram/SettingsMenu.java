@@ -23,7 +23,6 @@ import meal.LeckerSchmecker;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -32,6 +31,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 public class SettingsMenu {
 
     private final String setting;
+    private int messageID;
     private final boolean singleChoice;
     private final int elementsInRow;
     private final ChatContext context;
@@ -58,7 +58,20 @@ public class SettingsMenu {
 
     public void init(SendMessage message) {
         message.setReplyMarkup(generateMarkup());
-        context.sendMessage(message);
+        messageID = context.sendMessage(message);
+    }
+
+    public void delete() {
+        EditMessageReplyMarkup editMessage = new EditMessageReplyMarkup();
+        editMessage.setChatId(context.getChatID());
+        editMessage.setMessageId(messageID);
+        editMessage.setReplyMarkup(null);
+
+        try {
+            LeckerSchmeckerBot.getInstance().execute(editMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
     public void updateSettings(Update update) {
@@ -70,7 +83,6 @@ public class SettingsMenu {
         boolean settingsModified = false;
         CallbackQuery query = update.getCallbackQuery();
         String pressedButton = query.getData();
-        Message message = query.getMessage();
 
         // Check if "Done" Button was pressed
         if (pressedButton.equals(ResourceManager.getString("done", context.getLocale()))) {
@@ -103,7 +115,7 @@ public class SettingsMenu {
 
             EditMessageReplyMarkup editMessage = new EditMessageReplyMarkup();
             editMessage.setChatId(context.getChatID());
-            editMessage.setMessageId(message.getMessageId());
+            editMessage.setMessageId(messageID);
             editMessage.setReplyMarkup(markup);
 
             try {

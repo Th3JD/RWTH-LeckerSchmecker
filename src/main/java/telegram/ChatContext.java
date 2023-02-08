@@ -285,8 +285,8 @@ public class ChatContext {
         bot.sendTextMessage(chatID, text);
     }
 
-    public void sendMessage(SendMessage message) {
-        bot.sendMessage(chatID, message);
+    public Integer sendMessage(SendMessage message) {
+        return bot.sendMessage(chatID, message);
     }
 
     public String sendPoll(SendPoll poll) {

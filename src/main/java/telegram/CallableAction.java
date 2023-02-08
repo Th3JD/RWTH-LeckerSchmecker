@@ -267,6 +267,13 @@ public abstract class CallableAction implements BotAction {
             if (!update.hasMessage()) {
                 return;
             }
+
+            // Check if user is already in a menu
+            if (context.getSettingsMenu() != null) {
+                context.getSettingsMenu().delete();
+                context.setSettingsMenu(null);
+            }
+
             String text = update.getMessage().getText();
             if (text.equals(context.getLocalizedString("canteen"))) {
                 SettingsMenu menu = new SettingsMenu(text, true, 2, context,

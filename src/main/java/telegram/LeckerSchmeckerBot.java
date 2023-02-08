@@ -195,16 +195,18 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         this.sendMessage(chatId, sendMessage);
     }
 
-    public void sendMessage(Long chatId, SendMessage message) {
+    public Integer sendMessage(Long chatId, SendMessage message) {
         if (message == null) {
-            return;
+            return null;
         }
         message.setChatId(chatId);
+        Message sentMessage = null;
         try {
-            this.execute(message);
+            sentMessage = this.execute(message);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+        return sentMessage.getMessageId();
     }
 
     public void deleteMessage(Long chatId, DeleteMessage message) {
