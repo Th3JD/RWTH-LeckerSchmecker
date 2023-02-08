@@ -335,6 +335,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         if (update.hasPoll()) {
             return chatIDByPollID.get(update.getPoll().getId());
         }
+        if (update.hasCallbackQuery()) {
+            return update.getCallbackQuery().getMessage().getChatId();
+        }
         return null;
     }
 
