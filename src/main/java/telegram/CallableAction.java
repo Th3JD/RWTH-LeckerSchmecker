@@ -17,6 +17,7 @@
 package telegram;
 
 import database.DatabaseManager;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
@@ -92,6 +93,17 @@ public abstract class CallableAction implements BotAction {
             }
 
             if (context.hasCanteen()) {
+
+                // Check if the canteen offers meals today
+                if (context.getCanteen().getDailyOffer(LocalDate.now()).isEmpty()) {
+                    SendMessage msg = new SendMessage();
+                    msg.setText(
+                            ResourceManager.getString("canteen_offers_no_meals_today", context.getLocale(), context.getCanteen().getDisplayName()));
+                    msg.enableMarkdown(true);
+                    MAIN_MENU.init(context, msg, update);
+                    return;
+                }
+
                 InternalAction.SELECT_MEAL.init(context, null, update);
             } else {
                 InternalAction.SELECT_CANTEEN.init(context, null, update);
@@ -114,6 +126,15 @@ public abstract class CallableAction implements BotAction {
                         context.getLocalizedString("canteen_not_open_yet",
                                 canteen.getDisplayName())), update);
                 context.resetPassthroughInformation();
+                return;
+            }
+
+            // Check if the canteen offers meals today
+            if (canteen.getDailyOffer(LocalDate.now()).isEmpty()) {
+                SendMessage msg = new SendMessage();
+                msg.setText(ResourceManager.getString("canteen_offers_no_meals_today", context.getLocale(), context.getCanteen().getDisplayName()));
+                msg.enableMarkdown(true);
+                MAIN_MENU.init(context, msg, update);
                 return;
             }
 
