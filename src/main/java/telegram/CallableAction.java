@@ -175,7 +175,7 @@ public abstract class CallableAction implements BotAction {
     };
 
     public static final CallableAction MAIN_MENU = new CallableAction("callableaction_main_menu",
-            List.of("/start", "start", "exit", "menu", "menü", "hauptmenü", "inicio")) {
+            List.of("/start", "start", "exit", "menu", "menü", "hauptmenü", "inicio", "reset")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.setCurrentAction(this);
