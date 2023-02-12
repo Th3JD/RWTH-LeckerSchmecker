@@ -157,6 +157,10 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                     .contains(update.getMessage().getText().toLowerCase()) || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
                     .equalsIgnoreCase(update.getMessage().getText()))) {
                 context.setCurrentAction(null);
+                if (context.getSettingsMenu() != null) {
+                    context.getSettingsMenu().delete();
+                    context.setSettingsMenu(null);
+                }
             }
 
             // An action is currently running -> update
@@ -195,16 +199,18 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         this.sendMessage(chatId, sendMessage);
     }
 
-    public void sendMessage(Long chatId, SendMessage message) {
+    public Integer sendMessage(Long chatId, SendMessage message) {
         if (message == null) {
-            return;
+            return null;
         }
         message.setChatId(chatId);
+        Message sentMessage = null;
         try {
-            this.execute(message);
+            sentMessage = this.execute(message);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+        return sentMessage.getMessageId();
     }
 
     public void deleteMessage(Long chatId, DeleteMessage message) {
@@ -334,6 +340,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         }
         if (update.hasPoll()) {
             return chatIDByPollID.get(update.getPoll().getId());
+        }
+        if (update.hasCallbackQuery()) {
+            return update.getCallbackQuery().getMessage().getChatId();
         }
         return null;
     }

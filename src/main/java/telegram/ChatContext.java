@@ -49,6 +49,7 @@ public class ChatContext {
     // State information
     private BotAction returnToAction; // Action to return to, once the internal actions are done
     private BotAction currentAction;
+    private SettingsMenu settingsMenu;
 
     // Passthrough information
     private Locale selectedLocale;
@@ -112,6 +113,14 @@ public class ChatContext {
     }
 
     // Generated Getter & Setter //////////////////////////////////////////////
+    public SettingsMenu getSettingsMenu() {
+        return settingsMenu;
+    }
+
+    public void setSettingsMenu(SettingsMenu settingsMenu) {
+        this.settingsMenu = settingsMenu;
+    }
+
     public int getNumberOfVotes() {
         return numberOfVotes;
     }
@@ -124,7 +133,9 @@ public class ChatContext {
         return locale;
     }
 
-    public boolean isCompactLayout() { return compactLayout; }
+    public boolean isCompactLayout() {
+        return compactLayout;
+    }
 
     public Boolean getDefaultValueSet() {
         return defaultValueSet;
@@ -221,6 +232,7 @@ public class ChatContext {
     public DietType getDietType() {
         return this.getDefaultDietType() != null ? this.getDefaultDietType() : this.getSelectedDietType();
     }
+
     public DietType getDefaultDietType() {
         return defaultDietType;
     }
@@ -273,8 +285,8 @@ public class ChatContext {
         bot.sendTextMessage(chatID, text);
     }
 
-    public void sendMessage(SendMessage message) {
-        bot.sendMessage(chatID, message);
+    public Integer sendMessage(SendMessage message) {
+        return bot.sendMessage(chatID, message);
     }
 
     public String sendPoll(SendPoll poll) {
