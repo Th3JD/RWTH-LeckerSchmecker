@@ -21,13 +21,16 @@ import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import localization.ResourceManager;
 import meal.Canteen;
 import meal.DietType;
+import meal.LeckerSchmecker;
 import meal.MainMeal;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 
 public abstract class CallableAction implements BotAction {
 
@@ -187,136 +190,134 @@ public abstract class CallableAction implements BotAction {
         }
     };
 
-    public static final CallableAction SELECT_DEFAULTS = new CallableAction(
-            "callableaction_select_defaults", List.of("standardwerte", "defaults")) {
+    public static final CallableAction SETTINGS_MENU = new CallableAction("callableaction_settings",
+            List.of("settings", "einstellungen")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
-            message.setText(context.getLocalizedString("set_delete_default_value"));
+            message.setText(context.getLocalizedString("which_setting_to_change"));
 
-            message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(2,
+            ReplyKeyboardMarkup markup = BotAction.createKeyboardMarkupWithMenu(1,
                     context.getLocale(),
-                    context.getLocalizedString("callableaction_set_defaults_set"),
-                    context.getLocalizedString("callableaction_set_defaults_delete")));
-
+                    context.getLocalizedString("canteen"),
+                    context.getLocalizedString("language"),
+                    context.getLocalizedString("diet"),
+                    context.getLocalizedString("compact_layout"));
+            message.setReplyMarkup(markup);
             context.sendMessage(message);
         }
 
         @Override
         public void onUpdate(ChatContext context, Update update) {
+            if (update.hasCallbackQuery()) {
+                SettingsMenu menu = context.getSettingsMenu();
+                menu.updateSettings(update);
+
+                if (menu.isDone()) {
+                    context.setSettingsMenu(null);
+
+                    SendMessage message = new SendMessage();
+
+                    // Check which setting was changed
+                    String setting = menu.getSetting();
+                    if (setting.equals(context.getLocalizedString("canteen"))) {
+                        Optional<Canteen> canteenOpt = Canteen.getByDisplayName(menu.getSelected().get(0));
+                        if (canteenOpt.isEmpty()) {
+                            LeckerSchmecker.getLogger().warning("Invalid canteen returned by setting menu. Ignoring...");
+                            context.sendLocalizedMessage("invalid_option");
+                            this.init(context, null, update);
+                            return;
+                        }
+                        context.setDefaultCanteen(canteenOpt.get());
+                        message.setText(context.getDefaultCanteen().getDisplayName() + " ✅");
+
+                    } else if (setting.equals(context.getLocalizedString("language"))) {
+                        Optional<Locale> localeOpt = ResourceManager.LOCALES.stream()
+                                .filter(a -> a.getDisplayName().equals(menu.getSelected().get(0)))
+                                .findFirst();
+                        if (localeOpt.isEmpty()) {
+                            LeckerSchmecker.getLogger().warning("Invalid locale returned by setting menu. Ignoring...");
+                            context.sendLocalizedMessage("invalid_option");
+                            this.init(context, null, update);
+                            return;
+                        }
+                        context.setLocale(localeOpt.get());
+                        message.setText(context.getLocale().getDisplayName() + " ✅");
+
+                    } else if (setting.equals(context.getLocalizedString("diet"))) {
+                        Optional<DietType> dietTypeOpt = DietType.getByDisplayName(menu.getSelected().get(0), context.getLocale());
+                        if (dietTypeOpt.isEmpty()) {
+                            LeckerSchmecker.getLogger().warning("Invalid dietType returned by setting menu. Ignoring...");
+                            context.sendLocalizedMessage("invalid_option");
+                            this.init(context, null, update);
+                            return;
+                        }
+                        context.setDefaultDietType(dietTypeOpt.get());
+                        message.setText(context.getDefaultDietType().getDisplayName(context.getLocale()) + " ✅");
+                    }
+                    MAIN_MENU.init(context, message, update);
+                }
+                return;
+            }
+
+            // User is selecting a setting to change
             if (!update.hasMessage()) {
                 return;
             }
 
-            // Check if we returned from an internal state
-            if (context.getReturnToAction() == this) {
-
-                SendMessage message = new SendMessage();
-
-                // Check if the user selected a canteen
-                if (context.getSelectedCanteen() != null) {
-                    context.setDefaultCanteen(context.getSelectedCanteen());
-                    message.setText(context.getSelectedCanteen().getDisplayName() + " ✅");
-                } else if (context.getSelectedLocale() != null) {
-                    context.setLocale(context.getSelectedLocale());
-                    message.setText(context.getSelectedLocale().getDisplayName() + " ✅");
-                } else if (context.getSelectedDietType() != null) {
-                    context.setDefaultDietType(context.getSelectedDietType());
-                    message.setText(context.getSelectedDietType().getDisplayName(context.getLocale()) + " ✅");
-                }
-
-                // Reset everything prior to exiting the state
-                context.resetPassthroughInformation();
-                MAIN_MENU.init(context, message, update);
-                return;
+            // Check if user is already in a menu
+            if (context.getSettingsMenu() != null) {
+                context.getSettingsMenu().delete();
+                context.setSettingsMenu(null);
             }
 
             String text = update.getMessage().getText();
-            if (text.equals(context.getLocalizedString("callableaction_set_defaults_set")) ||
-                    text.equals(context.getLocalizedString("callableaction_set_defaults_delete"))) {
-
-                boolean shouldBeSet = text.equals(context.getLocalizedString("callableaction_set_defaults_set"));
-                context.setDefaultValueSet(shouldBeSet);
+            if (text.equals(context.getLocalizedString("canteen"))) {
+                SettingsMenu menu = new SettingsMenu(text, true, 2, context,
+                        Canteen.TYPES.stream().map(Canteen::getDisplayName).toList(),
+                        context.getDefaultCanteen() == null ? List.of() : List.of(context.getDefaultCanteen().getDisplayName()));
+                context.setSettingsMenu(menu);
 
                 SendMessage message = new SendMessage();
-                message.setText(context.getLocalizedString(shouldBeSet ?
-                        "which_default_value_should_be_set" : "which_default_value_should_be_deleted"));
-                message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(2, context.getLocale(),
-                        context.getLocalizedString("canteen"),
-                        context.getLocalizedString("language"),
-                        context.getLocalizedString("diet"),
-                        context.getLocalizedString("compact_layout")));
-                context.sendMessage(message);
-
-            } else if (text.equals(context.getLocalizedString("canteen"))) {
-
-                // Check if the default canteen needs to be set or unset
-                if (context.getDefaultValueSet()) {
-                    // Canteen should be set
-                    context.setReturnToAction(this);
-
-                    InternalAction.SELECT_CANTEEN.init(context, null, update);
-                } else {
-                    // Canteen should be unset
-                    context.setDefaultCanteen(null);
-
-                    SendMessage message = new SendMessage();
-                    message.setText(context.getLocalizedString("deleted_default_canteen"));
-                    MAIN_MENU.init(context, message, update);
-                }
+                message.setText(context.getLocalizedString("select_a_canteen"));
+                menu.init(message);
 
             } else if (text.equals(context.getLocalizedString("language"))) {
+                SettingsMenu menu = new SettingsMenu(text, true, 1, context,
+                        ResourceManager.LOCALES.stream().map(Locale::getDisplayName).toList(),
+                        List.of(context.getLocale().getDisplayName()));
+                context.setSettingsMenu(menu);
 
-                if (context.getDefaultValueSet()) {
-                    context.setReturnToAction(this);
-
-                    InternalAction.SELECT_LOCALE.init(context, null, update);
-                } else {
-                    context.setLocale(ResourceManager.DEFAULTLOCALE);
-
-                    SendMessage message = new SendMessage();
-                    message.setText(context.getLocalizedString("reset_selected_language"));
-                    MAIN_MENU.init(context, message, update);
-                }
+                SendMessage message = new SendMessage();
+                message.setText(context.getLocalizedString("select_a_language"));
+                menu.init(message);
 
             } else if (text.equals(context.getLocalizedString("diet"))) {
-                // Check if the default diet needs to be set or unset
-                if (context.getDefaultValueSet()) {
-                    // Diet should be set
-                    context.setReturnToAction(this); // Needed to make the internal action return to this action
+                SettingsMenu menu = new SettingsMenu(text, true, 2, context,
+                        DietType.TYPES.stream().map(a -> a.getDisplayName(context.getLocale())).toList(),
+                        List.of(context.getDietType().getDisplayName(context.getLocale())));
+                context.setSettingsMenu(menu);
 
-                    InternalAction.SELECT_DIET_TYPE.init(context, null, update);
-                } else {
-                    // Diet should be unset
-                    context.setDefaultDietType(DietType.EVERYTHING);
+                SendMessage message = new SendMessage();
+                message.setText(context.getLocalizedString("choose_diet"));
+                menu.init(message);
 
-                    SendMessage message = new SendMessage();
-                    message.setText(context.getLocalizedString("reset_selected_diet"));
-                    MAIN_MENU.init(context, message, update);
-                }
             } else if (text.equals(context.getLocalizedString("compact_layout"))) {
-                // Check if the compact layout needs to be set or unset
-                if (context.getDefaultValueSet()) {
-                    // Compact layout should be set
-                    context.setCompactLayout(true);
-
-                    SendMessage message = new SendMessage();
-                    message.setText(context.getLocalizedString("set_compact_layout"));
-                    MAIN_MENU.init(context, message, update);
+                context.setCompactLayout(!context.isCompactLayout());
+                if (context.isCompactLayout()) {
+                    context.sendLocalizedMessage("set_compact_layout");
                 } else {
-                    // Compact layout should be unset
-                    context.setCompactLayout(false);
-
-                    SendMessage message = new SendMessage();
-                    message.setText(context.getLocalizedString("reset_compact_layout"));
-                    MAIN_MENU.init(context, message, update);
+                    context.sendLocalizedMessage("reset_compact_layout");
                 }
+                MAIN_MENU.init(context, null, update);
             } else {
                 context.sendLocalizedMessage("invalid_option");
                 this.init(context, null, update);
             }
+
+
         }
     };
 
@@ -336,8 +337,8 @@ public abstract class CallableAction implements BotAction {
         }
     };
 
-    public static final CallableAction[] VALUES = {LIST_MEALS, RATING, MAIN_MENU, SELECT_DEFAULTS, TUTORIAL};
-    public static final CallableAction[] MAIN_MENU_ACTIONS = {LIST_MEALS, RATING, SELECT_DEFAULTS, TUTORIAL};
+    public static final CallableAction[] VALUES = {LIST_MEALS, RATING, MAIN_MENU, TUTORIAL, SETTINGS_MENU};
+    public static final CallableAction[] MAIN_MENU_ACTIONS = {LIST_MEALS, RATING, SETTINGS_MENU, TUTORIAL};
 
     public static CallableAction[] values() {
         return VALUES;
