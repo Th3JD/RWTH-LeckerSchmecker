@@ -19,6 +19,7 @@ package telegram;
 import database.DatabaseManager;
 import java.time.LocalTime;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -223,15 +224,22 @@ public abstract class CallableAction implements BotAction {
                     // Check which setting was changed
                     String setting = menu.getSetting();
                     if (setting.equals(context.getLocalizedString("canteen"))) {
-                        Optional<Canteen> canteenOpt = Canteen.getByDisplayName(menu.getSelected().get(0));
-                        if (canteenOpt.isEmpty()) {
-                            LeckerSchmecker.getLogger().warning("Invalid canteen returned by setting menu. Ignoring...");
-                            context.sendLocalizedMessage("invalid_option");
-                            this.init(context, null, update);
-                            return;
+
+                        // Check if user wants to reset the default canteen
+                        if (menu.getSelected().get(0).equals(ResourceManager.getString("no_default_canteen", context.getLocale()))) {
+                            context.setDefaultCanteen(null);
+                            message.setText(ResourceManager.getString("no_default_canteen", context.getLocale()) + " ✅");
+                        } else {
+                            Optional<Canteen> canteenOpt = Canteen.getByDisplayName(menu.getSelected().get(0));
+                            if (canteenOpt.isEmpty()) {
+                                LeckerSchmecker.getLogger().warning("Invalid canteen returned by setting menu. Ignoring...");
+                                context.sendLocalizedMessage("invalid_option");
+                                this.init(context, null, update);
+                                return;
+                            }
+                            context.setDefaultCanteen(canteenOpt.get());
+                            message.setText(context.getDefaultCanteen().getDisplayName() + " ✅");
                         }
-                        context.setDefaultCanteen(canteenOpt.get());
-                        message.setText(context.getDefaultCanteen().getDisplayName() + " ✅");
 
                     } else if (setting.equals(context.getLocalizedString("language"))) {
                         Optional<Locale> localeOpt = ResourceManager.LOCALES.stream()
@@ -275,8 +283,10 @@ public abstract class CallableAction implements BotAction {
 
             String text = update.getMessage().getText();
             if (text.equals(context.getLocalizedString("canteen"))) {
+                List<String> options = new LinkedList<>(Canteen.TYPES.stream().map(Canteen::getDisplayName).toList());
+                options.add(ResourceManager.getString("no_default_canteen", context.getLocale()));
                 SettingsMenu menu = new SettingsMenu(text, true, 2, context,
-                        Canteen.TYPES.stream().map(Canteen::getDisplayName).toList(),
+                        options,
                         context.getDefaultCanteen() == null ? List.of() : List.of(context.getDefaultCanteen().getDisplayName()));
                 context.setSettingsMenu(menu);
 
