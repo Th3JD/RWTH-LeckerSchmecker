@@ -308,20 +308,25 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             }
         }
 
-        sb.append("*").append(context.getLocalizedString("main_side_dish")).append("*")
+        if (!offer.getSideMeals(SideMeal.Type.MAIN).isEmpty()) {
+            sb.append("*").append(context.getLocalizedString("main_side_dish")).append("*")
                 .append("\n");
-        sb.append(String.join(" " + context.getLocalizedString("or") + " ",
+            sb.append(String.join(" " + context.getLocalizedString("or") + " ",
                 offer.getSideMeals(SideMeal.Type.MAIN).stream()
-                        .map(a -> a.getDisplayName(context.getLocale()))
-                        .toList()));
-        sb.append("\n\n");
+                    .map(a -> a.getDisplayName(context.getLocale()))
+                    .toList()));
+        }
 
-        sb.append("*").append(context.getLocalizedString("secondary_dish")).append("*")
+        if (!offer.getSideMeals(SideMeal.Type.SIDE).isEmpty()) {
+            sb.append("\n\n");
+
+            sb.append("*").append(context.getLocalizedString("secondary_dish")).append("*")
                 .append("\n");
-        sb.append(String.join(" " + context.getLocalizedString("or") + " ",
+            sb.append(String.join(" " + context.getLocalizedString("or") + " ",
                 offer.getSideMeals(SideMeal.Type.SIDE).stream()
-                        .map(a -> a.getDisplayName(context.getLocale()))
-                        .toList()));
+                    .map(a -> a.getDisplayName(context.getLocale()))
+                    .toList()));
+        }
 
         return sb.toString();
     }
