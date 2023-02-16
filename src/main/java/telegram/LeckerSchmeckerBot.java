@@ -109,39 +109,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             }
 
             // Check if user is allowed to take part in the closed beta
-            if (!Config.isAllowedUser(chatId)) {
-
-                // Check if the user sent an access code
-                if (update.hasMessage()) {
-                    String messageText = update.getMessage().getText();
-                    Matcher matcher = accessCodePattern.matcher(messageText);
-                    if (matcher.matches()) {
-                        if (checkAccessCode(messageText)) {
-                            Config.addAllowedUser(chatId);
-                            sendTextMessage(chatId,
-                                    ResourceManager.getString("access_granted",
-                                            ResourceManager.DEFAULTLOCALE));
-
-                            SendMessage msg = new SendMessage();
-                            msg.enableMarkdownV2(true);
-                            msg.setText(ResourceManager.getString("introduction", ResourceManager.DEFAULTLOCALE));
-                            sendMessage(chatId, msg);
-
-                            return;
-                        } else {
-                            sendTextMessage(chatId, ResourceManager.getString("access_denied",
-                                    ResourceManager.DEFAULTLOCALE));
-                            return;
-                        }
-                    }
-                }
-
-                sendTextMessage(chatId,
-                        ResourceManager.getString("bot_unavailable", ResourceManager.DEFAULTLOCALE));
-                LeckerSchmecker.getLogger()
-                        .info("Unerlaubter Nutzer mit chatID " + chatId + " hat ein Update ausgelöst.");
-                return;
-            }
+            //if (!this.isUserAllowed(update, chatId)) {
+            //    return;
+            //}
 
             // Create ChatContext if it does not exist
             ChatContext context = getContext(chatId);
@@ -157,6 +127,10 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                     .contains(update.getMessage().getText().toLowerCase()) || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
                     .equalsIgnoreCase(update.getMessage().getText()))) {
                 context.setCurrentAction(null);
+                if (context.getSettingsMenu() != null) {
+                    context.getSettingsMenu().delete();
+                    context.setSettingsMenu(null);
+                }
             }
 
             // An action is currently running -> update
@@ -186,6 +160,42 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         }
     }
 
+    private boolean isUserAllowed(Update update, long chatId) {
+        if (Config.isAllowedUser(chatId)) {
+            return true;
+        }
+
+        // Check if the user sent an access code
+        if (update.hasMessage()) {
+            String messageText = update.getMessage().getText();
+            Matcher matcher = accessCodePattern.matcher(messageText);
+            if (matcher.matches()) {
+                if (checkAccessCode(messageText)) {
+                    Config.addAllowedUser(chatId);
+                    sendTextMessage(chatId,
+                            ResourceManager.getString("access_granted",
+                                    ResourceManager.DEFAULTLOCALE));
+
+                    SendMessage msg = new SendMessage();
+                    msg.enableMarkdownV2(true);
+                    msg.setText(ResourceManager.getString("introduction", ResourceManager.DEFAULTLOCALE));
+                    sendMessage(chatId, msg);
+                    return true;
+                } else {
+                    sendTextMessage(chatId, ResourceManager.getString("access_denied",
+                            ResourceManager.DEFAULTLOCALE));
+                    return false;
+                }
+            }
+        }
+
+        sendTextMessage(chatId,
+                ResourceManager.getString("bot_unavailable", ResourceManager.DEFAULTLOCALE));
+        LeckerSchmecker.getLogger()
+                .info("Unerlaubter Nutzer mit chatID " + chatId + " hat ein Update ausgelöst.");
+        return false;
+    }
+
     public void sendTextMessage(Long chatId, String message) {
         if (message == null) {
             return;
@@ -195,16 +205,18 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         this.sendMessage(chatId, sendMessage);
     }
 
-    public void sendMessage(Long chatId, SendMessage message) {
+    public Integer sendMessage(Long chatId, SendMessage message) {
         if (message == null) {
-            return;
+            return null;
         }
         message.setChatId(chatId);
+        Message sentMessage = null;
         try {
-            this.execute(message);
+            sentMessage = this.execute(message);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+        return sentMessage.getMessageId();
     }
 
     public void deleteMessage(Long chatId, DeleteMessage message) {
@@ -334,6 +346,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         }
         if (update.hasPoll()) {
             return chatIDByPollID.get(update.getPoll().getId());
+        }
+        if (update.hasCallbackQuery()) {
+            return update.getCallbackQuery().getMessage().getChatId();
         }
         return null;
     }
