@@ -169,7 +169,7 @@ public abstract class InternalAction implements BotAction {
             context.setCurrentAction(this);
             SendMessage msg = new SendMessage();
             msg.setText(context.getLocalizedString("select_a_meal"));
-            msg.setReplyMarkup(BotAction.createKeyboardMarkup(1,
+            msg.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1, context.getLocale(),
                     context.getCanteen().getDailyOffer(LocalDate.now()).get()
                             .getMainMeals().stream()
                             .map(a -> a.getDisplayName(context.getLocale())).toList()));
@@ -178,9 +178,19 @@ public abstract class InternalAction implements BotAction {
 
         @Override
         public void onUpdate(ChatContext context, Update update) {
-            context.setSelectedMeal(context.getCanteen()
+            if (!update.hasMessage()) {
+                return;
+            }
+
+            Optional<MainMeal> mealOpt = context.getCanteen()
                     .getDailyOffer(LocalDate.now()).get()
-                    .getMainMealByDisplayName(update.getMessage().getText(), context.getLocale()).get());
+                    .getMainMealByDisplayName(update.getMessage().getText(), context.getLocale());
+            if (mealOpt.isEmpty()) {
+                context.sendLocalizedMessage("invalid_option");
+                this.init(context, null, update);
+                return;
+            }
+            context.setSelectedMeal(mealOpt.get());
             context.getReturnToAction().onUpdate(context, update);
         }
     };
