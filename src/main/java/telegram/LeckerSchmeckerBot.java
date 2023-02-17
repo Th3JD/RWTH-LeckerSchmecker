@@ -287,7 +287,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                 sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
                         .append(" _").append(priceFormat.format(meal.getPrice()))
                         .append("€").append("_    ")
-                        .append(userRating == null ? "_-_" : ratingFormat.format(userRating))
+                        .append(userRating == null ? "_-_" : ratingFormat.format(userRating.getRating()) +
+                                (userRating.isEstimated() ? "❓" : ""))
                         .append(" / ")
                         .append(globalRating == null ? "_-_" : ratingFormat.format(globalRating.getRating())).append("\n")
                         .append(meal.text(context.getLocale())).append("\n\n");
