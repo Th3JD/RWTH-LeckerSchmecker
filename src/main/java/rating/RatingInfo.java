@@ -21,33 +21,40 @@ import meal.MainMeal;
 public class RatingInfo {
 
     private final MainMeal meal;
-    private final float averageRating;
+    private final float rating;
     private final int numVotes;
+    private final boolean isEstimated;
 
-    public RatingInfo(MainMeal meal, float averageRating, int numVotes) {
+    public RatingInfo(MainMeal meal, float rating, int numVotes, boolean isEstimated) {
         this.meal = meal;
-        this.averageRating = averageRating;
+        this.rating = rating;
         this.numVotes = numVotes;
+        this.isEstimated = isEstimated;
     }
 
     public MainMeal getMeal() {
         return meal;
     }
 
-    public float getAverageRating() {
-        return averageRating;
+    public float getRating() {
+        return rating;
     }
 
     public int getNumVotes() {
         return numVotes;
     }
 
+    public boolean isEstimated() {
+        return isEstimated;
+    }
+
     @Override
     public String toString() {
         return "RatingInfo{" +
                 "meal=" + meal +
-                ", averageRating=" + averageRating +
+                ", rating=" + rating +
                 ", numVotes=" + numVotes +
+                ", isEstimated=" + isEstimated +
                 '}';
     }
 }
