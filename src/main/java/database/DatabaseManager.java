@@ -54,7 +54,7 @@ public class DatabaseManager {
     // STATEMENTS
     private PreparedStatement LOAD_USER, LOAD_USER_CHAT_IDS, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, SET_COMPACT_LAYOUT, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
             ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS, LOAD_NUMBER_OF_VOTES,
-            RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING;
+            RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING, LOAD_SIMILAR_RATING;
     /////////////
 
 
@@ -144,7 +144,7 @@ public class DatabaseManager {
         return getInstance()._getGlobalRating(meal);
     }
 
-    public static Float getUserRating(ChatContext context, MainMeal meal) {
+    public static RatingInfo getUserRating(ChatContext context, MainMeal meal) {
         return getInstance()._getUserRating(context, meal);
     }
 
@@ -182,6 +182,7 @@ public class DatabaseManager {
             LOAD_USER_RATING_BY_DATE.close();
             LOAD_GLOBAL_RATING.close();
             LOAD_USER_RATING.close();
+            LOAD_SIMILAR_RATING.close();
             LOAD_NUMBER_OF_VOTES.close();
             connection.close();
         } catch (SQLException e) {
@@ -321,6 +322,13 @@ public class DatabaseManager {
                             + "    WHERE mealID=? and userID LIKE ?\n"
                             + "    group by userID, mealID\n"
                             + ") rmax on r.userID=rmax.userID and r.mealID=rmax.mealID and r.date=MaxDate);");
+            LOAD_SIMILAR_RATING = connection.prepareStatement(
+                    "SELECT AVG(rating) AS average, COUNT(*) AS votes FROM ratings r,\n"
+                            + "(SELECT userID, lastRatings.mealID AS mealID, MaxDate FROM\n"
+                            + "(SELECT mealID FROM meal_shortname_alias WHERE shortAlias LIKE ?) AS similarIDs,\n"
+                            + "(SELECT userID, mealID, MAX(date) AS MaxDate FROM ratings WHERE userID LIKE ? GROUP BY userID, mealID) AS lastRatings\n"
+                            + "WHERE similarIDs.mealID=lastRatings.mealID) AS similarLastRatings\n"
+                            + "WHERE r.userID=similarLastRatings.userID AND r.mealID=similarLastRatings.mealID AND r.date=similarLastRatings.MaxDate;");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -435,7 +443,7 @@ public class DatabaseManager {
 
     protected void _setCompactLayout(UUID userID, boolean value) {
         try {
-            SET_COMPACT_LAYOUT.clearParameters();;
+            SET_COMPACT_LAYOUT.clearParameters();
             SET_COMPACT_LAYOUT.setBoolean(1, value);
             SET_COMPACT_LAYOUT.setString(2, userID.toString());
             SET_COMPACT_LAYOUT.executeUpdate();
@@ -590,7 +598,7 @@ public class DatabaseManager {
                 return null; // rs.getFloat returns 0f if the value is null
             }
 
-            return new RatingInfo(meal, rs.getFloat("average"), rs.getInt("votes"));
+            return new RatingInfo(meal, rs.getFloat("average"), rs.getInt("votes"), false);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -598,7 +606,7 @@ public class DatabaseManager {
         return null;
     }
 
-    protected Float _getUserRating(ChatContext context, MainMeal meal) {
+    protected RatingInfo _getUserRating(ChatContext context, MainMeal meal) {
 
         // Cannot return global rating for meals which are still waiting for admin input
         if (meal.getId() == null) {
@@ -611,11 +619,25 @@ public class DatabaseManager {
             LOAD_USER_RATING.setString(2, context.getUserID().toString());
             ResultSet rs = LOAD_USER_RATING.executeQuery();
 
+            // Check if the user did NOT rate this exact meal yet
             if (!rs.next()) {
-                return null;
+                LOAD_SIMILAR_RATING.clearParameters();
+                LOAD_SIMILAR_RATING.setString(1, meal.getShortAlias());
+                LOAD_SIMILAR_RATING.setString(2, context.getUserID().toString());
+                ResultSet rsSimilar = LOAD_SIMILAR_RATING.executeQuery();
+
+                if (!rsSimilar.next()) {
+                    return null;
+                }
+
+                if (rsSimilar.getFloat("average") == 0f) {
+                    return null; // rs.getFloat returns 0f if the value is null
+                }
+
+                return new RatingInfo(meal, rsSimilar.getFloat("average"), rsSimilar.getInt("votes"), true);
             }
 
-            return rs.getFloat("rating");
+            return new RatingInfo(meal, rs.getFloat("rating"), 1, false);
 
         } catch (SQLException e) {
             e.printStackTrace();

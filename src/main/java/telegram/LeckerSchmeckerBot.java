@@ -281,15 +281,16 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             }
 
             RatingInfo globalRating = DatabaseManager.getGlobalRating(meal);
-            Float userRating = DatabaseManager.getUserRating(context, meal);
+            RatingInfo userRating = DatabaseManager.getUserRating(context, meal);
 
             if (context.isCompactLayout()) {
                 sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
                         .append(" _").append(priceFormat.format(meal.getPrice()))
                         .append("€").append("_    ")
-                        .append(userRating == null ? "_-_" : ratingFormat.format(userRating))
+                        .append(userRating == null ? "_-_" : ratingFormat.format(userRating.getRating()) +
+                                (userRating.isEstimated() ? "❓" : ""))
                         .append(" / ")
-                        .append(globalRating == null ? "_-_" : ratingFormat.format(globalRating.getAverageRating())).append("\n")
+                        .append(globalRating == null ? "_-_" : ratingFormat.format(globalRating.getRating())).append("\n")
                         .append(meal.text(context.getLocale())).append("\n\n");
             } else {
                 sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
@@ -298,12 +299,14 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                         .append("\n")
                         .append(meal.text(context.getLocale())).append("\n")
                         .append(context.getLocalizedString("your_rating"))
-                        .append(userRating == null ? "_" + context.getLocalizedString("not_rated") +
-                                "_" : ratingFormat.format(userRating)).append("\n")
+                        .append(userRating == null ? "_" +
+                                context.getLocalizedString("not_rated") +
+                                "_" : ratingFormat.format(userRating.getRating()) + (userRating.isEstimated() ? "❓" : ""))
+                        .append("\n")
                         .append(context.getLocalizedString("global_rating"))
                         .append(globalRating == null ? "_" +
                                 context.getLocalizedString("not_rated") +
-                                "_" : ratingFormat.format(globalRating.getAverageRating()) + " (" +
+                                "_" : ratingFormat.format(globalRating.getRating()) + " (" +
                                 globalRating.getNumVotes() + ")").append("\n\n");
             }
         }
