@@ -81,7 +81,11 @@ public class Config {
         return getInstance()._getMaxLogFiles();
     }
 
-  // ///////////////////////////////////////////////////////////////////////////////////////
+    public static int getMaxVotesPerDay() {
+        return getInstance()._getMaxVotesPerDay();
+    }
+
+    // ///////////////////////////////////////////////////////////////////////////////////////
 
     // protected implementations /////////////////////////////////////////////////////////////
     protected String _getString(String property) {
@@ -165,6 +169,10 @@ public class Config {
 
     protected int _getMaxLogFiles() {
         return Integer.parseInt(properties.getProperty("log.maxFiles"));
+    }
+
+    protected int _getMaxVotesPerDay() {
+        return Integer.parseInt(properties.getProperty("botaction.rate_meal.max_votes_per_day", "2"));
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////
