@@ -307,7 +307,7 @@ public class DatabaseManager {
             ADD_MEAL_ALIAS = connection.prepareStatement(
                     "INSERT INTO meal_name_alias VALUES (?, ?)");
             RATE_MEAL = connection.prepareStatement(
-                    "INSERT INTO ratings VALUES (?, ?, ?, ?)");
+                    "INSERT INTO ratings VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating=?");
             DELETE_RATING = connection.prepareStatement(
                     "DELETE FROM ratings WHERE userID like ? AND date=?");
             LOAD_USER_RATING_BY_DATE = connection.prepareStatement(
@@ -554,16 +554,12 @@ public class DatabaseManager {
 
     protected void _rateMeal(ChatContext context, MainMeal meal, int rating) {
         try {
-            DELETE_RATING.clearParameters();
-            DELETE_RATING.setString(1, context.getUserID().toString());
-            DELETE_RATING.setDate(2, Date.valueOf(LocalDate.now()));
-            DELETE_RATING.executeUpdate();
-
             RATE_MEAL.clearParameters();
             RATE_MEAL.setString(1, context.getUserID().toString());
             RATE_MEAL.setInt(2, meal.getId());
             RATE_MEAL.setDate(3, Date.valueOf(LocalDate.now()));
             RATE_MEAL.setInt(4, rating);
+            RATE_MEAL.setInt(5, rating);
             RATE_MEAL.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
