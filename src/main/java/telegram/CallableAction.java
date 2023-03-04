@@ -16,6 +16,7 @@
 
 package telegram;
 
+import config.Config;
 import database.DatabaseManager;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -91,9 +92,15 @@ public abstract class CallableAction implements BotAction {
 
             context.setReturnToAction(this);
 
-            // Check if user already rated a meal today
-            if (DatabaseManager.hasRatedToday(context)) {
-                context.sendLocalizedMessage("already_rated");
+            // Check if user already used up their votes for today
+            if (DatabaseManager.numberOfRatingsByDate(context, LocalDate.now()) >= Config.getMaxVotesPerDay()) {
+                SendMessage message = new SendMessage();
+                message.setText(ResourceManager.getString("already_rated", context.getLocale(), Config.getMaxVotesPerDay()));
+                message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1,
+                        context.getLocale(), context.getLocalizedString("continue")));
+                message.enableMarkdown(true);
+                context.sendMessage(message);
+                return;
             }
 
             if (context.hasCanteen()) {
@@ -116,6 +123,14 @@ public abstract class CallableAction implements BotAction {
 
         @Override
         public void onUpdate(ChatContext context, Update update) {
+
+            //Check if the user agreed to delete all ratings from today
+            if (update.hasMessage() && update.getMessage().getText().equals(context.getLocalizedString("continue"))) {
+                DatabaseManager.deleteRatingsAtDate(context, LocalDate.now());
+                RATING.init(context, null, update);
+                return;
+            }
+
             if (!context.hasCanteen()) {
                 context.setReturnToAction(this);
                 InternalAction.SELECT_CANTEEN.init(context, null, update);

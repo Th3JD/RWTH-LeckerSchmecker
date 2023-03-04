@@ -136,8 +136,12 @@ public class DatabaseManager {
         getInstance()._rateMeal(context, meal, rating);
     }
 
-    public static boolean hasRatedToday(ChatContext context) {
-        return getInstance()._hasRatedToday(context);
+    public static void deleteRatingsAtDate(ChatContext context, LocalDate date) {
+        getInstance()._deleteRatingsAtDate(context, date);
+    }
+
+    public static int numberOfRatingsByDate(ChatContext context, LocalDate date) {
+        return getInstance()._numberOfRatingsByDate(context, date);
     }
 
     public static RatingInfo getGlobalRating(MainMeal meal) {
@@ -303,11 +307,11 @@ public class DatabaseManager {
             ADD_MEAL_ALIAS = connection.prepareStatement(
                     "INSERT INTO meal_name_alias VALUES (?, ?)");
             RATE_MEAL = connection.prepareStatement(
-                    "INSERT INTO ratings VALUES (?, ?, ?, ?)");
+                    "INSERT INTO ratings VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating=?");
             DELETE_RATING = connection.prepareStatement(
-                    "DELETE FROM ratings WHERE userID=? AND date=?");
+                    "DELETE FROM ratings WHERE userID like ? AND date=?");
             LOAD_USER_RATING_BY_DATE = connection.prepareStatement(
-                    "SELECT * FROM ratings WHERE userID=? AND date=?");
+                    "SELECT * FROM ratings WHERE userID like ? AND date=?");
             LOAD_GLOBAL_RATING = connection.prepareStatement(
                     "SELECT AVG(rating) as average, COUNT(*) as votes from (ratings r inner join (\n"
                             + "    select userID, mealID, MAX(date) as MaxDate\n"
@@ -550,32 +554,46 @@ public class DatabaseManager {
 
     protected void _rateMeal(ChatContext context, MainMeal meal, int rating) {
         try {
-            DELETE_RATING.clearParameters();
-            DELETE_RATING.setString(1, context.getUserID().toString());
-            DELETE_RATING.setDate(2, Date.valueOf(LocalDate.now()));
-            DELETE_RATING.executeUpdate();
-
             RATE_MEAL.clearParameters();
             RATE_MEAL.setString(1, context.getUserID().toString());
             RATE_MEAL.setInt(2, meal.getId());
             RATE_MEAL.setDate(3, Date.valueOf(LocalDate.now()));
             RATE_MEAL.setInt(4, rating);
+            RATE_MEAL.setInt(5, rating);
             RATE_MEAL.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    protected boolean _hasRatedToday(ChatContext context) {
+    protected void _deleteRatingsAtDate(ChatContext context, LocalDate date) {
         try {
-            LOAD_USER_RATING_BY_DATE.clearParameters();
-            LOAD_USER_RATING_BY_DATE.setString(1, context.getUserID().toString());
-            LOAD_USER_RATING_BY_DATE.setDate(2, Date.valueOf(LocalDate.now()));
-            return LOAD_USER_RATING_BY_DATE.executeQuery().next();
+            DELETE_RATING.clearParameters();
+            DELETE_RATING.setString(1, context.getUserID().toString());
+            DELETE_RATING.setDate(2, Date.valueOf(date));
+            DELETE_RATING.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return false;
+    }
+
+    protected int _numberOfRatingsByDate(ChatContext context, LocalDate date) {
+        try {
+            LOAD_USER_RATING_BY_DATE.clearParameters();
+            LOAD_USER_RATING_BY_DATE.setString(1, context.getUserID().toString());
+            LOAD_USER_RATING_BY_DATE.setDate(2, Date.valueOf(date));
+            ResultSet rs = LOAD_USER_RATING_BY_DATE.executeQuery();
+
+            int res = 0;
+            while (rs.next()) {
+                res++;
+            }
+
+            return res;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     protected RatingInfo _getGlobalRating(MainMeal meal) {
