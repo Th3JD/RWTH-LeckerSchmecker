@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -28,8 +30,10 @@ import org.telegram.telegrambots.meta.api.objects.polls.PollOption;
 
 public abstract class AdminAction implements BotAction {
 
+    private static Pattern customPollPattern = Pattern.compile("/\\d{4}_\\d+");
+
     public static final AdminAction GENERATE_TIMED_ACCESS_CODE = new AdminAction(
-                    "Timed Access Code", List.of("/timedaccess", "timedaccess")) {
+            "Timed Access Code", List.of("/timedaccess", "timedaccess")) {
         private final Random rnd = new Random();
 
         @Override
@@ -92,6 +96,17 @@ public abstract class AdminAction implements BotAction {
     public static void processUpdate(ChatContext context, Update update) {
         if (update.hasMessage()) {
 
+            // Check if the message is a custom poll
+            String text = update.getMessage().getText();
+            Matcher matcher = customPollPattern.matcher(text);
+            if (matcher.find()) {
+                text = matcher.group();
+                String votedMealID = text.trim().split("_")[1];
+                String pollID = "-" + text.trim().substring(1).split("_")[0];
+                processPollResult(pollID, votedMealID, context);
+                return;
+            }
+
             if (context.hasCurrentAction()) {
                 context.getCurrentAction().onUpdate(context, update);
             } else {
@@ -110,18 +125,19 @@ public abstract class AdminAction implements BotAction {
             String votedMealID = poll.getOptions().stream()
                     .max(Comparator.comparingInt(PollOption::getVoterCount))
                     .get().getText().split(":")[0];
-            int updatedMeals = LeckerSchmeckerBot.getInstance().getMealPollInfo(poll)
-                    .updateMeals(votedMealID);
-
-            LeckerSchmeckerBot.getInstance().removeMealPollInfo(poll);
-
-            context.sendMessage(
-                    updatedMeals + " Gericht" + (updatedMeals == 1 ? " wurde" : "e wurden") +
-                            " angepasst. " + (updatedMeals == 1 ? "Es gehört " : "Sie gehören ")
-                            + "nun zu: " + votedMealID);
-
+            processPollResult(poll.getId(), votedMealID, context);
             context.deletePoll(poll);
         }
+    }
+
+    private static void processPollResult(String pollID, String votedMealID, ChatContext context) {
+        int updatedMeals = LeckerSchmeckerBot.getInstance().getMealPollInfo(pollID).updateMeals(votedMealID);
+        LeckerSchmeckerBot.getInstance().removeMealPollInfo(pollID);
+
+        context.sendMessage(
+                updatedMeals + " Gericht" + (updatedMeals == 1 ? " wurde" : "e wurden") +
+                        " angepasst. " + (updatedMeals == 1 ? "Es gehört " : "Sie gehören ")
+                        + "nun zu: " + (votedMealID.equals("0") ? "Neues Gericht" : votedMealID));
     }
 
     public static final AdminAction[] VALUES = {GENERATE_TIMED_ACCESS_CODE, GENERATE_ACCESS_CODE, BROADCAST};
