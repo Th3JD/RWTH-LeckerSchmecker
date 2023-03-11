@@ -17,10 +17,9 @@
 package telegram;
 
 import database.DatabaseManager;
-import meal.MainMeal;
-
 import java.util.HashSet;
 import java.util.Set;
+import meal.MainMeal;
 
 public class MealPollInfo {
 
@@ -30,12 +29,11 @@ public class MealPollInfo {
         mealsWaitingForID.add(meal);
     }
 
-    public int updateMeals(String chosenMealName) {
-        int id;
-        if (chosenMealName.equals("Neues Gericht")) {
+    public int updateMeals(String chosenMealID) {
+        int id = Integer.parseInt(chosenMealID.trim());
+        if (id == 0) {
             id = DatabaseManager.addMeal(mealsWaitingForID.iterator().next());
         } else {
-            id = Integer.parseInt(chosenMealName.trim());
             DatabaseManager.addAliasToMeal(id, this.getMealName());
         }
         for (MainMeal meal : mealsWaitingForID) {
