@@ -45,6 +45,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
@@ -313,22 +314,22 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
         if (!offer.getSideMeals(SideMeal.Type.MAIN).isEmpty()) {
             sb.append("*").append(context.getLocalizedString("main_side_dish")).append("*")
-                .append("\n");
+                    .append("\n");
             sb.append(String.join(" " + context.getLocalizedString("or") + " ",
-                offer.getSideMeals(SideMeal.Type.MAIN).stream()
-                    .map(a -> a.getDisplayName(context.getLocale()))
-                    .toList()));
+                    offer.getSideMeals(SideMeal.Type.MAIN).stream()
+                            .map(a -> a.getDisplayName(context.getLocale()))
+                            .toList()));
         }
 
         if (!offer.getSideMeals(SideMeal.Type.SIDE).isEmpty()) {
             sb.append("\n\n");
 
             sb.append("*").append(context.getLocalizedString("secondary_dish")).append("*")
-                .append("\n");
+                    .append("\n");
             sb.append(String.join(" " + context.getLocalizedString("or") + " ",
-                offer.getSideMeals(SideMeal.Type.SIDE).stream()
-                    .map(a -> a.getDisplayName(context.getLocale()))
-                    .toList()));
+                    offer.getSideMeals(SideMeal.Type.SIDE).stream()
+                            .map(a -> a.getDisplayName(context.getLocale()))
+                            .toList()));
         }
 
         return sb.toString();
@@ -367,19 +368,54 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             return;
         }
 
-        SendPoll poll = new SendPoll();
-        poll.setIsAnonymous(false);
-        poll.setQuestion("Das Gericht '" + meal.getDisplayName(new Locale("de", "DE"))
-                + "' ist ähnlich zu den folgenden Gerichten. Bitte wähle eine Option:");
+        String pollID;
 
-        List<String> options = new ArrayList<>(
-                similarMeals.stream().map(a -> a + ": " + DatabaseManager.getMealAliases(a).get(0))
-                        .toList());
-        options.add("Neues Gericht");
-        poll.setOptions(options);
+        // Check if there are more than nine similar meals (breaks the poll-feature of telegram)
+        if (similarMeals.size() > 9) {
 
-        Long adminId = Config.getAdminChatID();
-        String pollID = chatContextById.get(adminId).sendPoll(poll);
+            SendMessage message = new SendMessage();
+            StringBuilder sb = new StringBuilder();
+            sb.append("Das Gericht '").append(meal.getDisplayName(new Locale("de", "DE")))
+                    .append("' ist ähnlich zu den folgenden Gerichten. Bitte wähle eine Option:\n\n");
+
+            for (int mealID : similarMeals) {
+                sb.append("/").append("<xxx>").append("_").append(mealID).append("  ")
+                        .append(DatabaseManager.getMealAliases(mealID).get(0));
+                sb.append("\n\n");
+            }
+            sb.append("/").append("<xxx>").append("_").append(0).append("  ").append("Neues Gericht");
+
+            long adminChatID = Config.getAdminChatID();
+            message.setText(sb.toString());
+            pollID = chatContextById.get(adminChatID).sendMessage(message).toString();
+
+            EditMessageText editMessage = new EditMessageText();
+            editMessage.setChatId(adminChatID);
+            editMessage.setMessageId(Integer.parseInt(pollID));
+            editMessage.setText(sb.toString().replaceAll("<xxx>", pollID));
+
+            try {
+                execute(editMessage);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+
+
+        } else {
+            SendPoll poll = new SendPoll();
+            poll.setIsAnonymous(false);
+            poll.setQuestion("Das Gericht '" + meal.getDisplayName(new Locale("de", "DE"))
+                    + "' ist ähnlich zu den folgenden Gerichten. Bitte wähle eine Option:");
+
+            List<String> options = new ArrayList<>(
+                    similarMeals.stream().map(a -> a + ": " + DatabaseManager.getMealAliases(a).get(0))
+                            .toList());
+            options.add("0: Neues Gericht");
+            poll.setOptions(options);
+
+            Long adminId = Config.getAdminChatID();
+            pollID = chatContextById.get(adminId).sendPoll(poll);
+        }
 
         MealPollInfo info = new MealPollInfo();
         info.addMeal(meal);
@@ -387,13 +423,13 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         mealPollInfoByMealNameOrPollId.put(meal.getName(), pollID, info);
     }
 
-    public MealPollInfo getMealPollInfo(Poll poll) {
-        return this.mealPollInfoByMealNameOrPollId.get2(poll.getId());
+    public MealPollInfo getMealPollInfo(String pollID) {
+        return this.mealPollInfoByMealNameOrPollId.get2(pollID);
     }
 
-    public void removeMealPollInfo(Poll poll) {
-        String mealName = this.mealPollInfoByMealNameOrPollId.get2(poll.getId()).getMealName();
-        this.mealPollInfoByMealNameOrPollId.remove(mealName, poll.getId());
+    public void removeMealPollInfo(String pollID) {
+        String mealName = this.mealPollInfoByMealNameOrPollId.get2(pollID).getMealName();
+        this.mealPollInfoByMealNameOrPollId.remove(mealName, pollID);
     }
 
     public boolean addAccessCode(String code) {
