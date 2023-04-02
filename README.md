@@ -16,8 +16,6 @@ Features:
 
 We host an [official instance](https://t.me/rwth_leckerschmecker_bot) of this bot, which we recommend using, as one of the main purposes of this bot is the rating system.
 
-However, if you still want to host your own instance, you will need to install the Java 17 SDK and Gradle framework, as well as MariaDB.
-
 ## Privacy policy
 
 When using our bot via the official instance, our [privacy policy](https://github.com/Th3JD/RWTH-LeckerSchmecker/blob/main/privacy-policy.md) applies.

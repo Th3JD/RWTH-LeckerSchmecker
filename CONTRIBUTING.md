@@ -5,6 +5,7 @@ If you want to contribute via code, please fork our repository and develop your 
 We always use separate branches to develop features, and merge them into the main branch later.
 When you've finished your feature, you can create a pull request from your fork to our main branch. Please see the ''Pull requests'' section below for more details.
 
+To develop your features, you will need to install the Java 17 SDK and Gradle framework, as well as MariaDB.
 ## Issues
 
 If you find a bug, or have a suggestion, please open an issue [here](https://github.com/Th3JD/RWTH-LeckerSchmecker/issues). You can assign any of the maintainers of this repository.
