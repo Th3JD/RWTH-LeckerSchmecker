@@ -2,7 +2,7 @@
 
 ## Description
 
-Telegram bot for the RWTH canteens
+Telegram bot for rating meals of the RWTH canteens.
 
 Features:
 
@@ -19,7 +19,7 @@ We host an [official instance](https://t.me/rwth_leckerschmecker_bot) of this bo
 recommend using, as one of the main purposes of this bot is the rating system.
 
 <p align="center">
-  <img src="img/qr.jpg" width="30%"/>
+  <img src="img/qr.jpg" width="30%" alt="Telegram QR-Code"/>
 </p>
 
 ## Privacy policy
@@ -36,9 +36,9 @@ The bot was created using the following technologies:
 - Gradle
 - MariaDB
 
-Special thanks to the following contributors:
+Repository maintainers:
 
-[3dde](https://github.com/3dde), [Th3JD](https://github.com/Th3JD), [ekansemit](https://github.com/ekansemit)
+[Th3JD](https://github.com/Th3JD), [ekansemit](https://github.com/ekansemit), [3dde](https://github.com/3dde)
 
 ## Contributing
 
