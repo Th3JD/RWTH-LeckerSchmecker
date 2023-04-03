@@ -9,17 +9,24 @@ Features:
 - Query meals from any canteen from of the RWTH (up to 2 days in advance)
 - Set diet options to filter the meal list
 - Rate meals and view global and personal ratings per meal
-- The bot automatically shows ratings for similar meals, if the currently offered meal doesn't have any ratings yet
+- The bot automatically shows ratings for similar meals, if the currently offered meal doesn't have
+  any ratings yet
 - Supported Languages: German, English, Spanish, Chinese
 
 ## Usage
 
-We host an [official instance](https://t.me/rwth_leckerschmecker_bot) of this bot, which we recommend using, as one of the main purposes of this bot is the rating system.
+We host an [official instance](https://t.me/rwth_leckerschmecker_bot) of this bot, which we
+recommend using, as one of the main purposes of this bot is the rating system.
+
+<p align="center">
+  <img src="img/qr.jpg" width="30%"/>
+</p>
 
 ## Privacy policy
 
-When using our bot via the official instance, our [privacy policy](https://github.com/Th3JD/RWTH-LeckerSchmecker/blob/main/privacy-policy.md) applies.
-
+When using our bot via the official instance,
+our [privacy policy](https://github.com/Th3JD/RWTH-LeckerSchmecker/blob/main/privacy-policy.md)
+applies.
 
 ## Credits
 
