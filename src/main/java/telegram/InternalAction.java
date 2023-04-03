@@ -172,6 +172,7 @@ public abstract class InternalAction implements BotAction {
             msg.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1, context.getLocale(),
                     context.getCanteen().getDailyOffer(LocalDate.now()).get()
                             .getMainMeals().stream()
+                            .filter(a -> DietType.isMealInDiet(a.getNutritions(), context.getDefaultDietType()))
                             .map(a -> a.getDisplayName(context.getLocale())).toList()));
             context.sendMessage(msg);
         }
