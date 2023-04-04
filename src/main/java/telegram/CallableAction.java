@@ -371,15 +371,41 @@ public abstract class CallableAction implements BotAction {
             List.of("/tutorial", "anleitung")) {
         @Override
         public void init(ChatContext context, SendMessage passthroughMessage, Update update) {
+            context.setCurrentAction(this);
+
             SendMessage message = new SendMessage();
-            message.enableMarkdownV2(true);
-            message.setText(context.getLocalizedString("tutorial"));
-            MAIN_MENU.init(context, message, update);
+            message.setText(context.getLocalizedString("which_tutorial"));
+
+            ReplyKeyboardMarkup markup = BotAction.createKeyboardMarkupWithMenu(2,
+                    context.getLocale(),
+                    context.getLocalizedString("query_tutorial_name"),
+                    context.getLocalizedString("rating_tutorial_name"),
+                    context.getLocalizedString("settings_tutorial_name"));
+            message.setReplyMarkup(markup);
+            context.sendMessage(message);
         }
 
         @Override
         public void onUpdate(ChatContext context, Update update) {
+            String text = update.getMessage().getText();
+            SendMessage message = new SendMessage();
+            message.enableMarkdownV2(true);
+            if (text.equals(context.getLocalizedString("query_tutorial_name"))) {
+                message.setText(context.getLocalizedString("query_tutorial"));
+                MAIN_MENU.init(context, message, update);
 
+            } else if (text.equals(context.getLocalizedString("rating_tutorial_name"))) {
+                message.setText(context.getLocalizedString("rating_tutorial"));
+                MAIN_MENU.init(context, message, update);
+
+            } else if (text.equals(context.getLocalizedString("settings_tutorial_name"))) {
+                message.setText(context.getLocalizedString("settings_tutorial"));
+                MAIN_MENU.init(context, message, update);
+
+            } else {
+                context.sendLocalizedMessage("invalid_option");
+                this.init(context, null, update);
+            }
         }
     };
 
