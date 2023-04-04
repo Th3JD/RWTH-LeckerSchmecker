@@ -388,21 +388,17 @@ public abstract class CallableAction implements BotAction {
         @Override
         public void onUpdate(ChatContext context, Update update) {
             String text = update.getMessage().getText();
+            SendMessage message = new SendMessage();
+            message.enableMarkdownV2(true);
             if (text.equals(context.getLocalizedString("query_tutorial_name"))) {
-                SendMessage message = new SendMessage();
-                message.enableMarkdownV2(true);
                 message.setText(context.getLocalizedString("query_tutorial"));
                 MAIN_MENU.init(context, message, update);
 
             } else if (text.equals(context.getLocalizedString("rating_tutorial_name"))) {
-                SendMessage message = new SendMessage();
-                message.enableMarkdownV2(true);
                 message.setText(context.getLocalizedString("rating_tutorial"));
                 MAIN_MENU.init(context, message, update);
 
             } else if (text.equals(context.getLocalizedString("settings_tutorial_name"))) {
-                SendMessage message = new SendMessage();
-                message.enableMarkdownV2(true);
                 message.setText(context.getLocalizedString("settings_tutorial"));
                 MAIN_MENU.init(context, message, update);
 
