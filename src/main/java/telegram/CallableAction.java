@@ -236,7 +236,7 @@ public abstract class CallableAction implements BotAction {
             SendMessage message = new SendMessage();
             message.setText(context.getLocalizedString("which_setting_to_change"));
 
-            ReplyKeyboardMarkup markup = BotAction.createKeyboardMarkupWithMenu(1,
+            ReplyKeyboardMarkup markup = BotAction.createKeyboardMarkupWithMenu(2,
                     context.getLocale(),
                     context.getLocalizedString("canteen"),
                     context.getLocalizedString("language"),
