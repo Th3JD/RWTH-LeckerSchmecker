@@ -31,6 +31,8 @@ import telegram.LeckerSchmeckerBot;
 
 public class MainMeal extends Meal {
 
+    private static final Set<String> INVALID_NAMES = Set.of("geschlossen");
+
     private static final String NO_NUTRITION_SYMBOL = "\uD83C\uDF74";
 
     private static final String MEAL_SEPARATOR_DE = "ODER";
@@ -55,7 +57,8 @@ public class MainMeal extends Meal {
         String htmlNameDE = elementDE.getElementsByClass("expand-nutr").get(0).ownText();
         String htmlNameEN = elementEN.getElementsByClass("expand-nutr").get(0).ownText();
 
-        if (htmlNameDE.isBlank() || htmlNameDE.strip().startsWith("|")) {
+        if (htmlNameDE.isBlank() || htmlNameDE.strip().startsWith("|")
+                || INVALID_NAMES.stream().anyMatch(s -> s.equalsIgnoreCase(htmlNameDE))) {
             LeckerSchmecker.getLogger().warning("Encountered meal with an invalid name!");
             return List.of();
         }
@@ -176,7 +179,9 @@ public class MainMeal extends Meal {
     }
 
     public String getSymbols() {
-        if (this.nutritions.isEmpty()) return NO_NUTRITION_SYMBOL;
+        if (this.nutritions.isEmpty()) {
+            return NO_NUTRITION_SYMBOL;
+        }
         return this.nutritions.stream().map(Nutrition::getSymbol).collect(Collectors.joining());
     }
 
@@ -298,6 +303,7 @@ public class MainMeal extends Meal {
     }
 
     public static class Builder {
+
         private String name;
         private String displayNameDE;
         private String displayNameEN;
