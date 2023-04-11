@@ -386,7 +386,9 @@ public abstract class CallableAction implements BotAction {
                 options.add(ResourceManager.getString("off", context.getLocale()));
                 SettingsMenu menu = new SettingsMenu(text, true, 2, context,
                         options,
-                        context.getAutomatedQueryTime() == null ? List.of() : List.of(context.getAutomatedQueryTime().toString()));
+                        context.getAutomatedQueryTime() == null ?
+                                List.of(ResourceManager.getString("off", context.getLocale()))
+                                : List.of(context.getAutomatedQueryTime().toString()));
                 context.setSettingsMenu(menu);
 
                 SendMessage message = new SendMessage();

@@ -25,6 +25,7 @@ import java.util.Locale;
 public class DateUtils {
 
     public static final List<LocalTime> TIME_OPTIONS = List.of(
+            LocalTime.of(8,0),
             LocalTime.of(9,0),
             LocalTime.of(10,0),
             LocalTime.of(11,0),

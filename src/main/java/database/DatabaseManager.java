@@ -221,7 +221,7 @@ public class DatabaseManager {
                     +
                     "    compact_layout  TINYINT                                   default 0 not null,\n"
                     +
-                    "    automated_query ENUM ('9:00', '10:00', '11:00', '12:00') null,\n"
+                    "    automated_query ENUM ('08:00', '09:00', '10:00', '11:00', '12:00') null,\n"
                     +
                     "    constraint users_pk\n" +
                     "        primary key (userID)\n" +
