@@ -56,7 +56,7 @@ public class MainMeal extends Meal {
         String htmlNameEN = elementEN.getElementsByClass("expand-nutr").get(0).ownText();
 
         if (htmlNameDE.isBlank() || htmlNameDE.strip().startsWith("|")) {
-            LeckerSchmecker.getLogger().warning("Encountered meal with an invalid name!");
+            LeckerSchmecker.getLogger().warning("Encountered meal with an invalid name! : " + htmlNameDE);
             return List.of();
         }
 

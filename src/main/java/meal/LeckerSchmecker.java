@@ -82,7 +82,7 @@ public class LeckerSchmecker {
     }
 
     public static void exit() {
-        System.out.println("LeckersSchmecker is shutting down. Cleaning up...");
+        System.out.println("LeckerSchmecker is shutting down. Cleaning up...");
         DatabaseManager.disconnect();
     }
 

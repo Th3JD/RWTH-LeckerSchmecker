@@ -20,11 +20,15 @@ import config.Config;
 import database.DatabaseManager;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+
+import javassist.bytecode.LocalVariableTypeAttribute;
 import localization.ResourceManager;
 import meal.Canteen;
 import meal.DietType;
@@ -34,6 +38,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import util.DateUtils;
 
 public abstract class CallableAction implements BotAction {
 
@@ -236,12 +241,13 @@ public abstract class CallableAction implements BotAction {
             SendMessage message = new SendMessage();
             message.setText(context.getLocalizedString("which_setting_to_change"));
 
-            ReplyKeyboardMarkup markup = BotAction.createKeyboardMarkupWithMenu(1,
+            ReplyKeyboardMarkup markup = BotAction.createKeyboardMarkupWithMenu(2,
                     context.getLocale(),
                     context.getLocalizedString("canteen"),
                     context.getLocalizedString("language"),
                     context.getLocalizedString("diet"),
-                    context.getLocalizedString("compact_layout"));
+                    context.getLocalizedString("compact_layout"),
+                    context.getLocalizedString("automated_query"));
             message.setReplyMarkup(markup);
             context.sendMessage(message);
         }
@@ -300,6 +306,23 @@ public abstract class CallableAction implements BotAction {
                         }
                         context.setDefaultDietType(dietTypeOpt.get());
                         message.setText(context.getDefaultDietType().getDisplayName(context.getLocale()) + " ✅");
+                    } else if (setting.equals(context.getLocalizedString("automated_query"))) {
+                        if (menu.getSelected().get(0).equals(ResourceManager.getString("off", context.getLocale()))) {
+                            context.setAutomatedQueryTime(null);
+                            message.setText(ResourceManager.getString("off", context.getLocale()) + " ✅");
+                        } else {
+                            Optional<LocalTime> timeOpt = DateUtils.TIME_OPTIONS.stream()
+                                    .filter(a -> a.toString().equals(menu.getSelected().get(0)))
+                                    .findFirst();
+                            if (timeOpt.isEmpty()) {
+                                LeckerSchmecker.getLogger().warning("Invalid time returned by setting menu. Ignoring...");
+                                context.sendLocalizedMessage("invalid_option");
+                                this.init(context, null, update);
+                                return;
+                            }
+                            context.setAutomatedQueryTime(timeOpt.get());
+                            message.setText(context.getAutomatedQueryTime().toString() + " ✅");
+                        }
                     }
                     MAIN_MENU.init(context, message, update);
                 }
@@ -358,6 +381,17 @@ public abstract class CallableAction implements BotAction {
                     context.sendLocalizedMessage("reset_compact_layout");
                 }
                 MAIN_MENU.init(context, null, update);
+            } else if (text.equals(context.getLocalizedString("automated_query"))) {
+                List<String> options = new LinkedList<>(DateUtils.TIME_OPTIONS.stream().map(LocalTime::toString).toList());
+                options.add(ResourceManager.getString("off", context.getLocale()));
+                SettingsMenu menu = new SettingsMenu(text, true, 2, context,
+                        options,
+                        context.getAutomatedQueryTime() == null ? List.of() : List.of(context.getAutomatedQueryTime().toString()));
+                context.setSettingsMenu(menu);
+
+                SendMessage message = new SendMessage();
+                message.setText(context.getLocalizedString("choose_automated_query"));
+                menu.init(message);
             } else {
                 context.sendLocalizedMessage("invalid_option");
                 this.init(context, null, update);
