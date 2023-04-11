@@ -56,7 +56,8 @@ public class DatabaseManager {
     // STATEMENTS
     private PreparedStatement LOAD_USER, LOAD_USER_CHAT_IDS, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, SET_COMPACT_LAYOUT, SET_AUTOMATED_QUERY, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
             ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS, LOAD_NUMBER_OF_VOTES,
-            RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING, LOAD_SIMILAR_RATING;
+            RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING, LOAD_SIMILAR_RATING,
+            LOAD_AUTOMATED_QUERY_IDS, LOAD_CHATID_BY_USERID;
     /////////////
 
 
@@ -157,6 +158,14 @@ public class DatabaseManager {
 
     public static RatingInfo getUserRating(ChatContext context, MainMeal meal) {
         return getInstance()._getUserRating(context, meal);
+    }
+
+    public static List<UUID> getAutomatedQueryIds(LocalTime time) {
+        return getInstance()._getAutomatedQueryIds(time);
+    }
+
+    public static Long getChatIdByUserId(UUID uuid) {
+        return getInstance()._getChatIdByUserId(uuid);
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////
@@ -293,17 +302,17 @@ public class DatabaseManager {
             LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
             ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)");
             LOAD_USER_CHAT_IDS = connection.prepareStatement("SELECT chatID FROM users");
-            LOAD_NUMBER_OF_VOTES = connection.prepareStatement("SELECT COUNT(*) as amount from ratings WHERE userID like ?");
+            LOAD_NUMBER_OF_VOTES = connection.prepareStatement("SELECT COUNT(*) AS amount FROM ratings WHERE userID LIKE ?");
             SET_CANTEEN = connection.prepareStatement(
-                    "UPDATE users SET default_canteen=? WHERE userID like ?");
+                    "UPDATE users SET default_canteen=? WHERE userID LIKE ?");
             SET_DIET_TYPE = connection.prepareStatement(
-                    "UPDATE users SET default_diet_type=? WHERE userID like ?");
+                    "UPDATE users SET default_diet_type=? WHERE userID LIKE ?");
             SET_LOCALE = connection.prepareStatement(
-                    "UPDATE users SET language=? WHERE userID like ?");
+                    "UPDATE users SET language=? WHERE userID LIKE ?");
             SET_COMPACT_LAYOUT = connection.prepareStatement(
-                    "UPDATE users SET compact_layout=? WHERE userID like ?");
+                    "UPDATE users SET compact_layout=? WHERE userID LIKE ?");
             SET_AUTOMATED_QUERY = connection.prepareStatement(
-                    "UPDATE users SET automated_query=? WHERE userID like ?");
+                    "UPDATE users SET automated_query=? WHERE userID LIKE ?");
             LOAD_MEAL_BY_ALIAS = connection.prepareStatement(
                     "SELECT mealID FROM meal_name_alias WHERE alias LIKE ?");
             LOAD_MEALS_BY_SHORT_ALIAS = connection.prepareStatement(
@@ -320,23 +329,23 @@ public class DatabaseManager {
             RATE_MEAL = connection.prepareStatement(
                     "INSERT INTO ratings VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating=?");
             DELETE_RATING = connection.prepareStatement(
-                    "DELETE FROM ratings WHERE userID like ? AND date=?");
+                    "DELETE FROM ratings WHERE userID LIKE ? AND date=?");
             LOAD_USER_RATING_BY_DATE = connection.prepareStatement(
-                    "SELECT * FROM ratings WHERE userID like ? AND date=?");
+                    "SELECT * FROM ratings WHERE userID LIKE ? AND date=?");
             LOAD_GLOBAL_RATING = connection.prepareStatement(
-                    "SELECT AVG(rating) as average, COUNT(*) as votes from (ratings r inner join (\n"
-                            + "    select userID, mealID, MAX(date) as MaxDate\n"
-                            + "    from ratings\n"
+                    "SELECT AVG(rating) AS average, COUNT(*) AS votes FROM (ratings r INNER JOIN (\n"
+                            + "    SELECT userID, mealID, MAX(date) AS MaxDate\n"
+                            + "    FROM ratings\n"
                             + "    WHERE mealID=?\n"
-                            + "    group by userID, mealID\n"
-                            + ") rmax on r.userID=rmax.userID and r.mealID=rmax.mealID and r.date=MaxDate);");
+                            + "    GROUP BY userID, mealID\n"
+                            + ") rmax ON r.userID=rmax.userID AND r.mealID=rmax.mealID AND r.date=MaxDate);");
             LOAD_USER_RATING = connection.prepareStatement(
-                    "SELECT rating from (ratings r inner join (\n"
-                            + "    select userID, mealID, MAX(date) as MaxDate\n"
-                            + "    from ratings\n"
-                            + "    WHERE mealID=? and userID LIKE ?\n"
-                            + "    group by userID, mealID\n"
-                            + ") rmax on r.userID=rmax.userID and r.mealID=rmax.mealID and r.date=MaxDate);");
+                    "SELECT rating from (ratings r INNER JOIN (\n"
+                            + "    SELECT userID, mealID, MAX(date) AS MaxDate\n"
+                            + "    FROM ratings\n"
+                            + "    WHERE mealID=? AND userID LIKE ?\n"
+                            + "    GROUP BY userID, mealID\n"
+                            + ") rmax ON r.userID=rmax.userID AND r.mealID=rmax.mealID AND r.date=MaxDate);");
             LOAD_SIMILAR_RATING = connection.prepareStatement(
                     "SELECT AVG(rating) AS average, COUNT(*) AS votes FROM ratings r,\n"
                             + "(SELECT userID, lastRatings.mealID AS mealID, MaxDate FROM\n"
@@ -344,6 +353,10 @@ public class DatabaseManager {
                             + "(SELECT userID, mealID, MAX(date) AS MaxDate FROM ratings WHERE userID LIKE ? GROUP BY userID, mealID) AS lastRatings\n"
                             + "WHERE similarIDs.mealID=lastRatings.mealID) AS similarLastRatings\n"
                             + "WHERE r.userID=similarLastRatings.userID AND r.mealID=similarLastRatings.mealID AND r.date=similarLastRatings.MaxDate;");
+            LOAD_AUTOMATED_QUERY_IDS = connection.prepareStatement(
+                    "SELECT userID FROM users WHERE automated_query LIKE ?");
+            LOAD_CHATID_BY_USERID = connection.prepareStatement(
+                    "SELECT chatID FROM users WHERE userID LIKE ?");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -687,6 +700,42 @@ public class DatabaseManager {
 
             return new RatingInfo(meal, rs.getFloat("rating"), 1, false);
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    protected List<UUID> _getAutomatedQueryIds(LocalTime time) {
+
+        if (time == null) {
+            return List.of();
+        }
+
+        List<UUID> res = new LinkedList<>();
+        try {
+            LOAD_AUTOMATED_QUERY_IDS.clearParameters();
+            LOAD_AUTOMATED_QUERY_IDS.setString(1, time.toString());
+            ResultSet rs = LOAD_MEALNAME_BY_ID.executeQuery();
+
+            while (rs.next()) {
+                res.add(UUID.fromString(rs.getString("userID")));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return res;
+    }
+
+    protected Long _getChatIdByUserId(UUID uuid) {
+        try {
+            LOAD_CHATID_BY_USERID.clearParameters();
+            LOAD_CHATID_BY_USERID.setString(1, uuid.toString());
+            ResultSet rs = LOAD_CHATID_BY_USERID.executeQuery();
+
+            rs.next();
+            return rs.getLong("chatID");
         } catch (SQLException e) {
             e.printStackTrace();
         }

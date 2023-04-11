@@ -382,18 +382,23 @@ public abstract class CallableAction implements BotAction {
                 }
                 MAIN_MENU.init(context, null, update);
             } else if (text.equals(context.getLocalizedString("automated_query"))) {
-                List<String> options = new LinkedList<>(DateUtils.TIME_OPTIONS.stream().map(LocalTime::toString).toList());
-                options.add(ResourceManager.getString("off", context.getLocale()));
-                SettingsMenu menu = new SettingsMenu(text, true, 2, context,
-                        options,
-                        context.getAutomatedQueryTime() == null ?
-                                List.of(ResourceManager.getString("off", context.getLocale()))
-                                : List.of(context.getAutomatedQueryTime().toString()));
-                context.setSettingsMenu(menu);
+                if (context.getDefaultCanteen() != null) {
+                    List<String> options = new LinkedList<>(DateUtils.TIME_OPTIONS.stream().map(LocalTime::toString).toList());
+                    options.add(ResourceManager.getString("off", context.getLocale()));
+                    SettingsMenu menu = new SettingsMenu(text, true, 2, context,
+                            options,
+                            context.getAutomatedQueryTime() == null ?
+                                    List.of(ResourceManager.getString("off", context.getLocale()))
+                                    : List.of(context.getAutomatedQueryTime().toString()));
+                    context.setSettingsMenu(menu);
 
-                SendMessage message = new SendMessage();
-                message.setText(context.getLocalizedString("choose_automated_query"));
-                menu.init(message);
+                    SendMessage message = new SendMessage();
+                    message.setText(context.getLocalizedString("choose_automated_query"));
+                    menu.init(message);
+                } else {
+                    context.sendLocalizedMessage("default_canteen_needed");
+                    MAIN_MENU.init(context, null, update);
+                }
             } else {
                 context.sendLocalizedMessage("invalid_option");
                 this.init(context, null, update);

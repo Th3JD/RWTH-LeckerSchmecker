@@ -18,21 +18,24 @@ package meal;
 
 import config.Config;
 import database.DatabaseManager;
+import localization.ResourceManager;
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
+import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
+import util.DateUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.DayOfWeek;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.logging.*;
 
 public class LeckerSchmecker {
@@ -59,7 +62,8 @@ public class LeckerSchmecker {
         }
 
         // schedule update task without a delay
-        timer.schedule(new UpdateTask(), 0);
+        timer.schedule(new UpdateOfferTask(), 0);
+        timer.schedule(new AutomatedQueryTask(), Date.from(nextAutomatedQueryTime().atZone(ZoneOffset.systemDefault()).toInstant()));
 
 
         // add shutdown hook
@@ -129,7 +133,7 @@ public class LeckerSchmecker {
         return logger;
     }
 
-    public static class UpdateTask extends TimerTask {
+    public static class UpdateOfferTask extends TimerTask {
         @Override
         public void run() {
             updateOffers();
@@ -148,9 +152,57 @@ public class LeckerSchmecker {
                 dateTime = now.plusHours(4).withMinute(0).withSecond(0);
             }
 
-            timer.schedule(new UpdateTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
+            timer.schedule(new UpdateOfferTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
             logger.info("Scheduled update until " +
                     dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         }
+    }
+
+    public static class AutomatedQueryTask extends TimerTask {
+        @Override
+        public void run() {
+            for (UUID uuid : DatabaseManager.getAutomatedQueryIds(LocalTime.now().withMinute(0).withSecond(0))) {
+                // Send personalized meal queries
+                ChatContext context = DatabaseManager.loadUser(LeckerSchmeckerBot.getInstance(), DatabaseManager.getChatIdByUserId(uuid));
+
+                if (!context.hasCanteen()) {
+                    SendMessage message = new SendMessage();
+                    message.enableMarkdown(true);
+                    message.setText(ResourceManager.getString("default_canteen_needed", context.getLocale()));
+                    context.sendMessage(message);
+                    return;
+                }
+
+                Canteen userCanteen = context.getCanteen();
+                SendMessage message = new SendMessage();
+                message.enableMarkdown(true);
+                message.setText("*" + context.getLocalizedString("meals") + " ("
+                        + userCanteen.getDisplayName() + ")*\n\n"
+                        + context.getBot()
+                        .getMealsText(userCanteen, LocalDate.now(), context));
+                context.sendMessage(message);
+
+            }
+
+            LocalDateTime dateTime = nextAutomatedQueryTime();
+
+            timer.schedule(new UpdateOfferTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
+            logger.info("Scheduled automated queries until " +
+                    dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+        }
+    }
+
+    public static LocalDateTime nextAutomatedQueryTime() {
+        LocalDateTime now = LocalDateTime.now();
+
+        for (LocalTime time : DateUtils.TIME_OPTIONS) {
+            if (!now.getDayOfWeek().equals(DayOfWeek.SATURDAY)
+                    && !now.getDayOfWeek().equals(DayOfWeek.SUNDAY)
+                    && time.isAfter(now.toLocalTime())) {
+                return LocalDateTime.of(now.toLocalDate(), time);
+            }
+        }
+
+        return LocalDateTime.of(now.toLocalDate().plusDays(now.getDayOfWeek().equals(DayOfWeek.FRIDAY) ? 3 : 1), DateUtils.TIME_OPTIONS.get(0));
     }
 }
