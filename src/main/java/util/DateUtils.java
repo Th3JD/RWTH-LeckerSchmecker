@@ -18,8 +18,18 @@ package util;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Locale;
 
 public class DateUtils {
+
+    public static final List<LocalTime> TIME_OPTIONS = List.of(
+            LocalTime.of(8,0),
+            LocalTime.of(9,0),
+            LocalTime.of(10,0),
+            LocalTime.of(11,0),
+            LocalTime.of(12,0));
 
     /**
      * Adds a set amount of days to a given date, ignoring weekends. WARNING: If the param date is a weekend, setting days to zero will return the

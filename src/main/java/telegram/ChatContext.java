@@ -18,6 +18,7 @@ package telegram;
 
 import database.DatabaseManager;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -44,6 +45,7 @@ public class ChatContext {
     private Canteen defaultCanteen;
     private Locale locale;
     private boolean compactLayout;
+    private LocalTime automatedQueryTime;
     private int numberOfVotes;
 
     // State information
@@ -68,7 +70,7 @@ public class ChatContext {
 
 
     public ChatContext(LeckerSchmeckerBot bot, UUID userID, long chatID, Canteen defaultCanteen,
-            DietType dietType, Locale locale, boolean compactLayout, int numberOfVotes) {
+                       DietType dietType, Locale locale, boolean compactLayout, LocalTime automatedQueryTime, int numberOfVotes) {
         this.bot = bot;
         this.userID = userID;
         this.chatID = chatID;
@@ -76,6 +78,7 @@ public class ChatContext {
         this.defaultDietType = dietType;
         this.locale = locale;
         this.compactLayout = compactLayout;
+        this.automatedQueryTime = automatedQueryTime;
         this.numberOfVotes = numberOfVotes;
     }
 
@@ -112,6 +115,11 @@ public class ChatContext {
         DatabaseManager.setDefaultDietType(userID, dietType);
     }
 
+    public void setAutomatedQueryTime(LocalTime time) {
+        this.automatedQueryTime = time;
+        DatabaseManager.setAutomatedQuery(userID, time);
+    }
+
     // Generated Getter & Setter //////////////////////////////////////////////
     public SettingsMenu getSettingsMenu() {
         return settingsMenu;
@@ -135,6 +143,10 @@ public class ChatContext {
 
     public boolean isCompactLayout() {
         return compactLayout;
+    }
+
+    public LocalTime getAutomatedQueryTime() {
+        return automatedQueryTime;
     }
 
     public Boolean getDefaultValueSet() {
