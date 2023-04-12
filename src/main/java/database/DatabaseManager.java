@@ -716,7 +716,7 @@ public class DatabaseManager {
         try {
             LOAD_AUTOMATED_QUERY_IDS.clearParameters();
             LOAD_AUTOMATED_QUERY_IDS.setString(1, time.toString());
-            ResultSet rs = LOAD_MEALNAME_BY_ID.executeQuery();
+            ResultSet rs = LOAD_AUTOMATED_QUERY_IDS.executeQuery();
 
             while (rs.next()) {
                 res.add(UUID.fromString(rs.getString("userID")));

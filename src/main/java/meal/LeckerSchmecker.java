@@ -63,8 +63,10 @@ public class LeckerSchmecker {
 
         // schedule update task without a delay
         timer.schedule(new UpdateOfferTask(), 0);
-        timer.schedule(new AutomatedQueryTask(), Date.from(nextAutomatedQueryTime().atZone(ZoneOffset.systemDefault()).toInstant()));
-
+        LocalDateTime dateTime = nextAutomatedQueryTime();
+        timer.schedule(new AutomatedQueryTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
+        logger.info("Scheduled automated queries until " +
+                dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
 
         // add shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(LeckerSchmecker::exit));
@@ -161,7 +163,8 @@ public class LeckerSchmecker {
     public static class AutomatedQueryTask extends TimerTask {
         @Override
         public void run() {
-            for (UUID uuid : DatabaseManager.getAutomatedQueryIds(LocalTime.now().withMinute(0).withSecond(0))) {
+            for (UUID uuid : DatabaseManager.getAutomatedQueryIds(LocalTime.now()
+                    .withMinute(0).withSecond(0).withNano(0))) {
                 // Send personalized meal queries
                 ChatContext context = DatabaseManager.loadUser(LeckerSchmeckerBot.getInstance(), DatabaseManager.getChatIdByUserId(uuid));
 
