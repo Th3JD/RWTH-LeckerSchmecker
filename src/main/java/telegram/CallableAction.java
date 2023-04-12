@@ -415,6 +415,7 @@ public abstract class CallableAction implements BotAction {
             context.setCurrentAction(this);
 
             SendMessage message = new SendMessage();
+            message.enableMarkdownV2(true);
             message.setText(context.getLocalizedString("which_tutorial"));
 
             ReplyKeyboardMarkup markup = BotAction.createKeyboardMarkupWithMenu(2,
