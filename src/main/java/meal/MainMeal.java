@@ -59,7 +59,7 @@ public class MainMeal extends Meal {
 
         if (htmlNameDE.isBlank() || htmlNameDE.strip().startsWith("|")
                 || INVALID_NAMES.stream().anyMatch(s -> s.equalsIgnoreCase(htmlNameDE))) {
-            LeckerSchmecker.getLogger().warning("Encountered meal with an invalid name!");
+            LeckerSchmecker.getLogger().warning("Encountered meal with an invalid name: " + htmlNameDE);
             return List.of();
         }
 
