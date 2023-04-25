@@ -20,15 +20,11 @@ import config.Config;
 import database.DatabaseManager;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-
-import javassist.bytecode.LocalVariableTypeAttribute;
 import localization.ResourceManager;
 import meal.Canteen;
 import meal.DietType;
@@ -98,9 +94,11 @@ public abstract class CallableAction implements BotAction {
             context.setReturnToAction(this);
 
             // Check if user already used up their votes for today
-            if (DatabaseManager.numberOfRatingsByDate(context, LocalDate.now()) >= Config.getMaxVotesPerDay()) {
+            if (DatabaseManager.numberOfRatingsByDate(context, LocalDate.now())
+                    >= Config.getMaxVotesPerDay()) {
                 SendMessage message = new SendMessage();
-                message.setText(ResourceManager.getString("already_rated", context.getLocale(), Config.getMaxVotesPerDay()));
+                message.setText(ResourceManager.getString("already_rated", context.getLocale(),
+                        Config.getMaxVotesPerDay()));
                 message.setReplyMarkup(BotAction.createKeyboardMarkupWithMenu(1,
                         context.getLocale(), context.getLocalizedString("continue")));
                 message.enableMarkdown(true);
@@ -114,7 +112,8 @@ public abstract class CallableAction implements BotAction {
                 if (context.getCanteen().getDailyOffer(LocalDate.now()).isEmpty()) {
                     SendMessage msg = new SendMessage();
                     msg.setText(
-                            ResourceManager.getString("canteen_offers_no_meals_today", context.getLocale(), context.getCanteen().getDisplayName()));
+                            ResourceManager.getString("canteen_offers_no_meals_today",
+                                    context.getLocale(), context.getCanteen().getDisplayName()));
                     msg.enableMarkdown(true);
                     MAIN_MENU.init(context, msg, update);
                     return;
@@ -130,7 +129,8 @@ public abstract class CallableAction implements BotAction {
         public void onUpdate(ChatContext context, Update update) {
 
             //Check if the user agreed to delete all ratings from today
-            if (update.hasMessage() && update.getMessage().getText().equals(context.getLocalizedString("continue"))) {
+            if (update.hasMessage() && update.getMessage().getText()
+                    .equals(context.getLocalizedString("continue"))) {
                 DatabaseManager.deleteRatingsAtDate(context, LocalDate.now());
                 RATING.init(context, null, update);
                 return;
@@ -156,7 +156,8 @@ public abstract class CallableAction implements BotAction {
             // Check if the canteen offers meals today
             if (canteen.getDailyOffer(LocalDate.now()).isEmpty()) {
                 SendMessage msg = new SendMessage();
-                msg.setText(ResourceManager.getString("canteen_offers_no_meals_today", context.getLocale(), context.getCanteen().getDisplayName()));
+                msg.setText(ResourceManager.getString("canteen_offers_no_meals_today",
+                        context.getLocale(), context.getCanteen().getDisplayName()));
                 msg.enableMarkdown(true);
                 MAIN_MENU.init(context, msg, update);
                 return;
@@ -173,7 +174,8 @@ public abstract class CallableAction implements BotAction {
             if (meal.getId() == null) {
                 context.resetPassthroughInformation();
                 SendMessage msg = new SendMessage(String.valueOf(context.getChatID()),
-                        context.getLocalizedString("meal_not_ratable", meal.getDisplayName(context.getLocale())));
+                        context.getLocalizedString("meal_not_ratable",
+                                meal.getDisplayName(context.getLocale())));
                 msg.enableMarkdown(true);
                 MAIN_MENU.init(context, msg, update);
                 return;
@@ -268,13 +270,18 @@ public abstract class CallableAction implements BotAction {
                     if (setting.equals(context.getLocalizedString("canteen"))) {
 
                         // Check if user wants to reset the default canteen
-                        if (menu.getSelected().get(0).equals(ResourceManager.getString("no_default_canteen", context.getLocale()))) {
+                        if (menu.getSelected().get(0)
+                                .equals(ResourceManager.getString("no_default_canteen",
+                                        context.getLocale()))) {
                             context.setDefaultCanteen(null);
-                            message.setText(ResourceManager.getString("no_default_canteen", context.getLocale()) + " ✅");
+                            message.setText(ResourceManager.getString("no_default_canteen",
+                                    context.getLocale()) + " ✅");
                         } else {
-                            Optional<Canteen> canteenOpt = Canteen.getByDisplayName(menu.getSelected().get(0));
+                            Optional<Canteen> canteenOpt = Canteen.getByDisplayName(
+                                    menu.getSelected().get(0));
                             if (canteenOpt.isEmpty()) {
-                                LeckerSchmecker.getLogger().warning("Invalid canteen returned by setting menu. Ignoring...");
+                                LeckerSchmecker.getLogger().warning(
+                                        "Invalid canteen returned by setting menu. Ignoring...");
                                 context.sendLocalizedMessage("invalid_option");
                                 this.init(context, null, update);
                                 return;
@@ -288,7 +295,8 @@ public abstract class CallableAction implements BotAction {
                                 .filter(a -> a.getDisplayName().equals(menu.getSelected().get(0)))
                                 .findFirst();
                         if (localeOpt.isEmpty()) {
-                            LeckerSchmecker.getLogger().warning("Invalid locale returned by setting menu. Ignoring...");
+                            LeckerSchmecker.getLogger().warning(
+                                    "Invalid locale returned by setting menu. Ignoring...");
                             context.sendLocalizedMessage("invalid_option");
                             this.init(context, null, update);
                             return;
@@ -297,25 +305,32 @@ public abstract class CallableAction implements BotAction {
                         message.setText(context.getLocale().getDisplayName() + " ✅");
 
                     } else if (setting.equals(context.getLocalizedString("diet"))) {
-                        Optional<DietType> dietTypeOpt = DietType.getByDisplayName(menu.getSelected().get(0), context.getLocale());
+                        Optional<DietType> dietTypeOpt = DietType.getByDisplayName(
+                                menu.getSelected().get(0), context.getLocale());
                         if (dietTypeOpt.isEmpty()) {
-                            LeckerSchmecker.getLogger().warning("Invalid dietType returned by setting menu. Ignoring...");
+                            LeckerSchmecker.getLogger().warning(
+                                    "Invalid dietType returned by setting menu. Ignoring...");
                             context.sendLocalizedMessage("invalid_option");
                             this.init(context, null, update);
                             return;
                         }
                         context.setDefaultDietType(dietTypeOpt.get());
-                        message.setText(context.getDefaultDietType().getDisplayName(context.getLocale()) + " ✅");
+                        message.setText(
+                                context.getDefaultDietType().getDisplayName(context.getLocale())
+                                        + " ✅");
                     } else if (setting.equals(context.getLocalizedString("automated_query"))) {
-                        if (menu.getSelected().get(0).equals(ResourceManager.getString("off", context.getLocale()))) {
+                        if (menu.getSelected().get(0)
+                                .equals(ResourceManager.getString("off", context.getLocale()))) {
                             context.setAutomatedQueryTime(null);
-                            message.setText(ResourceManager.getString("off", context.getLocale()) + " ✅");
+                            message.setText(
+                                    ResourceManager.getString("off", context.getLocale()) + " ✅");
                         } else {
                             Optional<LocalTime> timeOpt = DateUtils.TIME_OPTIONS.stream()
                                     .filter(a -> a.toString().equals(menu.getSelected().get(0)))
                                     .findFirst();
                             if (timeOpt.isEmpty()) {
-                                LeckerSchmecker.getLogger().warning("Invalid time returned by setting menu. Ignoring...");
+                                LeckerSchmecker.getLogger().warning(
+                                        "Invalid time returned by setting menu. Ignoring...");
                                 context.sendLocalizedMessage("invalid_option");
                                 this.init(context, null, update);
                                 return;
@@ -342,11 +357,13 @@ public abstract class CallableAction implements BotAction {
 
             String text = update.getMessage().getText();
             if (text.equals(context.getLocalizedString("canteen"))) {
-                List<String> options = new LinkedList<>(Canteen.TYPES.stream().map(Canteen::getDisplayName).toList());
+                List<String> options = new LinkedList<>(
+                        Canteen.TYPES.stream().map(Canteen::getDisplayName).toList());
                 options.add(ResourceManager.getString("no_default_canteen", context.getLocale()));
                 SettingsMenu menu = new SettingsMenu(text, true, 2, context,
                         options,
-                        context.getDefaultCanteen() == null ? List.of() : List.of(context.getDefaultCanteen().getDisplayName()));
+                        context.getDefaultCanteen() == null ? List.of()
+                                : List.of(context.getDefaultCanteen().getDisplayName()));
                 context.setSettingsMenu(menu);
 
                 SendMessage message = new SendMessage();
@@ -365,7 +382,8 @@ public abstract class CallableAction implements BotAction {
 
             } else if (text.equals(context.getLocalizedString("diet"))) {
                 SettingsMenu menu = new SettingsMenu(text, true, 2, context,
-                        DietType.TYPES.stream().map(a -> a.getDisplayName(context.getLocale())).toList(),
+                        DietType.TYPES.stream().map(a -> a.getDisplayName(context.getLocale()))
+                                .toList(),
                         List.of(context.getDietType().getDisplayName(context.getLocale())));
                 context.setSettingsMenu(menu);
 
@@ -383,7 +401,8 @@ public abstract class CallableAction implements BotAction {
                 MAIN_MENU.init(context, null, update);
             } else if (text.equals(context.getLocalizedString("automated_query"))) {
                 if (context.getDefaultCanteen() != null) {
-                    List<String> options = new LinkedList<>(DateUtils.TIME_OPTIONS.stream().map(LocalTime::toString).toList());
+                    List<String> options = new LinkedList<>(
+                            DateUtils.TIME_OPTIONS.stream().map(LocalTime::toString).toList());
                     options.add(ResourceManager.getString("off", context.getLocale()));
                     SettingsMenu menu = new SettingsMenu(text, true, 2, context,
                             options,
@@ -451,8 +470,10 @@ public abstract class CallableAction implements BotAction {
         }
     };
 
-    public static final CallableAction[] VALUES = {LIST_MEALS, RATING, MAIN_MENU, TUTORIAL, SETTINGS_MENU};
-    public static final CallableAction[] MAIN_MENU_ACTIONS = {LIST_MEALS, RATING, SETTINGS_MENU, TUTORIAL};
+    public static final CallableAction[] VALUES = {LIST_MEALS, RATING, MAIN_MENU, TUTORIAL,
+            SETTINGS_MENU};
+    public static final CallableAction[] MAIN_MENU_ACTIONS = {LIST_MEALS, RATING, SETTINGS_MENU,
+            TUTORIAL};
 
     public static CallableAction[] values() {
         return VALUES;
