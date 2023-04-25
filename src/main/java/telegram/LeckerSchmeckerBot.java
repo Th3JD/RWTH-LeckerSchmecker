@@ -23,11 +23,10 @@ import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +40,8 @@ import meal.DietType;
 import meal.LeckerSchmecker;
 import meal.MainMeal;
 import meal.SideMeal;
+import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch;
+import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch.Diff;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -124,8 +125,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             }
 
             // Reset the current action if the user wants to access the main menu
-            if (update.hasMessage() && (CallableAction.MAIN_MENU.getCmds()
-                    .contains(update.getMessage().getText().toLowerCase()) || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
+            if (update.hasMessage()
+                    && (CallableAction.MAIN_MENU.getCmds().contains(update.getMessage().getText().toLowerCase())
+                    || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
                     .equalsIgnoreCase(update.getMessage().getText()))) {
                 context.setCurrentAction(null);
                 if (context.getSettingsMenu() != null) {
@@ -143,8 +145,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
                 // Find action requested by the user
                 Optional<CallableAction> action = Arrays.stream(CallableAction.values())
-                        .filter(a -> a.getCmds().contains(msg.getText().toLowerCase()) || a.getDisplayName(context.getLocale())
-                                .equalsIgnoreCase(msg.getText()))
+                        .filter(a -> a.getCmds().contains(msg.getText().toLowerCase())
+                                || a.getDisplayName(context.getLocale()).equalsIgnoreCase(msg.getText()))
                         .findFirst();
 
                 if (action.isPresent()) {
@@ -156,7 +158,9 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                 CallableAction.MAIN_MENU.init(context, null, update);
             }
         } catch (Exception e) {
-            LeckerSchmecker.getLogger().severe("Caught the following exception whilst processing an update: " + update);
+            LeckerSchmecker.getLogger()
+                    .severe("Caught the following exception whilst processing an update: "
+                            + update);
             e.printStackTrace();
         }
     }
@@ -285,17 +289,21 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
             RatingInfo userRating = DatabaseManager.getUserRating(context, meal);
 
             if (context.isCompactLayout()) {
-                sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
+                sb.append("*").append(meal.getType().getDisplayName(context.getLocale()))
+                        .append("*")
                         .append(" _").append(priceFormat.format(meal.getPrice()))
                         .append("€").append("_    ")
-                        .append(userRating == null ? "_-_" : ratingFormat.format(userRating.getRating()) +
-                                (userRating.isEstimated() ? "❓" : ""))
+                        .append(userRating == null ? "_-_"
+                                : ratingFormat.format(userRating.getRating()) +
+                                        (userRating.isEstimated() ? "❓" : ""))
                         .append(" / ")
-                        .append(globalRating == null ? "_-_" : ratingFormat.format(globalRating.getRating()) + " (" +
-                                globalRating.getNumVotes() + ")").append("\n")
+                        .append(globalRating == null ? "_-_"
+                                : ratingFormat.format(globalRating.getRating()) + " (" +
+                                        globalRating.getNumVotes() + ")").append("\n")
                         .append(meal.text(context.getLocale())).append("\n\n");
             } else {
-                sb.append("*").append(meal.getType().getDisplayName(context.getLocale())).append("*")
+                sb.append("*").append(meal.getType().getDisplayName(context.getLocale()))
+                        .append("*")
                         .append(" _").append(priceFormat.format(meal.getPrice()))
                         .append("€").append("_")
                         .append("\n")
@@ -303,7 +311,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                         .append(context.getLocalizedString("your_rating"))
                         .append(userRating == null ? "_" +
                                 context.getLocalizedString("not_rated") +
-                                "_" : ratingFormat.format(userRating.getRating()) + (userRating.isEstimated() ? "❓" : ""))
+                                "_" : ratingFormat.format(userRating.getRating()) + (
+                                userRating.isEstimated() ? "❓" : ""))
                         .append("\n")
                         .append(context.getLocalizedString("global_rating"))
                         .append(globalRating == null ? "_" +
@@ -371,57 +380,61 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
         String pollID;
 
-        // Check if there are more than nine similar meals (breaks the poll-feature of telegram)
-        if (similarMeals.size() > 9) {
+        SendMessage message = new SendMessage();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Das Gericht ")
+                .append("<b>")
+                .append(meal.getName())
+                .append("</b>")
+                .append(" ist ähnlich zu den folgenden Gerichten. Bitte wähle eine Option:\n\n");
 
-            SendMessage message = new SendMessage();
-            StringBuilder sb = new StringBuilder();
-            sb.append("Das Gericht '").append(meal.getDisplayName(new Locale("de", "DE")))
-                    .append("' ist ähnlich zu den folgenden Gerichten. Bitte wähle eine Option:\n\n");
+        for (int mealID : similarMeals) {
+            sb.append("/").append("<xxx>")
+                    .append("_").append(mealID).append("  ")
+                    .append(calcNameDiff(meal, mealID))
+                    .append("\n\n");
+        }
+        sb.append("/").append("<xxx>").append("_").append(0).append("  ")
+                .append("Neues Gericht");
 
-            for (int mealID : similarMeals) {
-                sb.append("/").append("<xxx>").append("_").append(mealID).append("  ")
-                        .append(DatabaseManager.getMealAliases(mealID).get(0));
-                sb.append("\n\n");
-            }
-            sb.append("/").append("<xxx>").append("_").append(0).append("  ").append("Neues Gericht");
+        long adminChatID = Config.getAdminChatID();
+        message.setText(sb.toString());
+        pollID = chatContextById.get(adminChatID).sendMessage(message).toString();
 
-            long adminChatID = Config.getAdminChatID();
-            message.setText(sb.toString());
-            pollID = chatContextById.get(adminChatID).sendMessage(message).toString();
+        EditMessageText editMessage = new EditMessageText();
+        editMessage.setChatId(adminChatID);
+        editMessage.setMessageId(Integer.parseInt(pollID));
+        editMessage.setText(sb.toString().replaceAll("<xxx>", pollID));
+        editMessage.enableHtml(true);
 
-            EditMessageText editMessage = new EditMessageText();
-            editMessage.setChatId(adminChatID);
-            editMessage.setMessageId(Integer.parseInt(pollID));
-            editMessage.setText(sb.toString().replaceAll("<xxx>", pollID));
-
-            try {
-                execute(editMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-
-
-        } else {
-            SendPoll poll = new SendPoll();
-            poll.setIsAnonymous(false);
-            poll.setQuestion("Das Gericht '" + meal.getDisplayName(new Locale("de", "DE"))
-                    + "' ist ähnlich zu den folgenden Gerichten. Bitte wähle eine Option:");
-
-            List<String> options = new ArrayList<>(
-                    similarMeals.stream().map(a -> a + ": " + DatabaseManager.getMealAliases(a).get(0))
-                            .toList());
-            options.add("0: Neues Gericht");
-            poll.setOptions(options);
-
-            Long adminId = Config.getAdminChatID();
-            pollID = chatContextById.get(adminId).sendPoll(poll);
+        try {
+            execute(editMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
 
         MealPollInfo info = new MealPollInfo();
         info.addMeal(meal);
 
         mealPollInfoByMealNameOrPollId.put(meal.getName(), pollID, info);
+    }
+
+    private String calcNameDiff(MainMeal meal, Integer a) {
+        String alias = DatabaseManager.getMealAliases(a).get(0);
+
+        LinkedList<Diff> diffs = new DiffMatchPatch().diffMain(meal.getName(), alias);
+
+        StringBuilder nameDiff = new StringBuilder();
+
+        for (Diff diff : diffs) {
+            switch (diff.operation) {
+                case EQUAL -> nameDiff.append(diff.text);
+                case DELETE -> nameDiff.append("<s>").append(diff.text).append("</s>");
+                case INSERT -> nameDiff.append("<u>").append(diff.text).append("</u>");
+            }
+        }
+
+        return nameDiff.toString();
     }
 
     public MealPollInfo getMealPollInfo(String pollID) {

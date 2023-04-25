@@ -63,6 +63,7 @@ public class LeckerSchmecker {
 
         // schedule update task without a delay
         timer.schedule(new UpdateOfferTask(), 0);
+
         LocalDateTime dateTime = nextAutomatedQueryTime();
         timer.schedule(new AutomatedQueryTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
         logger.info("Scheduled automated queries until " +
