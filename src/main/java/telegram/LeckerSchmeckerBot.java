@@ -26,7 +26,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -40,8 +39,6 @@ import meal.DietType;
 import meal.LeckerSchmecker;
 import meal.MainMeal;
 import meal.SideMeal;
-import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch;
-import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch.Diff;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -126,7 +123,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
             // Reset the current action if the user wants to access the main menu
             if (update.hasMessage()
-                    && (CallableAction.MAIN_MENU.getCmds().contains(update.getMessage().getText().toLowerCase())
+                    && (CallableAction.MAIN_MENU.getCmds()
+                    .contains(update.getMessage().getText().toLowerCase())
                     || CallableAction.MAIN_MENU.getDisplayName(context.getLocale())
                     .equalsIgnoreCase(update.getMessage().getText()))) {
                 context.setCurrentAction(null);
@@ -146,7 +144,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                 // Find action requested by the user
                 Optional<CallableAction> action = Arrays.stream(CallableAction.values())
                         .filter(a -> a.getCmds().contains(msg.getText().toLowerCase())
-                                || a.getDisplayName(context.getLocale()).equalsIgnoreCase(msg.getText()))
+                                || a.getDisplayName(context.getLocale())
+                                .equalsIgnoreCase(msg.getText()))
                         .findFirst();
 
                 if (action.isPresent()) {
@@ -183,7 +182,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
 
                     SendMessage msg = new SendMessage();
                     msg.enableMarkdownV2(true);
-                    msg.setText(ResourceManager.getString("introduction", ResourceManager.DEFAULTLOCALE));
+                    msg.setText(ResourceManager.getString("introduction",
+                            ResourceManager.DEFAULTLOCALE));
                     sendMessage(chatId, msg);
                     return true;
                 } else {
@@ -391,7 +391,7 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         for (int mealID : similarMeals) {
             sb.append("/").append("<xxx>")
                     .append("_").append(mealID).append("  ")
-                    .append(calcNameDiff(meal, mealID))
+                    .append(MainMeal.calcNameDiff(meal, mealID))
                     .append("\n\n");
         }
         sb.append("/").append("<xxx>").append("_").append(0).append("  ")
@@ -417,24 +417,6 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
         info.addMeal(meal);
 
         mealPollInfoByMealNameOrPollId.put(meal.getName(), pollID, info);
-    }
-
-    private String calcNameDiff(MainMeal meal, Integer a) {
-        String alias = DatabaseManager.getMealAliases(a).get(0);
-
-        LinkedList<Diff> diffs = new DiffMatchPatch().diffMain(meal.getName(), alias);
-
-        StringBuilder nameDiff = new StringBuilder();
-
-        for (Diff diff : diffs) {
-            switch (diff.operation) {
-                case EQUAL -> nameDiff.append(diff.text);
-                case DELETE -> nameDiff.append("<s>").append(diff.text).append("</s>");
-                case INSERT -> nameDiff.append("<u>").append(diff.text).append("</u>");
-            }
-        }
-
-        return nameDiff.toString();
     }
 
     public MealPollInfo getMealPollInfo(String pollID) {
