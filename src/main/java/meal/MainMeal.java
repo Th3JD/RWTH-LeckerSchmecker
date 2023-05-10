@@ -434,17 +434,13 @@ public class MainMeal extends Meal {
             switch (diff.operation) {
                 case EQUAL -> {
                     result.append(diff.text);
-                    longestMatch++;
-                    matches++;
+                    if (diff.text.length() > longestMatch) {
+                        longestMatch = diff.text.length();
+                    }
+                    matches += diff.text.length();
                 }
-                case DELETE -> {
-                    result.append("<s>").append(diff.text).append("</s>");
-                    longestMatch = 0;
-                }
-                case INSERT -> {
-                    result.append("<u>").append(diff.text).append("</u>");
-                    longestMatch = 0;
-                }
+                case DELETE -> result.append("<s>").append(diff.text).append("</s>");
+                case INSERT -> result.append("<u>").append(diff.text).append("</u>");
             }
         }
 
