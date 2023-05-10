@@ -19,17 +19,25 @@ package meal;
 import database.DatabaseManager;
 import java.time.DayOfWeek;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import localization.ResourceManager;
+import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch;
+import org.bitbucket.cowwoc.diffmatchpatch.DiffMatchPatch.Diff;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import telegram.LeckerSchmeckerBot;
+import util.Triple;
+import util.Tuple;
 
 public class MainMeal extends Meal {
+
+    private static final float MIN_MATCH = 0.5f;
+    private static final float MIN_LONGEST_MATCH = 2f;
 
     private static final Set<String> INVALID_NAMES = Set.of("geschlossen");
 
@@ -59,7 +67,8 @@ public class MainMeal extends Meal {
 
         if (htmlNameDE.isBlank() || htmlNameDE.strip().startsWith("|")
                 || INVALID_NAMES.stream().anyMatch(s -> s.equalsIgnoreCase(htmlNameDE))) {
-            LeckerSchmecker.getLogger().warning("Encountered meal with an invalid name: " + htmlNameDE);
+            LeckerSchmecker.getLogger()
+                    .warning("Encountered meal with an invalid name: " + htmlNameDE);
             return List.of();
         }
 
@@ -205,6 +214,8 @@ public class MainMeal extends Meal {
                 .replace(",", " ")
                 .replace(".", " ")
                 .replace("&", " ")
+                .replace("/", " ")
+                .replace("\\", " ")
                 .toLowerCase()
                 .replace("ß", "ss")
                 .replace(" mit ", " ")
@@ -350,5 +361,99 @@ public class MainMeal extends Meal {
         public MainMeal createMainMeal() {
             return new MainMeal(this);
         }
+    }
+
+    public static String calcNameDiff(MainMeal meal, Integer mealId) {
+        String alias = DatabaseManager.getMealAliases(mealId).get(0);
+
+        List<String> nameDiff = new LinkedList<>();
+
+        List<String> nameParts = new LinkedList<>(Arrays.asList(meal.getName().split("_")));
+        List<String> aliasParts = new LinkedList<>(Arrays.asList(alias.split("_")));
+
+        while (!nameParts.isEmpty() || !aliasParts.isEmpty()) {
+            Triple<Integer, Integer, String> matchResult = findFirstWordMatch(nameParts,
+                    aliasParts);
+
+            for (int i = 0; i < matchResult.getA(); i++) {
+                nameDiff.add("<s>" + nameParts.get(i) + "</s>");
+            }
+
+            for (int i = 0; i < matchResult.getB(); i++) {
+                nameDiff.add("<u>" + aliasParts.get(i) + "</u>");
+            }
+
+            if (matchResult.getC() != null) {
+                nameDiff.add(aliasParts.get(matchResult.getB()));
+            }
+
+            if (matchResult.getB() < aliasParts.size()) {
+                aliasParts.subList(0, matchResult.getB() + 1).clear();
+            } else {
+                aliasParts.clear();
+            }
+
+            if (matchResult.getA() < nameParts.size()) {
+                nameParts.subList(0, matchResult.getA() + 1).clear();
+            } else {
+                nameParts.clear();
+            }
+        }
+
+        return String.join("_", nameDiff);
+    }
+
+    private static Triple<Integer, Integer, String> findFirstWordMatch(List<String> name,
+            List<String> alias) {
+        for (int j = 0; j < name.size(); j++) {
+            String namePart = name.get(j);
+            for (int i = 0; i < alias.size(); i++) {
+                String aliasPart = alias.get(i);
+                Tuple<Boolean, String> matchResult = areWordsMatching(namePart, aliasPart);
+                if (matchResult.getA()) {
+                    return new Triple<>(j, i, matchResult.getB());
+                }
+            }
+        }
+        return new Triple<>(name.size(), alias.size(), null);
+    }
+
+    private static Tuple<Boolean, String> areWordsMatching(String a, String b) {
+        if (a.equals(b)) {
+            return new Tuple<>(true, a);
+        }
+
+        StringBuilder result = new StringBuilder();
+
+        LinkedList<Diff> diffs = new DiffMatchPatch().diffMain(a, b);
+
+        int longestMatch = 0;
+        int matches = 0;
+
+        for (Diff diff : diffs) {
+            switch (diff.operation) {
+                case EQUAL -> {
+                    result.append(diff.text);
+                    longestMatch++;
+                    matches++;
+                }
+                case DELETE -> {
+                    result.append("<s>").append(diff.text).append("</s>");
+                    longestMatch = 0;
+                }
+                case INSERT -> {
+                    result.append("<u>").append(diff.text).append("</u>");
+                    longestMatch = 0;
+                }
+            }
+        }
+
+        if (matches < MIN_MATCH * 0.5 * (a.length() + b.length())) {
+            return new Tuple<>(false, null);
+        } else if (longestMatch < MIN_LONGEST_MATCH) {
+            return new Tuple<>(false, null);
+        }
+
+        return new Tuple<>(true, result.toString());
     }
 }
