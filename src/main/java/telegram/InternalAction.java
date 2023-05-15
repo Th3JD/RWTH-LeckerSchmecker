@@ -253,13 +253,23 @@ public abstract class InternalAction implements BotAction {
         @Override
         public void onUpdate(ChatContext context, Update update) {
             String updateMsg = update.getMessage().getText();
+            int rating;
 
             try {
-                context.setRatedPoints(Integer.parseInt(updateMsg));
+                rating = Integer.parseInt(updateMsg);
             } catch (NumberFormatException ignored) {
                 context.sendLocalizedMessage("invalid_option");
                 this.init(context, null, update);
+                return;
             }
+
+            if (rating < 1 || rating > 10) {
+                context.sendLocalizedMessage("invalid_option");
+                this.init(context, null, update);
+                return;
+            }
+            context.setRatedPoints(rating);
+
             context.getReturnToAction().onUpdate(context, update);
         }
     };
