@@ -243,7 +243,7 @@ public class DatabaseManager {
             stmt.addBatch("create table if not exists meal_name_alias\n" +
                     "(\n" +
                     "    mealID int auto_increment,\n" +
-                    "    alias  VARCHAR(100) not null,\n" +
+                    "    alias  VARCHAR(200) not null,\n" +
                     "    constraint meal_name_alias_pk\n" +
                     "        primary key (mealID, alias)\n" +
                     ");");
@@ -254,7 +254,7 @@ public class DatabaseManager {
             stmt.addBatch("create table if not exists meal_shortname_alias\n" +
                     "(\n" +
                     "    mealID     int          null,\n" +
-                    "    shortAlias VARCHAR(100) not null,\n" +
+                    "    shortAlias VARCHAR(200) not null,\n" +
                     "    constraint meal_shortname_alias_pk\n" +
                     "        primary key (mealID, shortAlias),\n" +
                     "    constraint meal_shortname_alias_meal_name_alias_mealID_fk\n" +
