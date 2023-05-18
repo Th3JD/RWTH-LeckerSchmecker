@@ -384,7 +384,7 @@ public class MainMeal extends Meal {
             }
 
             if (matchResult.getC() != null) {
-                nameDiff.add(aliasParts.get(matchResult.getB()));
+                nameDiff.add(matchResult.getC());
             }
 
             if (matchResult.getB() < aliasParts.size()) {
