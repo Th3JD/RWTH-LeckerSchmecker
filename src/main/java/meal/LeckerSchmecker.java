@@ -18,6 +18,24 @@ package meal;
 
 import config.Config;
 import database.DatabaseManager;
+import java.io.File;
+import java.io.IOException;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.UUID;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import localization.ResourceManager;
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -27,16 +45,6 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
 import util.DateUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.UUID;
-import java.util.logging.*;
 
 public class LeckerSchmecker {
 
@@ -190,7 +198,7 @@ public class LeckerSchmecker {
 
             LocalDateTime dateTime = nextAutomatedQueryTime();
 
-            timer.schedule(new UpdateOfferTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
+            timer.schedule(new AutomatedQueryTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
             logger.info("Scheduled automated queries until " +
                     dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         }
