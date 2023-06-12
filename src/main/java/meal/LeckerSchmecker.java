@@ -182,7 +182,7 @@ public class LeckerSchmecker {
                     message.enableMarkdown(true);
                     message.setText(ResourceManager.getString("default_canteen_needed", context.getLocale()));
                     context.sendMessage(message);
-                    return;
+                    continue;
                 }
 
                 Canteen userCanteen = context.getCanteen();
