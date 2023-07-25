@@ -11,6 +11,7 @@ Features:
 - Rate meals and view global and personal ratings per meal
 - The bot automatically shows ratings for similar meals, if the currently offered meal doesn't have
   any ratings yet
+- Receive automated messages with the menu of your preferred canteen at fixed times every day
 - Supported Languages: German, English, Spanish, Chinese
 
 ## Usage
