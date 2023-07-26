@@ -250,6 +250,7 @@ public class MainMeal extends Meal {
         PIZZA_CLASSICS("mainmealtype_pizza_classics", 3.7f),
         BURGER_CLASSICS("mainmealtype_burger_classics", 4.9f),
         BURGER_DER_WOCHE("mainmealtype_burger_of_the_week", 1.8f),
+        OFENKARTOFFEL("mainmealtype_baked_potato", 3.1f),
         ;
 
         private final String bundleKey;
@@ -299,6 +300,9 @@ public class MainMeal extends Meal {
                 }
                 case "Burger der Woche" -> {
                     return BURGER_DER_WOCHE;
+                }
+                case "Ofenkartoffel" -> {
+                    return OFENKARTOFFEL;
                 }
             }
             return null;
