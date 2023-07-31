@@ -270,6 +270,22 @@ public class DatabaseManager {
             stmt.addBatch("create index if not exists ratings_mealID_index\n" +
                     "    on leckerschmecker.ratings (mealID desc);");
 
+            stmt.addBatch("create table if not exists ratings_moving_average\n" +
+                    "(\n" +
+                    "   userID              UUID            not null, \n" +
+                    "   mealID              int             not null, \n" +
+                    "   moving_average      DECIMAL(3,1)    not null, \n" +
+                    "   constraint ratings_moving_pk\n" +
+                    "       primary key (userID, mealID),\n" +
+                    "   constraint ratings_moving_meal_name_alias_mealID_fk\n" +
+                    "       foreign key (mealID) references meal_name_alias (mealID),\n" +
+                    "   constraint ratings_moving_users_userID_fk\n" +
+                    "       foreign key (userID) references users (userID)\n" +
+                    ");\n");
+
+            stmt.addBatch("create index if not exists ratings_moving_mealID_index\n" +
+                    "   on leckerschmecker.ratings_moving_average (mealID desc);");
+
             stmt.executeBatch();
         } catch (SQLException e) {
             e.printStackTrace();
