@@ -157,9 +157,8 @@ public class LeckerSchmeckerBot extends TelegramLongPollingBot {
                 CallableAction.MAIN_MENU.init(context, null, update);
             }
         } catch (Exception e) {
-            LeckerSchmecker.getLogger()
-                    .severe("Caught the following exception whilst processing an update: "
-                            + update);
+            LeckerSchmecker.getLogger().severe("Caught the following exception whilst processing an update: "
+                + update);
             e.printStackTrace();
         }
     }
