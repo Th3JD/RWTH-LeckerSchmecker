@@ -147,60 +147,72 @@ public class LeckerSchmecker {
     public static class UpdateOfferTask extends TimerTask {
         @Override
         public void run() {
-            updateOffers();
+            try {
+                updateOffers();
 
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime dateTime;
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime dateTime;
 
-            // fetch every 15 min between daily opening hours (excluding saturday and sunday)
-            if (!now.getDayOfWeek().equals(DayOfWeek.SATURDAY)
+                // fetch every 15 min between daily opening hours (excluding saturday and sunday)
+                if (!now.getDayOfWeek().equals(DayOfWeek.SATURDAY)
                     && !now.getDayOfWeek().equals(DayOfWeek.SUNDAY)
                     && now.getHour() >= 10
                     && (now.getHour() < 14) || (now.getHour() == 14 && now.getMinute() <= 30)) {
 
-                 dateTime = now.plusMinutes(15).withSecond(0);
-            } else {
-                dateTime = now.plusHours(4).withMinute(0).withSecond(0);
+                    dateTime = now.plusMinutes(15).withSecond(0);
+                } else {
+                    dateTime = now.plusHours(4).withMinute(0).withSecond(0);
+                }
+
+                timer.schedule(new UpdateOfferTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
+                logger.info("Scheduled update until " +
+                    dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            } catch (Exception e) {
+                logger.warning("Unexpected exception thrown");
+                e.printStackTrace();
             }
 
-            timer.schedule(new UpdateOfferTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
-            logger.info("Scheduled update until " +
-                    dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         }
     }
 
     public static class AutomatedQueryTask extends TimerTask {
         @Override
         public void run() {
-            for (UUID uuid : DatabaseManager.getAutomatedQueryIds(LocalTime.now()
+            try {
+                for (UUID uuid : DatabaseManager.getAutomatedQueryIds(LocalTime.now()
                     .withMinute(0).withSecond(0).withNano(0))) {
-                // Send personalized meal queries
-                ChatContext context = DatabaseManager.loadUser(LeckerSchmeckerBot.getInstance(), DatabaseManager.getChatIdByUserId(uuid));
+                    // Send personalized meal queries
+                    ChatContext context = DatabaseManager.loadUser(LeckerSchmeckerBot.getInstance(), DatabaseManager.getChatIdByUserId(uuid));
 
-                if (!context.hasCanteen()) {
+                    if (!context.hasCanteen()) {
+                        SendMessage message = new SendMessage();
+                        message.enableMarkdown(true);
+                        message.setText(ResourceManager.getString("default_canteen_needed", context.getLocale()));
+                        context.sendMessage(message);
+                        continue;
+                    }
+
+                    Canteen userCanteen = context.getCanteen();
                     SendMessage message = new SendMessage();
                     message.enableMarkdown(true);
-                    message.setText(ResourceManager.getString("default_canteen_needed", context.getLocale()));
-                    context.sendMessage(message);
-                    continue;
-                }
-
-                Canteen userCanteen = context.getCanteen();
-                SendMessage message = new SendMessage();
-                message.enableMarkdown(true);
-                message.setText("*" + context.getLocalizedString("meals") + " ("
+                    message.setText("*" + context.getLocalizedString("meals") + " ("
                         + userCanteen.getDisplayName() + ")*\n\n"
                         + context.getBot()
                         .getMealsText(userCanteen, LocalDate.now(), context));
-                context.sendMessage(message);
+                    context.sendMessage(message);
 
+                }
+
+                LocalDateTime dateTime = nextAutomatedQueryTime();
+
+                timer.schedule(new AutomatedQueryTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
+                logger.info("Scheduled automated queries until " +
+                    dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            } catch (Exception e) {
+                logger.warning("Unexpected exception thrown");
+                e.printStackTrace();
             }
 
-            LocalDateTime dateTime = nextAutomatedQueryTime();
-
-            timer.schedule(new AutomatedQueryTask(), Date.from(dateTime.atZone(ZoneOffset.systemDefault()).toInstant()));
-            logger.info("Scheduled automated queries until " +
-                    dateTime.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         }
     }
 
