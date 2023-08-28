@@ -36,25 +36,27 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 import localization.ResourceManager;
 import meal.Canteen;
 import meal.DietType;
 import meal.LeckerSchmecker;
 import meal.MainMeal;
+import org.apache.commons.dbcp2.BasicDataSource;
 import rating.RatingInfo;
 import telegram.ChatContext;
 import telegram.LeckerSchmeckerBot;
 
 public class DatabaseManager {
 
-    protected static DatabaseManager instance;
 
-    private Connection connection;
+    protected static DatabaseManager instance;
+    private BasicDataSource dataSource;
     private final TimeBasedGenerator generator = Generators.timeBasedGenerator(
             new EthernetAddress("00:00:00:00:00:00"));
 
     // STATEMENTS
-    private PreparedStatement LOAD_USER, LOAD_USER_CHAT_IDS, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, SET_COMPACT_LAYOUT, SET_AUTOMATED_QUERY, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
+    private String LOAD_USER, LOAD_USER_CHAT_IDS, ADD_USER, SET_CANTEEN, SET_DIET_TYPE, SET_LOCALE, SET_COMPACT_LAYOUT, SET_AUTOMATED_QUERY, LOAD_MEAL_BY_ALIAS, LOAD_MEALS_BY_SHORT_ALIAS,
             ADD_NEW_MEAL_ALIAS, ADD_NEW_MEAL_SHORT_ALIAS, LOAD_MEALNAME_BY_ID, ADD_MEAL_ALIAS, LOAD_NUMBER_OF_VOTES,
             RATE_MEAL, DELETE_RATING, LOAD_USER_RATING_BY_DATE, LOAD_GLOBAL_RATING, LOAD_USER_RATING, LOAD_SIMILAR_RATING,
             LOAD_AUTOMATED_QUERY_IDS, LOAD_CHATID_BY_USERID;
@@ -170,50 +172,36 @@ public class DatabaseManager {
 
     // ///////////////////////////////////////////////////////////////////////////////////////
 
+    private Connection getConnection() throws SQLException {
+        if(dataSource == null)
+            throw new SQLException("Database not yet connected");
+        return dataSource.getConnection();
+    }
+
 
     // protected implementations /////////////////////////////////////////////////////////////
     protected void _connect() {
-        try {
-            connection = DriverManager.getConnection(Config.getString("database.url"),
-                    Config.getString("database.user"),
-                    Config.getString("database.password"));
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        // Initialize datasource
+        dataSource = new BasicDataSource();
+        dataSource.setUrl(Config.getString("database.url"));
+        dataSource.setUsername(Config.getString("database.user"));
+        dataSource.setPassword(Config.getString("database.password"));
+        dataSource.setMinIdle(5);
+        dataSource.setMaxIdle(10);
+        dataSource.setMaxOpenPreparedStatements(100);
     }
 
     protected void _disconnect() {
         try {
-            LOAD_USER.close();
-            LOAD_USER_CHAT_IDS.close();
-            ADD_USER.close();
-            SET_CANTEEN.close();
-            SET_DIET_TYPE.close();
-            SET_LOCALE.close();
-            SET_COMPACT_LAYOUT.close();
-            LOAD_MEAL_BY_ALIAS.close();
-            LOAD_MEALS_BY_SHORT_ALIAS.close();
-            ADD_NEW_MEAL_ALIAS.close();
-            ADD_NEW_MEAL_SHORT_ALIAS.close();
-            LOAD_MEALNAME_BY_ID.close();
-            ADD_MEAL_ALIAS.close();
-            RATE_MEAL.close();
-            DELETE_RATING.close();
-            LOAD_USER_RATING_BY_DATE.close();
-            LOAD_GLOBAL_RATING.close();
-            LOAD_USER_RATING.close();
-            LOAD_SIMILAR_RATING.close();
-            LOAD_NUMBER_OF_VOTES.close();
-            connection.close();
+            dataSource.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     protected void _setupTables() {
-        Statement stmt = null;
-        try {
-            stmt = connection.createStatement();
+        try (Connection connection = getConnection();
+                Statement stmt = connection.createStatement()) {
 
             // Users
             stmt.addBatch("create table if not exists users\n" +
@@ -285,88 +273,58 @@ public class DatabaseManager {
             stmt.executeBatch();
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
-
     }
 
     protected void _setupStatements() {
-        try {
-            LOAD_USER = connection.prepareStatement("SELECT * FROM users WHERE chatID=?");
-            ADD_USER = connection.prepareStatement("INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)");
-            LOAD_USER_CHAT_IDS = connection.prepareStatement("SELECT chatID FROM users");
-            LOAD_NUMBER_OF_VOTES = connection.prepareStatement("SELECT COUNT(*) AS amount FROM ratings WHERE userID LIKE ?");
-            SET_CANTEEN = connection.prepareStatement(
-                    "UPDATE users SET default_canteen=? WHERE userID LIKE ?");
-            SET_DIET_TYPE = connection.prepareStatement(
-                    "UPDATE users SET default_diet_type=? WHERE userID LIKE ?");
-            SET_LOCALE = connection.prepareStatement(
-                    "UPDATE users SET language=? WHERE userID LIKE ?");
-            SET_COMPACT_LAYOUT = connection.prepareStatement(
-                    "UPDATE users SET compact_layout=? WHERE userID LIKE ?");
-            SET_AUTOMATED_QUERY = connection.prepareStatement(
-                    "UPDATE users SET automated_query=? WHERE userID LIKE ?");
-            LOAD_MEAL_BY_ALIAS = connection.prepareStatement(
-                    "SELECT mealID FROM meal_name_alias WHERE alias LIKE ?");
-            LOAD_MEALS_BY_SHORT_ALIAS = connection.prepareStatement(
-                    "SELECT mealID FROM meal_shortname_alias WHERE shortAlias LIKE ?");
-            ADD_NEW_MEAL_ALIAS = connection.prepareStatement(
-                    "INSERT INTO meal_name_alias (alias) VALUES (?)",
-                    Statement.RETURN_GENERATED_KEYS);
-            ADD_NEW_MEAL_SHORT_ALIAS = connection.prepareStatement(
-                    "INSERT INTO meal_shortname_alias VALUES (?,?)");
-            LOAD_MEALNAME_BY_ID = connection.prepareStatement(
-                    "SELECT alias FROM meal_name_alias WHERE mealID=?");
-            ADD_MEAL_ALIAS = connection.prepareStatement(
-                    "INSERT INTO meal_name_alias VALUES (?, ?)");
-            RATE_MEAL = connection.prepareStatement(
-                    "INSERT INTO ratings VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating=?");
-            DELETE_RATING = connection.prepareStatement(
-                    "DELETE FROM ratings WHERE userID LIKE ? AND date=?");
-            LOAD_USER_RATING_BY_DATE = connection.prepareStatement(
-                    "SELECT * FROM ratings WHERE userID LIKE ? AND date=?");
-            LOAD_GLOBAL_RATING = connection.prepareStatement(
-                    "SELECT AVG(rating) AS average, COUNT(*) AS votes FROM (ratings r INNER JOIN (\n"
-                            + "    SELECT userID, mealID, MAX(date) AS MaxDate\n"
-                            + "    FROM ratings\n"
-                            + "    WHERE mealID=?\n"
-                            + "    GROUP BY userID, mealID\n"
-                            + ") rmax ON r.userID=rmax.userID AND r.mealID=rmax.mealID AND r.date=MaxDate);");
-            LOAD_USER_RATING = connection.prepareStatement(
-                    "SELECT rating from (ratings r INNER JOIN (\n"
-                            + "    SELECT userID, mealID, MAX(date) AS MaxDate\n"
-                            + "    FROM ratings\n"
-                            + "    WHERE mealID=? AND userID LIKE ?\n"
-                            + "    GROUP BY userID, mealID\n"
-                            + ") rmax ON r.userID=rmax.userID AND r.mealID=rmax.mealID AND r.date=MaxDate);");
-            LOAD_SIMILAR_RATING = connection.prepareStatement(
-                    "SELECT AVG(rating) AS average, COUNT(*) AS votes FROM ratings r,\n"
-                            + "(SELECT userID, lastRatings.mealID AS mealID, MaxDate FROM\n"
-                            + "(SELECT mealID FROM meal_shortname_alias WHERE shortAlias LIKE ?) AS similarIDs,\n"
-                            + "(SELECT userID, mealID, MAX(date) AS MaxDate FROM ratings WHERE userID LIKE ? GROUP BY userID, mealID) AS lastRatings\n"
-                            + "WHERE similarIDs.mealID=lastRatings.mealID) AS similarLastRatings\n"
-                            + "WHERE r.userID=similarLastRatings.userID AND r.mealID=similarLastRatings.mealID AND r.date=similarLastRatings.MaxDate;");
-            LOAD_AUTOMATED_QUERY_IDS = connection.prepareStatement(
-                    "SELECT userID FROM users WHERE automated_query LIKE ?");
-            LOAD_CHATID_BY_USERID = connection.prepareStatement(
-                    "SELECT chatID FROM users WHERE userID LIKE ?");
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        LOAD_USER = "SELECT * FROM users WHERE chatID=?";
+        ADD_USER = "INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)";
+        LOAD_USER_CHAT_IDS = "SELECT chatID FROM users";
+        LOAD_NUMBER_OF_VOTES = "SELECT COUNT(*) AS amount FROM ratings WHERE userID LIKE ?";
+        SET_CANTEEN = "UPDATE users SET default_canteen=? WHERE userID LIKE ?";
+        SET_DIET_TYPE = "UPDATE users SET default_diet_type=? WHERE userID LIKE ?";
+        SET_LOCALE = "UPDATE users SET language=? WHERE userID LIKE ?";
+        SET_COMPACT_LAYOUT = "UPDATE users SET compact_layout=? WHERE userID LIKE ?";
+        SET_AUTOMATED_QUERY ="UPDATE users SET automated_query=? WHERE userID LIKE ?";
+        LOAD_MEAL_BY_ALIAS = "SELECT mealID FROM meal_name_alias WHERE alias LIKE ?";
+        LOAD_MEALS_BY_SHORT_ALIAS = "SELECT mealID FROM meal_shortname_alias WHERE shortAlias LIKE ?";
+        ADD_NEW_MEAL_ALIAS = "INSERT INTO meal_name_alias (alias) VALUES (?)";
+        ADD_NEW_MEAL_SHORT_ALIAS = "INSERT INTO meal_shortname_alias VALUES (?,?)";
+        LOAD_MEALNAME_BY_ID = "SELECT alias FROM meal_name_alias WHERE mealID=?";
+        ADD_MEAL_ALIAS = "INSERT INTO meal_name_alias VALUES (?, ?)";
+        RATE_MEAL = "INSERT INTO ratings VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rating=?";
+        DELETE_RATING = "DELETE FROM ratings WHERE userID LIKE ? AND date=?";
+        LOAD_USER_RATING_BY_DATE = "SELECT * FROM ratings WHERE userID LIKE ? AND date=?";
+        LOAD_GLOBAL_RATING = "SELECT AVG(rating) AS average, COUNT(*) AS votes FROM (ratings r INNER JOIN (\n"
+                        + "    SELECT userID, mealID, MAX(date) AS MaxDate\n"
+                        + "    FROM ratings\n"
+                        + "    WHERE mealID=?\n"
+                        + "    GROUP BY userID, mealID\n"
+                        + ") rmax ON r.userID=rmax.userID AND r.mealID=rmax.mealID AND r.date=MaxDate);";
+        LOAD_USER_RATING = "SELECT rating from (ratings r INNER JOIN (\n"
+                        + "    SELECT userID, mealID, MAX(date) AS MaxDate\n"
+                        + "    FROM ratings\n"
+                        + "    WHERE mealID=? AND userID LIKE ?\n"
+                        + "    GROUP BY userID, mealID\n"
+                        + ") rmax ON r.userID=rmax.userID AND r.mealID=rmax.mealID AND r.date=MaxDate);";
+        LOAD_SIMILAR_RATING = "SELECT AVG(rating) AS average, COUNT(*) AS votes FROM ratings r,\n"
+                        + "(SELECT userID, lastRatings.mealID AS mealID, MaxDate FROM\n"
+                        + "(SELECT mealID FROM meal_shortname_alias WHERE shortAlias LIKE ?) AS similarIDs,\n"
+                        + "(SELECT userID, mealID, MAX(date) AS MaxDate FROM ratings WHERE userID LIKE ? GROUP BY userID, mealID) AS lastRatings\n"
+                        + "WHERE similarIDs.mealID=lastRatings.mealID) AS similarLastRatings\n"
+                        + "WHERE r.userID=similarLastRatings.userID AND r.mealID=similarLastRatings.mealID AND r.date=similarLastRatings.MaxDate;";
+        LOAD_AUTOMATED_QUERY_IDS = "SELECT userID FROM users WHERE automated_query LIKE ?";
+        LOAD_CHATID_BY_USERID = "SELECT chatID FROM users WHERE userID LIKE ?";
     }
 
     protected ChatContext _loadUser(LeckerSchmeckerBot bot, long chatID) {
-        try {
-            LOAD_USER.clearParameters();
-            LOAD_USER.setLong(1, chatID);
-            ResultSet rs = LOAD_USER.executeQuery();
+        try (Connection connection = getConnection();
+                 PreparedStatement psL = connection.prepareStatement(LOAD_USER);
+                 PreparedStatement psA = connection.prepareStatement(ADD_USER);
+                 PreparedStatement psV = connection.prepareStatement(LOAD_NUMBER_OF_VOTES)) {
+
+            psL.setLong(1, chatID);
+            ResultSet rs = psL.executeQuery();
 
             if (!rs.next()) {
                 // User not yet in database
@@ -375,16 +333,15 @@ public class DatabaseManager {
 
                 UUID userID = generator.generate();
 
-                ADD_USER.clearParameters();
-                ADD_USER.setString(1, userID.toString());
-                ADD_USER.setLong(2, chatID);
-                ADD_USER.setString(3, null);
-                ADD_USER.setString(4, DietType.EVERYTHING.getId());
-                ADD_USER.setString(5, ResourceManager.DEFAULTLOCALE.getLanguage() + "-"
+                psA.setString(1, userID.toString());
+                psA.setLong(2, chatID);
+                psA.setString(3, null);
+                psA.setString(4, DietType.EVERYTHING.getId());
+                psA.setString(5, ResourceManager.DEFAULTLOCALE.getLanguage() + "-"
                         + ResourceManager.DEFAULTLOCALE.getCountry());
-                ADD_USER.setBoolean(6, false);
-                ADD_USER.setString(7, null);
-                ADD_USER.execute();
+                psA.setBoolean(6, false);
+                psA.setString(7, null);
+                psA.execute();
 
                 return new ChatContext(bot, userID, chatID, null, DietType.EVERYTHING, ResourceManager.DEFAULTLOCALE, false, null, 0);
             } else {
@@ -410,9 +367,8 @@ public class DatabaseManager {
                     automatedQueryTime = LocalTime.parse(automatedQuery, parser);
                 }
 
-                LOAD_NUMBER_OF_VOTES.clearParameters();
-                LOAD_NUMBER_OF_VOTES.setString(1, userID.toString());
-                ResultSet rsNOV = LOAD_NUMBER_OF_VOTES.executeQuery();
+                psV.setString(1, userID.toString());
+                ResultSet rsNOV = psV.executeQuery();
 
                 rsNOV.next();
                 int numberOfVotes = rsNOV.getInt("amount");
@@ -429,8 +385,9 @@ public class DatabaseManager {
     protected Set<Long> _getUserChatIds() {
         Set<Long> ids = new HashSet<>();
 
-        try {
-            ResultSet rs = LOAD_USER_CHAT_IDS.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(LOAD_USER_CHAT_IDS)){
+            ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 ids.add(rs.getLong("chatID"));
@@ -443,11 +400,11 @@ public class DatabaseManager {
     }
 
     protected void _setDefaultCanteen(UUID userID, Canteen canteen) {
-        try {
-            SET_CANTEEN.clearParameters();
-            SET_CANTEEN.setString(1, canteen != null ? canteen.getUrlName() : null);
-            SET_CANTEEN.setString(2, userID.toString());
-            SET_CANTEEN.executeUpdate();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(SET_CANTEEN)){
+            ps.setString(1, canteen != null ? canteen.getUrlName() : null);
+            ps.setString(2, userID.toString());
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -455,11 +412,11 @@ public class DatabaseManager {
     }
 
     protected void _setDefaultDietType(UUID userID, DietType dietType) {
-        try {
-            SET_DIET_TYPE.clearParameters();
-            SET_DIET_TYPE.setString(1, dietType != null ? dietType.getId() : null);
-            SET_DIET_TYPE.setString(2, userID.toString());
-            SET_DIET_TYPE.executeUpdate();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(SET_DIET_TYPE)){
+            ps.setString(1, dietType != null ? dietType.getId() : null);
+            ps.setString(2, userID.toString());
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -467,43 +424,43 @@ public class DatabaseManager {
     }
 
     protected void _setAutomatedQuery(UUID userID, LocalTime time) {
-        try {
-            SET_AUTOMATED_QUERY.clearParameters();
-            SET_AUTOMATED_QUERY.setString(1, time != null ? time.toString() : null);
-            SET_AUTOMATED_QUERY.setString(2, userID.toString());
-            SET_AUTOMATED_QUERY.executeUpdate();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(SET_AUTOMATED_QUERY)){
+            ps.setString(1, time != null ? time.toString() : null);
+            ps.setString(2, userID.toString());
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     protected void _setLanguage(UUID userID, Locale locale) {
-        try {
-            SET_LOCALE.clearParameters();
-            SET_LOCALE.setString(1, locale.getLanguage() + "-" + locale.getCountry());
-            SET_LOCALE.setString(2, userID.toString());
-            SET_LOCALE.executeUpdate();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(SET_LOCALE)){
+            ps.setString(1, locale.getLanguage() + "-" + locale.getCountry());
+            ps.setString(2, userID.toString());
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     protected void _setCompactLayout(UUID userID, boolean value) {
-        try {
-            SET_COMPACT_LAYOUT.clearParameters();
-            SET_COMPACT_LAYOUT.setBoolean(1, value);
-            SET_COMPACT_LAYOUT.setString(2, userID.toString());
-            SET_COMPACT_LAYOUT.executeUpdate();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(SET_COMPACT_LAYOUT)){
+            ps.setBoolean(1, value);
+            ps.setString(2, userID.toString());
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     protected Integer _loadMealID(String mealName) {
-        try {
-            LOAD_MEAL_BY_ALIAS.clearParameters();
-            LOAD_MEAL_BY_ALIAS.setString(1, mealName);
-            ResultSet rs = LOAD_MEAL_BY_ALIAS.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(LOAD_MEAL_BY_ALIAS)){
+            ps.setString(1, mealName);
+            ResultSet rs = ps.executeQuery();
 
             if (!rs.next()) {
                 return null;
@@ -529,10 +486,10 @@ public class DatabaseManager {
     protected Set<Integer> _loadMealIDsByShortAlias(MainMeal meal) {
         Set<Integer> ids = new HashSet<>();
 
-        try {
-            LOAD_MEALS_BY_SHORT_ALIAS.clearParameters();
-            LOAD_MEALS_BY_SHORT_ALIAS.setString(1, meal.getShortAlias());
-            ResultSet rs = LOAD_MEALS_BY_SHORT_ALIAS.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(LOAD_MEALS_BY_SHORT_ALIAS)){
+            ps.setString(1, meal.getShortAlias());
+            ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 ids.add(rs.getInt("mealID"));
@@ -547,21 +504,23 @@ public class DatabaseManager {
     protected int _addMeal(MainMeal meal) {
         int newID = -1;
 
-        try {
-            ADD_NEW_MEAL_ALIAS.clearParameters();
-            ADD_NEW_MEAL_ALIAS.setString(1, meal.getName());
-            ADD_NEW_MEAL_ALIAS.executeUpdate();
-            ResultSet rs = ADD_NEW_MEAL_ALIAS.getGeneratedKeys();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(ADD_NEW_MEAL_ALIAS, Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement ps2 = connection.prepareStatement(ADD_NEW_MEAL_SHORT_ALIAS)){
+
+            ps.setString(1, meal.getName());
+            ps.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
 
             rs.next();
             newID = rs.getInt("insert_id");
 
-            ADD_NEW_MEAL_SHORT_ALIAS.clearParameters();
-            ADD_NEW_MEAL_SHORT_ALIAS.setInt(1, newID);
-            ADD_NEW_MEAL_SHORT_ALIAS.setString(2, meal.getShortAlias());
-            ADD_NEW_MEAL_SHORT_ALIAS.executeUpdate();
+            ps2.setInt(1, newID);
+            ps2.setString(2, meal.getShortAlias());
+            ps2.executeUpdate();
             return newID;
         } catch (SQLException e) {
+            LeckerSchmecker.getLogger().warning("???");
             e.printStackTrace();
         }
         return newID;
@@ -569,10 +528,10 @@ public class DatabaseManager {
 
     protected List<String> _getMealAliases(int mealID) {
         List<String> res = new LinkedList<>();
-        try {
-            LOAD_MEALNAME_BY_ID.clearParameters();
-            LOAD_MEALNAME_BY_ID.setInt(1, mealID);
-            ResultSet rs = LOAD_MEALNAME_BY_ID.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(LOAD_MEALNAME_BY_ID)){
+            ps.setInt(1, mealID);
+            ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 res.add(rs.getString("alias"));
@@ -585,47 +544,47 @@ public class DatabaseManager {
     }
 
     protected void _addAliasToMeal(int mealID, String newAlias) {
-        try {
-            ADD_MEAL_ALIAS.clearParameters();
-            ADD_MEAL_ALIAS.setInt(1, mealID);
-            ADD_MEAL_ALIAS.setString(2, newAlias);
-            ADD_MEAL_ALIAS.executeUpdate();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(ADD_MEAL_ALIAS)){
+            ps.setInt(1, mealID);
+            ps.setString(2, newAlias);
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     protected void _rateMeal(ChatContext context, MainMeal meal, int rating) {
-        try {
-            RATE_MEAL.clearParameters();
-            RATE_MEAL.setString(1, context.getUserID().toString());
-            RATE_MEAL.setInt(2, meal.getId());
-            RATE_MEAL.setDate(3, Date.valueOf(LocalDate.now()));
-            RATE_MEAL.setInt(4, rating);
-            RATE_MEAL.setInt(5, rating);
-            RATE_MEAL.executeUpdate();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(RATE_MEAL)){
+            ps.setString(1, context.getUserID().toString());
+            ps.setInt(2, meal.getId());
+            ps.setDate(3, Date.valueOf(LocalDate.now()));
+            ps.setInt(4, rating);
+            ps.setInt(5, rating);
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     protected void _deleteRatingsAtDate(ChatContext context, LocalDate date) {
-        try {
-            DELETE_RATING.clearParameters();
-            DELETE_RATING.setString(1, context.getUserID().toString());
-            DELETE_RATING.setDate(2, Date.valueOf(date));
-            DELETE_RATING.executeUpdate();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(DELETE_RATING)){
+            ps.setString(1, context.getUserID().toString());
+            ps.setDate(2, Date.valueOf(date));
+            ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
     protected int _numberOfRatingsByDate(ChatContext context, LocalDate date) {
-        try {
-            LOAD_USER_RATING_BY_DATE.clearParameters();
-            LOAD_USER_RATING_BY_DATE.setString(1, context.getUserID().toString());
-            LOAD_USER_RATING_BY_DATE.setDate(2, Date.valueOf(date));
-            ResultSet rs = LOAD_USER_RATING_BY_DATE.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(LOAD_USER_RATING_BY_DATE)){
+            ps.setString(1, context.getUserID().toString());
+            ps.setDate(2, Date.valueOf(date));
+            ResultSet rs = ps.executeQuery();
 
             int res = 0;
             while (rs.next()) {
@@ -646,10 +605,10 @@ public class DatabaseManager {
             return null;
         }
 
-        try {
-            LOAD_GLOBAL_RATING.clearParameters();
-            LOAD_GLOBAL_RATING.setInt(1, meal.getId());
-            ResultSet rs = LOAD_GLOBAL_RATING.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(LOAD_GLOBAL_RATING)){
+            ps.setInt(1, meal.getId());
+            ResultSet rs = ps.executeQuery();
 
             if (!rs.next()) {
                 return null;
@@ -674,18 +633,18 @@ public class DatabaseManager {
             return null;
         }
 
-        try {
-            LOAD_USER_RATING.clearParameters();
-            LOAD_USER_RATING.setInt(1, meal.getId());
-            LOAD_USER_RATING.setString(2, context.getUserID().toString());
-            ResultSet rs = LOAD_USER_RATING.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement psU = connection.prepareStatement(LOAD_USER_RATING);
+                PreparedStatement psS = connection.prepareStatement(LOAD_SIMILAR_RATING)) {
+            psU.setInt(1, meal.getId());
+            psU.setString(2, context.getUserID().toString());
+            ResultSet rs = psU.executeQuery();
 
             // Check if the user did NOT rate this exact meal yet
             if (!rs.next()) {
-                LOAD_SIMILAR_RATING.clearParameters();
-                LOAD_SIMILAR_RATING.setString(1, meal.getShortAlias());
-                LOAD_SIMILAR_RATING.setString(2, context.getUserID().toString());
-                ResultSet rsSimilar = LOAD_SIMILAR_RATING.executeQuery();
+                psS.setString(1, meal.getShortAlias());
+                psS.setString(2, context.getUserID().toString());
+                ResultSet rsSimilar = psS.executeQuery();
 
                 if (!rsSimilar.next()) {
                     return null;
@@ -713,10 +672,10 @@ public class DatabaseManager {
         }
 
         List<UUID> res = new LinkedList<>();
-        try {
-            LOAD_AUTOMATED_QUERY_IDS.clearParameters();
-            LOAD_AUTOMATED_QUERY_IDS.setString(1, time.toString());
-            ResultSet rs = LOAD_AUTOMATED_QUERY_IDS.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(LOAD_AUTOMATED_QUERY_IDS)){
+            ps.setString(1, time.toString());
+            ResultSet rs = ps.executeQuery();
 
             while (rs.next()) {
                 res.add(UUID.fromString(rs.getString("userID")));
@@ -729,10 +688,10 @@ public class DatabaseManager {
     }
 
     protected Long _getChatIdByUserId(UUID uuid) {
-        try {
-            LOAD_CHATID_BY_USERID.clearParameters();
-            LOAD_CHATID_BY_USERID.setString(1, uuid.toString());
-            ResultSet rs = LOAD_CHATID_BY_USERID.executeQuery();
+        try (Connection connection = getConnection();
+                PreparedStatement ps = connection.prepareStatement(LOAD_CHATID_BY_USERID)){
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
 
             rs.next();
             return rs.getLong("chatID");
@@ -743,5 +702,6 @@ public class DatabaseManager {
     }
 
     // ///////////////////////////////////////////////////////////////////////////////////////
+
 
 }
